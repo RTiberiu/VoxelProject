@@ -11,7 +11,10 @@
     <None Include="..\..\Source\UnrealTestEditor.Target.cs">
       <Filter>Source</Filter>
     </None>
+    <None Include="..\..\.gitattributes" />
+    <None Include="..\..\.gitignore" />
     <None Include="..\..\.vsconfig" />
+    <None Include="..\..\README.md" />
     <None Include="..\..\UpgradeLog.htm" />
     <Filter Include="Config">
       <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
@@ -61,12 +64,17 @@
     <ClInclude Include="..\..\Source\UnrealTest\Private\CustomChunk.h">
       <Filter>Source\UnrealTest\Private</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\Source\UnrealTest\Private\CustomChunkWorld.cpp">
+      <Filter>Source\UnrealTest\Private</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\UnrealTest\Private\CustomChunkWorld.h">
+      <Filter>Source\UnrealTest\Private</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\UnrealTest\Private\Enums.h">
       <Filter>Source\UnrealTest\Private</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\UnrealTest\Private\FastNoiseLite.h">
       <Filter>Source\UnrealTest\Private</Filter>
     </ClInclude>
-    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

@@ -6,24 +6,80 @@
 #include "GameFramework/Actor.h"
 #include "CustomChunk.generated.h"
 
+enum class EBlock;
+enum class EDirection;
+class FastNoiseLite;
+class UProceduralMeshComponent;
+
 UCLASS()
-class ACustomChunk : public AActor
-{
+class ACustomChunk : public AActor {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ACustomChunk();
 
-	UPROPERTY(EditAnywhere, Category = "Custom Chunk")
-	int chunkSize{ 32 };
+	UPROPERTY(EditAnywhere, Category = "Chunk")
+	int Size{ 32 };
 
-	UPROPERTY(EditAnywhere, Category = "Custom Chunk")
-	int chunkScale{ 1 };
+	UPROPERTY(EditAnywhere, Category = "Chunk")
+	int Scale{ 1 };
 
-private:
-	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+private:
+	TObjectPtr<UProceduralMeshComponent> Mesh;
+	TObjectPtr<FastNoiseLite> Noise;
+
+	TArray<EBlock> Blocks;
+
+	TArray<FVector> VertexData;
+	TArray<int> TriangleData;
+	TArray<FVector2D> UVData;
+
+	int VertexCount{ 0 };
+	const int MaxHeight{ 200 };
+
+	const float OctavesFrequency[3] = {
+		0.02, 0.025, 0.03
+	};
+
+	const FVector BlockVertexData[8] = {
+		FVector(100,100,100),
+		FVector(100,0,100),
+		FVector(100,0,0),
+		FVector(100,100,0),
+		FVector(0,0,100),
+		FVector(0,100,100),
+		FVector(0,100,0),
+		FVector(0,0,0)
+	};
+
+	const int BlockTriangleData[24] = {
+		0,1,2,3, // Forward
+		5,0,3,6, // Right
+		4,5,6,7, // Back
+		1,4,7,2, // Left
+		5,4,1,0, // Up
+		3,2,7,6  // Down
+	};
+
+	void GenerateBlocks();
+
+	void GenerateMesh();
+
+	void ApplyMesh() const;
+
+	bool Check(FVector Position) const;
+
+	void CreateFace(EDirection Direction, FVector Position);
+
+	TArray<FVector> GetFaceVertices(EDirection Direction, FVector Position) const;
+
+	FVector GetPositionInDirection(EDirection Direction, FVector Position) const;
+
+	int GetBlockIndex(int x, int y, int z) const;
+
+};
