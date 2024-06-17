@@ -56,7 +56,9 @@ void ACustomChunk::GenerateBlocks() {
 				// Adding multiple splines to the perlinValue
 				if (noiseValue <= 1) {
 					amplitude = 15;
-				} else if (noiseValue > 0 && noiseValue <= 1.8) {
+				} else if (noiseValue <= 1.4) {
+					amplitude = 20;
+				} else if (noiseValue <= 1.8) {
 					amplitude = 30;
 				} else if (noiseValue <= 2) {
 					amplitude = 25;
@@ -66,9 +68,6 @@ void ACustomChunk::GenerateBlocks() {
 			}
 
 			height = FMath::Clamp(height, 0, MaxHeight);
-
-			//const int Height = FMath::Clamp(FMath::RoundToInt((noiseValue) * Size / 2), 0, Size);
-
 			
 			for (int z = 0; z < height; z++) {
 				Blocks[GetBlockIndex(x, y, z)] = EBlock::Stone;
@@ -86,9 +85,9 @@ void ACustomChunk::GenerateMesh() {
 		for (int y = 0; y < Size; y++) {
 			for (int z = 0; z < MaxHeight; z++) {
 				if (Blocks[GetBlockIndex(x, y, z)] != EBlock::Air) {
-					const auto Position = FVector(x, y, z);
+					const FVector Position = FVector(x, y, z);
 
-					for (auto Direction : { EDirection::Forward, EDirection::Right, EDirection::Back, EDirection::Left, EDirection::Up, EDirection::Down }) {
+					for (EDirection Direction : { EDirection::Forward, EDirection::Right, EDirection::Back, EDirection::Left, EDirection::Up, EDirection::Down }) {
 						if (Check(GetPositionInDirection(Direction, Position))) {
 							CreateFace(Direction, Position * 100);
 						}
