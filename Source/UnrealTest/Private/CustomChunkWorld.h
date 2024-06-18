@@ -22,7 +22,7 @@ public:
 	int drawDistance{ 5 };
 
 	UPROPERTY(EditAnywhere, Category = "Custom Chunk World")
-	int chunkSize{ 32 };
+	int chunkSize{ 64 }; // 32
 
 	UPROPERTY(EditAnywhere, Category = "Custom Chunk World")
 	int UnrealScale{ 100 };

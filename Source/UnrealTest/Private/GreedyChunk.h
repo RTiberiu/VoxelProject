@@ -26,10 +26,13 @@ public:
 	AGreedyChunk();
 
 	UPROPERTY(EditAnywhere, Category = "Greedy Chunk")
-	int ChunkSize{ 32 };
+	int ChunkSize{ 64 };
 
 	UPROPERTY(EditAnywhere, Category = "Greedy Chunk")
 	FIntVector Size = FIntVector(1, 1, 1) * ChunkSize;
+
+	UPROPERTY(EditAnywhere, Category = "Custom Chunk")
+	int UnrealScale{ 100 };
 
 
 protected:
@@ -45,17 +48,26 @@ private:
 	TArray<EBlock> Blocks;
 
 	int VertexCount{ 0 };
+	const int MaxHeight{ 64 }; // 32
+
+	const float OctavesFrequency[3] = {
+		0.02, 0.025, 0.03
+	};
 
 	void GenerateBlocks();
 
+	void GenerateMesh();
+
 	void ApplyMesh();
 
-	void CreateQuad(FMask Mask, FIntVector AxisMask, FIntVector V1, FIntVector V2, FIntVector V3, FIntVector V4);
+	void CreateQuad(FMask Mask, FIntVector AxisMask, int Width, int Height, FIntVector V1, FIntVector V2, FIntVector V3, FIntVector V4);
 
 	int GetBlockIndex(int X, int Y, int Z) const;
 
 	EBlock GetBlock(FIntVector Index) const;
 
 	bool isMaskTheSame(FMask M1, FMask M2) const; // CompareMask in the tutorial
+
+	int GetTextureIndex(const EBlock Block, const FVector Normal) const;
 
 };
