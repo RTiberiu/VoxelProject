@@ -16,7 +16,6 @@ ACustomChunk::ACustomChunk() {
 	Mesh = CreateDefaultSubobject<UProceduralMeshComponent>("Mesh");
 
 	Noise = new FastNoiseLite();
-	Noise->SetFrequency(0.03f);
 	Noise->SetNoiseType(FastNoiseLite::NoiseType_Perlin);
 	Noise->SetFractalType(FastNoiseLite::FractalType_FBm);
 
@@ -34,6 +33,8 @@ void ACustomChunk::BeginPlay() {
 
 	GenerateMesh();
 
+	UE_LOG(LogTemp, Warning, TEXT("Vertex count: %d"), VertexCount);
+
 	ApplyMesh();
 }
 
@@ -43,8 +44,8 @@ void ACustomChunk::GenerateBlocks() {
 
 	for (int x = 0; x < Size; x++) {
 		for (int y = 0; y < Size; y++) {
-			const float Xpos = (x * 100 + Location.X) / 100;
-			const float Ypos = (y * 100 + Location.Y) / 100;
+			const float Xpos = (x * UnrealScale + Location.X) / UnrealScale;
+			const float Ypos = (y * UnrealScale + Location.Y) / UnrealScale;
 
 			// Looping over the different octaves to get the final height
 			int height = 0;
@@ -89,7 +90,7 @@ void ACustomChunk::GenerateMesh() {
 
 					for (EDirection Direction : { EDirection::Forward, EDirection::Right, EDirection::Back, EDirection::Left, EDirection::Up, EDirection::Down }) {
 						if (Check(GetPositionInDirection(Direction, Position))) {
-							CreateFace(Direction, Position * 100);
+							CreateFace(Direction, Position * UnrealScale);
 						}
 					}
 				}

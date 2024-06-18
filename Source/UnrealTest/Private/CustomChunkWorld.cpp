@@ -16,7 +16,7 @@ void ACustomChunkWorld::BeginPlay() {
 
 	for (int x = -drawDistance; x < drawDistance; x++) {
 		for (int y = -drawDistance; y < drawDistance; y++) {
-			GetWorld()->SpawnActor<AActor>(chunk, FVector(x * chunkSize * 100, y * chunkSize * 100, 0), FRotator::ZeroRotator);
+			GetWorld()->SpawnActor<AActor>(chunk, FVector(x * chunkSize * UnrealScale, y * chunkSize * UnrealScale, 0), FRotator::ZeroRotator);
 		}
 	}
 }

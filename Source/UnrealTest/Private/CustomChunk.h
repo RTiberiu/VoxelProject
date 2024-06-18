@@ -19,11 +19,14 @@ public:
 	// Sets default values for this actor's properties
 	ACustomChunk();
 
-	UPROPERTY(EditAnywhere, Category = "Chunk")
+	UPROPERTY(EditAnywhere, Category = "Custom Chunk")
 	int Size{ 32 };
 
-	UPROPERTY(EditAnywhere, Category = "Chunk")
-	int Scale{ 1 };
+	UPROPERTY(EditAnywhere, Category = "Custom Chunk")
+	float Scale{ 1.0f };
+
+	UPROPERTY(EditAnywhere, Category = "Custom Chunk")
+	int UnrealScale{ 100 };
 
 protected:
 	// Called when the game starts or when spawned

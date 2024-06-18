@@ -24,6 +24,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Custom Chunk World")
 	int chunkSize{ 32 };
 
+	UPROPERTY(EditAnywhere, Category = "Custom Chunk World")
+	int UnrealScale{ 100 };
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
