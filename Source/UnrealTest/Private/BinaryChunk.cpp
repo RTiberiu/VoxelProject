@@ -25,15 +25,19 @@ ABinaryChunk::ABinaryChunk() {
 	SetRootComponent(Mesh);
 }
 
-void ABinaryChunk::populateChunkVertices() {
-	//BinaryChunk3D binaryChunk = BinaryChunk3D{};
-
+void ABinaryChunk::createBinarySolidColumnsYXZ() {
 	const std::array<float, 3> octaveFrequencies{ 0.02f, 0.025f, 0.03f };
+
+	// Set the chunk values to air for all 3 axis (Y, X, Z)
+	binaryChunk.yBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
+	binaryChunk.xBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
+	binaryChunk.zBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
+
 
 	int loops{ 0 }; // TESTING 
 	// Loop over the chunk dimensions (X, Y, Z)
 	for (int x = 0; x < chunkSize; x++) {
-		for (int z = 0; z < chunkSize * chunkSize; z++) {
+		for (int z = 0; z < chunkSize; z++) {
 
 			// Looping over the different octaves to get the final height
 			int amplitude{ 0 };
@@ -62,7 +66,7 @@ void ABinaryChunk::populateChunkVertices() {
 			height = std::clamp(height, 0, static_cast<int>(chunkHeight));
 
 			// Add enough bits to y to cover the entire height (4 64bit integers when the max height is 256)
-			for (int bitIndex = 0; bitIndex < chunkHeight / chunkSize; bitIndex++) {
+			for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
 				uint64_t yHeight;
 
 				if (height >= 64) {
@@ -74,32 +78,100 @@ void ABinaryChunk::populateChunkVertices() {
 				}
 
 				// Get index of y 
-				int yIndex{ x * chunkSize + (z * chunkSize * chunkSize) + bitIndex + z }; // DOUBLE CHECK THIS
-
-				// Resize vector if not large enough
-				if (yIndex >= binaryChunk.voxelsPosition.size()) {
-					binaryChunk.voxelsPosition.resize(yIndex + 1);
-				}
+				int yIndex{ (x * chunkSize * intsPerHeight) + (z * intsPerHeight) + bitIndex };
 
 				// Add blocks height data (Y) to the current X and Z
-				binaryChunk.voxelsPosition[yIndex] = yHeight;
-				loops++;
+				binaryChunk.yBinaryColumn[yIndex] = yHeight;
+				uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex]; // TODO MAYBE COMBINE THIS TWO LINES (the one above)
+
+				// Skip iteration if Y column is all air
+				if (currentYCol == 0) {
+					continue;
+				}
+
+				for (int y = 0; y < chunkHeight; y++) {
+
+					uint64_t maskX = static_cast<uint64_t>(1) << z;
+
+					// Next Y index (column) means the same X index (column), but a change in Y bit index
+					int xIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + x };
+
+					// Flip the current X block if it's not already solid 
+					if (!(binaryChunk.xBinaryColumn[xIndex] & maskX)) {
+						binaryChunk.xBinaryColumn[xIndex] |= maskX;
+					}
+
+					// Next Y index (column) means the next Z index (column), but the same Y bit index
+					uint64_t maskZ = static_cast<uint64_t>(1) << x;
+
+					int zIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + z }; // FUCKING VERIFIED
+
+					if (!(binaryChunk.zBinaryColumn[zIndex] & maskZ)) {
+						binaryChunk.zBinaryColumn[zIndex] |= maskZ;
+
+					}
+
+					loops++;
+				}
+
 			}
-
-
 		}
 	}
 
 	// Testing
-	// std::cout << "Loops: " << loops << std::endl;
-	// std::cout << "Vector size: " << binaryChunk.voxelsPosition.size() << std::endl;
+	UE_LOG(LogTemp, Log, TEXT("Loops: %d"), loops);
+	UE_LOG(LogTemp, Log, TEXT("Vector size Y: %d"), binaryChunk.yBinaryColumn.size());
+	UE_LOG(LogTemp, Log, TEXT("Vector size X: %d"), binaryChunk.xBinaryColumn.size());
+	UE_LOG(LogTemp, Log, TEXT("Vector size Z: %d"), binaryChunk.zBinaryColumn.size());
+}
+
+void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
+	// Storing the face masks for the Y, X, Z axis
+	std::vector<std::vector<uint64_t>> columnFaceMasks{
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight),
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight),
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight),
+	};
+
+	// Face culling for all the 3 axis (Y, X, Z)
+	for (int axis = 0; axis < columnFaceMasks.size(); axis++) {
+
+		for (int i = 0; i < binaryChunk.yBinaryColumn.size(); i++) {
+			uint64_t column = binaryChunk.yBinaryColumn[i];
+
+			// Sample ascending axis and set to true when air meets solid
+			columnFaceMasks[axis][(axis + 1) * chunkSize + i] = column & ~(column >> 1);
+
+			// Sample descending axis and set to true when air meets solid
+			columnFaceMasks[axis][axis * chunkSize + i] = column & ~(column << 1);
+		}
+	}
+
+}
+
+void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functionName) {
+	std::chrono::duration<double, std::milli> duration = end - start;
+	UE_LOG(LogTemp, Log, TEXT("%s() took %f milliseconds to execute."), *FString(functionName), duration.count());
 }
 
 // Called when the game starts or when spawned
 void ABinaryChunk::BeginPlay() {
 	Super::BeginPlay();
 
-	populateChunkVertices();
+	Time start = std::chrono::high_resolution_clock::now();
 
+	createBinarySolidColumnsYXZ();
+
+	Time end = std::chrono::high_resolution_clock::now();
+
+	printExecutionTime(start, end, "createBinarySolidColumnsYXZ");
+
+	start = std::chrono::high_resolution_clock::now();
+
+	faceCullingBinaryColumnsYXZ();
+
+	end = std::chrono::high_resolution_clock::now();
+
+	printExecutionTime(start, end, "faceCullingBinaryColumnsYXZ");
 }
 
