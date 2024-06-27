@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <chrono>
+#include "ChunkMeshData.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BinaryChunk.generated.h"
@@ -22,9 +23,8 @@ class ABinaryChunk : public AActor {
 		std::vector<uint64_t> zBinaryColumn;
 	};
 
-	struct ChunkMesh {
-		std::vector<uint64_t> indices;
-		std::vector<uint64_t> vertices;
+	enum class EDirection {
+		Up, Down, Right, Left, Forward, Backward
 	};
 
 public:
@@ -42,16 +42,30 @@ private:
 	BinaryChunk3D binaryChunk = BinaryChunk3D{};
 
 	std::vector<uint64_t> columnsFaceMask;
+
+	FChunkMeshData MeshData; // store vertices, normals, triangles, etc.
 	
 	const uint16_t chunkHeight{ 256 }; // 4 bits (320 for 5 bits)
 	const uint8_t chunkSize{ 64 };
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
+	
+	int vertexCount{ 0 };
 
 	void createBinarySolidColumnsYXZ();
 
 	void faceCullingBinaryColumnsYXZ();
 
+	void createQuadAndAddToMeshData(
+		FVector* voxelPosition1,
+		FVector* voxelPosition2,
+		FVector* voxelPosition3,
+		FVector* voxelPosition4,
+		int* height, int* width);
+
+	void generateChunkMeshes();
 	// void generateChunkMesh();
+
+	void testingMeshCreation();
 
 	void printExecutionTime(Time& start, Time& end, const char* functionName);
 

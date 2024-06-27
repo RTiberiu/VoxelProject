@@ -83,6 +83,8 @@ void AGreedyChunk::GenerateBlocks() {
 }
 
 void AGreedyChunk::GenerateMesh() {
+	int logsToPrint{ 100 }; // TESTING
+
 	// Sweep over each axis (X, Y, Z)
 	for (int Axis = 0; Axis < 3; ++Axis) {
 		// 2 Perpendicular axis
@@ -159,6 +161,26 @@ void AGreedyChunk::GenerateMesh() {
 
 						DeltaAxis1[Axis1] = Width;
 						DeltaAxis2[Axis2] = Height;
+
+
+						if (logsToPrint != 0 && Axis == 1) {
+							UE_LOG(LogTemp, Warning, TEXT("CreateQuad called with the following parameters:"));
+							
+							for (int x = 0; x < 5; x++) {
+								UE_LOG(LogTemp, Warning, TEXT("Mask item %d: %d"), x, Mask[x].Normal);
+							}
+
+							UE_LOG(LogTemp, Warning, TEXT("AxisMask: %s"), *AxisMask.ToString());
+							UE_LOG(LogTemp, Warning, TEXT("Width: %d, Height: %d"), Width, Height);
+							UE_LOG(LogTemp, Warning, TEXT("V1: %s"), *ChunkItr.ToString());
+							UE_LOG(LogTemp, Warning, TEXT("V2: %s"), *(ChunkItr + DeltaAxis1).ToString());
+							UE_LOG(LogTemp, Warning, TEXT("V3: %s"), *(ChunkItr + DeltaAxis2).ToString());
+							UE_LOG(LogTemp, Warning, TEXT("V4: %s"), *(ChunkItr + DeltaAxis1 + DeltaAxis2).ToString());
+							UE_LOG(LogTemp, Warning, TEXT("DeltaAxis1: %s"), *DeltaAxis1.ToString());
+							UE_LOG(LogTemp, Warning, TEXT("DeltaAxis2: %s"), *DeltaAxis2.ToString());
+
+							logsToPrint--;
+						}
 
 						CreateQuad(
 							CurrentMask, AxisMask, Width, Height,

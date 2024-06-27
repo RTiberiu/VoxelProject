@@ -26,7 +26,7 @@ ABinaryChunk::ABinaryChunk() {
 }
 
 void ABinaryChunk::createBinarySolidColumnsYXZ() {
-	const std::array<float, 3> octaveFrequencies{ 0.02f, 0.025f, 0.03f };
+	constexpr std::array<float, 3> octaveFrequencies{ 0.02f, 0.025f, 0.03f };
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
@@ -127,26 +127,418 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 
 void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 	// Storing the face masks for the Y, X, Z axis
+	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint64_t>> columnFaceMasks{
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight),
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight),
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight),
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // Y ascending
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // Y descending
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // X ascending
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // X descending
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // Z ascending
+		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // Z descending
 	};
 
+	int logsToPrint{ 0 };
+
 	// Face culling for all the 3 axis (Y, X, Z)
-	for (int axis = 0; axis < columnFaceMasks.size(); axis++) {
+	for (int axis = 0; axis < 3; axis++) {
+		for (int x = 0; x < chunkSize; x++) {
+			for (int z = 0; z < chunkSize; z++) {
 
-		for (int i = 0; i < binaryChunk.yBinaryColumn.size(); i++) {
-			uint64_t column = binaryChunk.yBinaryColumn[i];
 
-			// Sample ascending axis and set to true when air meets solid
-			columnFaceMasks[axis][(axis + 1) * chunkSize + i] = column & ~(column >> 1);
+				for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
+					int columnIndex{ (x * chunkSize * intsPerHeight) + (z * intsPerHeight) + bitIndex };
 
-			// Sample descending axis and set to true when air meets solid
-			columnFaceMasks[axis][axis * chunkSize + i] = column & ~(column << 1);
+					uint64_t column = 0;
+					switch (axis) {
+					case 0:
+						column = binaryChunk.yBinaryColumn[columnIndex];
+						break;
+					case 1:
+						column = binaryChunk.xBinaryColumn[columnIndex];
+						break;
+					case 2:
+						column = binaryChunk.zBinaryColumn[columnIndex];
+						break;
+					}
+
+					// TODO Important note:
+					// For the Y axis, I should only do face culling IF the bit is not all 1 or when is the last bitIndex
+					// That's because I don't want voxels between my height chunks, since I have 4 64-bit for the height. 
+					
+					
+					// Sample ascending axis and set to true when air meets solid
+					columnFaceMasks[axis * 2 + 0][columnIndex + chunkSize] = column & ~(column >> 1); // TODO VALIDATE THIS INDEX
+
+					// Sample descending axis and set to true when air meets solid
+					columnFaceMasks[axis * 2 + 1][columnIndex] = column & ~(column << 1); // TODO VALIDATE THIS INDEX
+					
+				}
+
+			}
 		}
 	}
 
+	// Find faces and build binary planes based on the voxel block
+	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending
+
+		for (int x = 0; x < chunkSize; x++) {
+			for (int z = 0; z < chunkSize; z++) {
+
+				for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
+
+					int columnIndex{ (x * chunkSize * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // TODO VALIDATE THIS INDEX
+
+					// TODO Remove padding once I add it 
+
+					uint64_t column = columnFaceMasks[axis][columnIndex];
+
+
+
+					while (column != 0) {
+						// Get the trailing zeros for the current column
+						int y = std::countr_zero(column);
+
+						// Clear the position 
+						column &= column - 1;
+
+						FVector voxelPosition1(3);
+						switch (axis) {
+						case 0:
+						case 1:
+							voxelPosition1 = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(z) }; // up / down  // TODO VALIDATE THIS VALUE
+							break;
+						case 2:
+						case 3:
+							voxelPosition1 = { static_cast<float>(y), static_cast<float>(z), static_cast<float>(x) }; // right / left // TODO VALIDATE THIS VALUE
+							break;
+						case 4:
+						case 5:
+							voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(y) }; // forward / backwards // TODO VALIDATE THIS VALUE
+							break;
+						default:
+							UE_LOG(LogTemp, Error, TEXT("Invalid axis value: %d"), axis);
+							ensureMsgf(false, TEXT("Unhandled case in switch statement for axis: %d"), axis);
+							break;
+						}
+
+						// DEBUGGING
+						if (logsToPrint > 0) {
+							UE_LOG(LogTemp, Warning, TEXT("faceCullingBinaryColumnsYXZ(): \n\taxis: %d\n\tloop values x: %d z: %d columnIndex: %d\n\tvoxelPosition1 x: %f y: %f z: %f"), axis, x, z, columnIndex, voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z);
+							logsToPrint--;
+						}
+
+						// TODO Add greedy meshing and get the height and width 
+						
+
+						int width{ 1 }; // TODO change after greeding meshing
+						int height{ 1 }; // TODO change after greeding meshing
+
+						
+						// Get position modifiers depending on the current axis
+						// This values are used to create the 4 quad positions
+							// TODO Potentially integrate with the switch above
+						FVector widthPositionModifier = {0, 0, 0};
+						FVector heightPositionModifier = { 0, 0, 0 };
+						FVector voxelPosition2(3);
+						FVector voxelPosition3(3);
+						FVector voxelPosition4(3);
+
+						switch (axis) {
+						case 0: // Y axis descending
+							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
+							heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
+							voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
+							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+							voxelPosition4 = heightPositionModifier; // bottom - right
+							break;
+						case 1: // Y axis ascending
+							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
+							heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
+							voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
+							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+							voxelPosition4 = widthPositionModifier;// top - left
+							break;
+						case 2:
+							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
+							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+							voxelPosition2 = voxelPosition1 + widthPositionModifier; // bottom - right
+							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+							voxelPosition4 = heightPositionModifier;// top - left
+							break;
+						case 3:	
+							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
+							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+							voxelPosition2 = voxelPosition1 + heightPositionModifier; // top - left
+							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+							voxelPosition4 = widthPositionModifier; // bottom - right
+							break;
+						case 4:
+							widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
+							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+							voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
+							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+							voxelPosition4 = widthPositionModifier;// top - left
+							break;
+						case 5:
+							widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
+							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+							voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
+							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+							voxelPosition4 = heightPositionModifier; // bottom - right
+							break;
+						default:
+							UE_LOG(LogTemp, Error, TEXT("Invalid axis value: %d"), axis);
+							ensureMsgf(false, TEXT("Unhandled case in switch statement for axis: %d"), axis);
+							break;
+						}
+
+
+						// Create the quads
+						createQuadAndAddToMeshData(&voxelPosition1, &voxelPosition2, &voxelPosition3, &voxelPosition4, &width, &height);
+
+					}
+				}
+			}
+		}
+	}
+}
+
+void ABinaryChunk::createQuadAndAddToMeshData(
+		FVector* voxelPosition1,
+		FVector* voxelPosition2,
+		FVector* voxelPosition3,
+		FVector* voxelPosition4,
+		int* height, int* width
+	) {
+	// TODO Continue from here 
+	// I got to create the vectors from the voxelPosition vector (with the XYZ values)
+	//		To this part, I might need to use the axisDirection. 
+	//		And maybe calculate it once at the beginning of the axis loop. (so it doesn't repeat with every iteration)
+	// Then to create the triangles, that's easy. Just use the vertexCount
+	// Then calculate the normal
+	// Then build the UV0
+	// and finally, add all these calculations and vectors to:
+	//			MeshData.Vertices
+	//			MeshData.Triangles
+	//			MeshData.Normals
+	//			MeshData.Colors
+	//			MeshData.UV0
+	
+
+	MeshData.Vertices.Append({
+		*voxelPosition1 * 100,
+		*voxelPosition2 * 100,
+		*voxelPosition3 * 100,
+		*voxelPosition4 * 100
+	});
+
+	// Add triangles and increment vertex count
+	MeshData.Triangles.Append({
+		vertexCount, vertexCount + 1, vertexCount + 2,
+		vertexCount + 2, vertexCount + 3, vertexCount
+	});
+
+	vertexCount += 4;
+
+	FVector Normal = FVector::CrossProduct(*voxelPosition2 - *voxelPosition1, *voxelPosition4 - *voxelPosition1).GetSafeNormal();
+	MeshData.Normals.Append({ Normal, Normal, Normal, Normal });
+
+	MeshData.UV0.Append({
+		FVector2D(*width, *height), FVector2D(0, *height), FVector2D(*width, 0), FVector2D(0, 0)
+	});
+
+	// Randomize the RGB values
+	uint8 Red = FMath::RandRange(0, 255);
+	uint8 Green = FMath::RandRange(0, 255);
+	uint8 Blue = FMath::RandRange(0, 255);
+
+	FColor Color = FColor(Red, Green, Blue, 255);
+
+	// Add colors
+	MeshData.Colors.Append({
+		Color, Color, Color, Color
+	});
+}
+
+void ABinaryChunk::generateChunkMeshes() {
+	Mesh->CreateMeshSection(0, MeshData.Vertices, MeshData.Triangles, MeshData.Normals, MeshData.UV0, MeshData.Colors, TArray<FProcMeshTangent>(), false);
+}
+
+void ABinaryChunk::testingMeshCreation() {
+	TArray<FVector> Vertices;
+	TArray<int32> Triangles;
+	TArray<FVector> Normals;
+	TArray<FColor> Colors;
+	TArray<FVector2D> UV0;
+	TArray<FProcMeshTangent> Tangents;
+
+	int VertexCount = 0;
+	int Width = 1;
+	int Height = 2;
+
+	// x, z, y
+	int axis{ 0 };
+	FVector voxelPosition1 = { 1, 1, 1 }; // X, Y, Z order in FVector
+	// FVector voxelPosition2 = { 0, 1, 1 };
+
+	// for up and down (axis 0 and 1) Y 
+		// This points downwards 
+		FVector v1_downwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
+		FVector v2_downwards = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z); // top - left
+		FVector v3_downwards = FVector(voxelPosition1.X + 1, voxelPosition1.Y + 1, voxelPosition1.Z); // top - right
+		FVector v4_downwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z); // bottom - right
+
+		// This points upwards
+		FVector v1_upwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
+		FVector v2_upwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z); // bottom - right
+		FVector v3_upwards = FVector(voxelPosition1.X + 1, voxelPosition1.Y + 1, voxelPosition1.Z); // top - right
+		FVector v4_upwards = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z); // top - left
+
+	// for left and right (axis 2 and 3) X
+		// This points left
+		FVector v1_left = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
+		FVector v2_left = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z); // bottom - right
+		FVector v3_left = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z + 1); // top - right
+		FVector v4_left = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z + 1); // top - left
+	 
+		// This points right
+		FVector v1_right = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
+		FVector v2_right = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z + 1); // top - left
+		FVector v3_right = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z + 1); // top - right
+		FVector v4_right = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z); // bottom - right
+
+	// for forwards and backwards (axis 4 and 5) Z
+		// This points forwards 
+		FVector v1_forwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
+		FVector v2_forwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z + 1); // bottom - right
+		FVector v3_forwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z + 1); // top - right
+		FVector v4_forwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z); // top - left
+
+		// This points backwards 
+		FVector v1_backwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
+		FVector v2_backwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z); // top - left
+		FVector v3_backwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z + 1); // top - right
+		FVector v4_backwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z + 1); // bottom - right
+
+
+	// Define vertices
+	/*FVector V1 = FVector(0 * 100, 0 * 100, 0 * 100);
+	FVector V2 = FVector(0 * 100, 1 * 100, 0 * 100);
+	FVector V3 = FVector(1 * 100, 1 * 100, 0 * 100);
+	FVector V4 = FVector(1 * 100, 0 * 100, 0 * 100);*/
+
+	Vertices.Append({
+		v1_downwards * 100, v2_downwards * 100, v3_downwards * 100, v4_downwards * 100,
+		v1_upwards * 100, v2_upwards * 100, v3_upwards * 100, v4_upwards * 100,
+		v1_left * 100, v2_left * 100, v3_left * 100, v4_left * 100,
+		v1_right * 100, v2_right * 100, v3_right * 100, v4_right * 100,
+		v1_forwards * 100, v2_forwards * 100, v3_forwards * 100, v4_forwards * 100,
+		v1_backwards * 100, v2_backwards * 100, v3_backwards * 100, v4_backwards * 100
+	});
+
+	// Define triangles
+	Triangles.Append({
+		VertexCount, VertexCount + 1, VertexCount + 2,
+		VertexCount + 2, VertexCount + 3, VertexCount
+	});
+
+	VertexCount += 4;
+
+	Triangles.Append({
+		VertexCount, VertexCount + 1, VertexCount + 2,
+		VertexCount + 2, VertexCount + 3, VertexCount
+	});
+
+	VertexCount += 4;
+
+	Triangles.Append({
+		VertexCount, VertexCount + 1, VertexCount + 2,
+		VertexCount + 2, VertexCount + 3, VertexCount
+	});
+
+	VertexCount += 4;
+
+	Triangles.Append({
+		VertexCount, VertexCount + 1, VertexCount + 2,
+		VertexCount + 2, VertexCount + 3, VertexCount
+	});
+
+	VertexCount += 4;
+
+	Triangles.Append({
+		VertexCount, VertexCount + 1, VertexCount + 2,
+		VertexCount + 2, VertexCount + 3, VertexCount
+	});
+
+	VertexCount += 4;
+
+	Triangles.Append({
+		VertexCount, VertexCount + 1, VertexCount + 2,
+		VertexCount + 2, VertexCount + 3, VertexCount
+	});
+
+
+	// Calculate normals (optional)
+	// FVector Normal = FVector::CrossProduct(v2 - v1, v4 - v1).GetSafeNormal(); // Example of calculating normal
+	// Normals.Init(Normal, Vertices.Num());
+
+	// Normals for the downward face
+	FVector edge1 = v2_downwards - v1_downwards;
+	FVector edge2 = v4_downwards - v1_downwards;
+	FVector Normal = FVector::CrossProduct(edge2, edge1).GetSafeNormal();
+	Normals.Append({ Normal, Normal, Normal, Normal });
+
+	// Normals for the upward face
+	edge1 = v2_upwards - v1_upwards;
+	edge2 = v4_upwards - v1_upwards;
+	Normal = FVector::CrossProduct(edge1, edge2).GetSafeNormal();
+	Normals.Append({ Normal, Normal, Normal, Normal });
+
+	// Normals for the left face
+	edge1 = v2_left - v1_left;
+	edge2 = v4_left - v1_left;
+	Normal = FVector::CrossProduct(edge1, edge2).GetSafeNormal();
+	Normals.Append({ Normal, Normal, Normal, Normal });
+
+	// Normals for the right face
+	edge1 = v2_right - v1_right;
+	edge2 = v4_right - v1_right;
+	Normal = FVector::CrossProduct(edge2, edge1).GetSafeNormal();
+	Normals.Append({ Normal, Normal, Normal, Normal });
+
+	// Normals for the forward face
+	edge1 = v2_forwards - v1_forwards;
+	edge2 = v4_forwards - v1_forwards;
+	Normal = FVector::CrossProduct(edge1, edge2).GetSafeNormal();
+	Normals.Append({ Normal, Normal, Normal, Normal });
+
+	// Normals for the backward face
+	edge1 = v2_backwards - v1_backwards;
+	edge2 = v4_backwards - v1_backwards;
+	Normal = FVector::CrossProduct(edge2, edge1).GetSafeNormal();
+	Normals.Append({ Normal, Normal, Normal, Normal });
+
+
+	// Define UV coordinates
+	UV0.Append({
+		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
+		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
+		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
+		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
+		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
+		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0)
+	});
+
+	// Optionally define colors (optional)
+	FColor Color = FColor(18, 126, 20, 255); // White color
+	Colors.Init(Color, Vertices.Num());
+
+	// Create procedural mesh section
+	Mesh->CreateMeshSection(0, Vertices, Triangles, TArray<FVector>(), UV0, TArray<FColor>(), TArray<FProcMeshTangent>(), false);
+
+
+	// Increment vertex count for potential future use
+	VertexCount += 4;
 }
 
 void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functionName) {
@@ -173,5 +565,19 @@ void ABinaryChunk::BeginPlay() {
 	end = std::chrono::high_resolution_clock::now();
 
 	printExecutionTime(start, end, "faceCullingBinaryColumnsYXZ");
+
+	start = std::chrono::high_resolution_clock::now();
+
+	generateChunkMeshes();
+
+	end = std::chrono::high_resolution_clock::now();
+
+	printExecutionTime(start, end, "generateChunkMeshes");
+
+	// testingMeshCreation();
+
+
+
+
 }
 
