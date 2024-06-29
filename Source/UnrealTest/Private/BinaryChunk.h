@@ -69,6 +69,8 @@ private:
 
 	void printExecutionTime(Time& start, Time& end, const char* functionName);
 
+	void printBinary(uint64_t value, int groupSize);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
