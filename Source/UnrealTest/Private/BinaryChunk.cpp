@@ -123,26 +123,32 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 				}
 
 				for (int y = 0; y < chunkHeight; y++) {
-
-					uint64_t maskX = static_cast<uint64_t>(1) << z;
-
 					// Next Y index (column) means the same X index (column), but a change in Y bit index
 					int xIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + x };
 
-					// Flip the current X block if it's not already solid 
-					if (!(binaryChunk.xBinaryColumn[xIndex] & maskX)) {
-						binaryChunk.xBinaryColumn[xIndex] |= maskX;
-					}
+					// y'th bit of column Y
+					uint64_t nthBitY = (currentYCol >> y) & 1;
+
+					// Create temporary variable for column X
+					uint64_t xBitTemp = binaryChunk.xBinaryColumn[xIndex];
+
+					// Apply the change to the temporary X bit
+					xBitTemp = (xBitTemp >> z) | nthBitY;
+
+					// Assign to actual bit the change
+					binaryChunk.xBinaryColumn[xIndex] = (xBitTemp << z) | binaryChunk.xBinaryColumn[xIndex];
 
 					// Next Y index (column) means the next Z index (column), but the same Y bit index
-					uint64_t maskZ = static_cast<uint64_t>(1) << x;
-
 					int zIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + z }; // FUCKING VERIFIED
 
-					if (!(binaryChunk.zBinaryColumn[zIndex] & maskZ)) {
-						binaryChunk.zBinaryColumn[zIndex] |= maskZ;
+					// Create temporary variable for column Z
+					uint64_t zBitTemp = binaryChunk.zBinaryColumn[zIndex];
 
-					}
+					// Apply the change to the temporary Z bit
+					zBitTemp = (zBitTemp >> x) | nthBitY;
+
+					// Assign to actual bit the change
+					binaryChunk.zBinaryColumn[zIndex] = (zBitTemp << z) | binaryChunk.xBinaryColumn[zIndex];
 
 					loops++;
 				}
@@ -165,11 +171,11 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 	}*/
 
 	// TODO FIX xBinaryColumn
-	for (int i = 0; i < binaryChunk.zBinaryColumn.size(); ++i) {
+	/*for (int i = 0; i < binaryChunk.zBinaryColumn.size(); ++i) {
 		uint64_t column = binaryChunk.zBinaryColumn[i];
 		UE_LOG(LogTemp, Warning, TEXT("createBinarySolidColumnsYXZ() Z Index: %d"), i);
 		printBinary(column, 8);
-	}
+	}*/
 	
 }
 
@@ -229,7 +235,7 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 	}
 
 	// Find faces and build binary planes based on the voxel block
-	for (int axis = 0; axis < 4; axis++) { // Iterate all axis ascending and descending // 6 value
+	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending // 6 value
 
 		// TESTING
 		/*if (axis == 1) {
