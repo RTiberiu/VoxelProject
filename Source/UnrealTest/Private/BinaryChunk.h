@@ -60,12 +60,13 @@ private:
 		FVector* voxelPosition2,
 		FVector* voxelPosition3,
 		FVector* voxelPosition4,
-		int* height, int* width);
+		int* height, int* width,
+		int* axis);
 
 	void generateChunkMeshes();
 	// void generateChunkMesh();
 
-	void testingMeshCreation();
+	void testingMeshingCreation();
 
 	void printExecutionTime(Time& start, Time& end, const char* functionName);
 

@@ -66,7 +66,6 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 	binaryChunk.xBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
 	binaryChunk.zBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
 
-
 	int loops{ 0 }; // TESTING 
 	// Loop over the chunk dimensions (X, Y, Z)
 	for (int x = 0; x < chunkSize; x++) {
@@ -127,7 +126,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					int xIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + x };
 
 					// y'th bit of column Y
-					uint64_t nthBitY = (currentYCol >> y) & 1;
+					uint8_t nthBitY = (currentYCol >> y) & 1;
 
 					// Create temporary variable for column X
 					uint64_t xBitTemp = binaryChunk.xBinaryColumn[xIndex];
@@ -260,20 +259,16 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 
 				for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
 
-					int columnIndex{ (x * chunkSize * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // TODO VALIDATE THIS INDEX
+					int columnIndex{ (x * chunkSize * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
 
 					// UE_LOG(LogTemp, Warning, TEXT("BIT INDEX: %d   --  COLUMN INDEX: %d  --  X: %d Z: %d"), bitIndex, columnIndex, x, z);
 					// TODO Remove padding once I add it 
 
 					uint64_t column = columnFaceMasks[axis][columnIndex]; 
 
-
-
-
-					// int xIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + x };
-
 					if (axis == 3) { //  && x == 50 && (z >= 35 || z <= 40)
-						// UE_LOG(LogTemp, Warning, TEXT("x column when Z is: %d, X: %d, bitIndex: %d, columnIndex: %d"), z, x, bitIndex, columnIndex);
+						// UE_LOG(LogTemp, Warning, TEXT("x column when Z is: %d, X: %d, bitIndex: %d
+						// , columnIndex: %d"), z, x, bitIndex, columnIndex);
 						// printBinary(column, 8);
 					}
 
@@ -281,12 +276,23 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 					// printBinary(column, 8);
 
 					while (column != 0) {
-						// Get y's starting position, depending on the current bitIndex
-						int startingPosition = bitIndex * chunkSize;
+
+						// TODO
+						// The problem seems to be either with the faces, or how the faces get built.
+						// I think the X and Z positions are correct now, since I am waiting for a
+						// 64x64 chunk to be filled before I increment the height to 64.
+						// 
+						// Things to double-check:
+						// 1.	How X and Z gets added to the array (I think this is correct already, as
+						//		I fixed it yesterday).
+						// 2.	How the faces get built with createQuadAndAddToMeshData()
+						//		2.1. Check the vectors passed to this function.
+						//		2.2. Check if the faces are pointing at the right direction.
+						//		2.3. Check if the faces are spawning at the right location.
+						//		Note: Do this steps 2. in a small test environment (one cube only).
 
 						// Get the trailing zeros for the current column
 						int y = std::countr_zero(column);
-
 
 
 						// Clear the position 
@@ -295,19 +301,26 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 						FVector voxelPosition1(3);
 						switch (axis) {
 						case 0:
-						case 1:
+						case 1: {
+							// Get y's starting position, depending on the current bitIndex
+							int startingPositionY = bitIndex * chunkSize;
 							//									  X                      Y                     Z
-							voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(y + startingPosition) }; // up / down  // TODO VALIDATE THIS VALUE
+							voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(y + startingPositionY) }; // up / down  // TODO VALIDATE THIS VALUE
 							break;
+						}
 						case 2:
-						case 3:
-							voxelPosition1 = { static_cast<float>(y), static_cast<float>(z), static_cast<float>(x + startingPosition) }; // right / left // TODO VALIDATE THIS VALUE)
+						case 3: {
+							int startingPositionX = columnIndex > 0 ? (columnIndex / (chunkSize * chunkSize)) * chunkSize : 0;
+							voxelPosition1 = { static_cast<float>(y), static_cast<float>(z), static_cast<float>(x + startingPositionX) }; // right / left // TODO VALIDATE THIS VALUE)
 							// Z needs to be increments each time up until 64 and then resetted to 0 and again to 64 and so on
 							break;
+						}
 						case 4:
-						case 5:
-							voxelPosition1 = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(z + startingPosition) }; // forward / backwards // TODO VALIDATE THIS VALUE
+						case 5: {
+							int startingPositionZ = columnIndex > 0 ? (columnIndex / (chunkSize * chunkSize)) * chunkSize : 0;
+							voxelPosition1 = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(z + startingPositionZ) }; // forward / backwards // TODO VALIDATE THIS VALUE
 							break;
+						}
 						default:
 							UE_LOG(LogTemp, Error, TEXT("Invalid axis value: %d"), axis);
 							ensureMsgf(false, TEXT("Unhandled case in switch statement for axis: %d"), axis);
@@ -340,13 +353,6 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 						FVector voxelPosition4(3);
 
 						switch (axis) {
-						case 1: // Y axis descending
-							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-							heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
-							voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
-							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-							voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
-							break;
 						case 0: // Y axis ascending
 							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
 							heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
@@ -354,33 +360,40 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
 							voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
 							break;
-						case 2: // X axis descending
+						case 1: // Y axis descending
 							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-							voxelPosition2 = voxelPosition1 + widthPositionModifier; // bottom - right
+							heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
+							voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-							voxelPosition4 = voxelPosition1 + heightPositionModifier;// top - left
+							voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
 							break;
-						case 3:	// X axis ascending
+						case 2:	// X axis ascending
 							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
 							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
 							voxelPosition2 = voxelPosition1 + heightPositionModifier; // top - left
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
 							voxelPosition4 = voxelPosition1 + widthPositionModifier; // bottom - right
 							break;
-						case 4: // Z axis descending
-							widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
+						case 3: // X axis descending
+							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
 							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-							voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
+							voxelPosition2 = voxelPosition1 + widthPositionModifier; // bottom - right
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-							voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
+							voxelPosition4 = voxelPosition1 + heightPositionModifier;// top - left
 							break;
-						case 5: // Z axis ascending
+						case 4: // Z axis ascending
 							widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
 							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
 							voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
 							voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
+							break;
+						case 5: // Z axis descending
+							widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
+							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+							voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
+							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+							voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
 							break;
 						default:
 							UE_LOG(LogTemp, Error, TEXT("Invalid axis value: %d"), axis);
@@ -399,12 +412,114 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 						}*/
 
 						// Create the quads
-						createQuadAndAddToMeshData(&voxelPosition1, &voxelPosition2, &voxelPosition3, &voxelPosition4, &width, &height);
+						createQuadAndAddToMeshData(&voxelPosition1, &voxelPosition2, &voxelPosition3, &voxelPosition4, &width, &height, &axis);
 
 					}
 				}
+				UE_LOG(LogTemp, Warning, TEXT("--------------------- Z: %d"), z);
 			}
+			UE_LOG(LogTemp, Warning, TEXT("####################### X: %d"), x);
 		}
+		UE_LOG(LogTemp, Warning, TEXT("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ AXIS: % d"), axis);
+	}
+}
+
+void ABinaryChunk::testingMeshingCreation() {
+	int width{ 1 }; // TODO change after greeding meshing
+	int height{ 1 }; // TODO change after greeding meshing
+
+
+	FVector voxelPosition1 = { 0, 0, 0 };
+
+	for (int axis = 0; axis < 6; axis++) {
+
+		FVector widthPositionModifier = { 0, 0, 0 };
+		FVector heightPositionModifier = { 0, 0, 0 };
+		FVector voxelPosition2(3);
+		FVector voxelPosition3(3);
+		FVector voxelPosition4(3);
+
+		
+
+		switch (axis) {
+		case 0: // Y axis ascending
+
+			voxelPosition1 = { 0, 0, 1 }; // bottom face
+
+
+			widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
+			heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
+			voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
+			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+			voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
+			break;
+		case 1: // Y axis descending
+
+			voxelPosition1 = { 0, 0, 0 }; // top face
+
+			widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
+			heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
+			voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
+			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+			voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
+			break;
+		case 2:	// X axis ascending
+
+			voxelPosition1 = { 0, 0, 0 }; // right face
+
+			widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
+			heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+			voxelPosition2 = voxelPosition1 + heightPositionModifier; // top - left
+			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+			voxelPosition4 = voxelPosition1 + widthPositionModifier; // bottom - right
+			break;
+		case 3: // X axis descending
+
+			voxelPosition1 = { 0, 1, 0 }; // left face
+
+			widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
+			heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+			voxelPosition2 = voxelPosition1 + widthPositionModifier; // bottom - right
+			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+			voxelPosition4 = voxelPosition1 + heightPositionModifier;// top - left
+			break;
+		case 4: // Z axis ascending
+
+			voxelPosition1 = { 0, 0, 0 }; // backwards face
+
+
+			widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
+			heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+			voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
+			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+			voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
+			break;
+		case 5: // Z axis descending
+
+			voxelPosition1 = { 1, 0, 0 }; // forwards face
+
+
+			widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
+			heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+			voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
+			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
+			voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
+			break;
+		default:
+			UE_LOG(LogTemp, Error, TEXT("Invalid axis value: %d"), axis);
+			ensureMsgf(false, TEXT("Unhandled case in switch statement for axis: %d"), axis);
+			break;
+		}
+
+
+		// Log voxel positions
+		UE_LOG(LogTemp, Warning, TEXT("Axis: %d"), axis);
+		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition1: %s"), *voxelPosition1.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition2: %s"), *voxelPosition2.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition3: %s"), *voxelPosition3.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition4: %s"), *voxelPosition4.ToString());
+
+		createQuadAndAddToMeshData(&voxelPosition1, &voxelPosition2, &voxelPosition3, &voxelPosition4, &width, &height, &axis);
 	}
 }
 
@@ -413,7 +528,8 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 		FVector* voxelPosition2,
 		FVector* voxelPosition3,
 		FVector* voxelPosition4,
-		int* height, int* width
+		int* height, int* width,
+		int* axis
 	) {
 	// TODO Continue from here 
 	// I got to create the vectors from the voxelPosition vector (with the XYZ values)
@@ -445,11 +561,19 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 
 	vertexCount += 4;
 
-	FVector Normal = FVector::CrossProduct(*voxelPosition2 - *voxelPosition1, *voxelPosition4 - *voxelPosition1).GetSafeNormal();
+	FVector Normal;
+	if (*axis == 0 || *axis == 2 || *axis == 4) {
+		// Calculate the normals for counter clockwise vectors arrangement
+		Normal = FVector::CrossProduct(*voxelPosition4 - *voxelPosition1, *voxelPosition2 - *voxelPosition1).GetSafeNormal();
+	} else {
+		// Calculate the normals for clockwise vectors arrangement
+		Normal = FVector::CrossProduct(*voxelPosition2 - *voxelPosition1, *voxelPosition4 - *voxelPosition1).GetSafeNormal();
+	}
+
 	MeshData.Normals.Append({ Normal, Normal, Normal, Normal });
 
 	MeshData.UV0.Append({
-		FVector2D(*width, *height), FVector2D(0, *height), FVector2D(*width, 0), FVector2D(0, 0)
+		FVector2D(0, 0), FVector2D(0, *height), FVector2D(*width, *height), FVector2D(*width, 0)
 	});
 
 	// Randomize the RGB values
@@ -469,183 +593,6 @@ void ABinaryChunk::generateChunkMeshes() {
 	Mesh->CreateMeshSection(0, MeshData.Vertices, MeshData.Triangles, MeshData.Normals, MeshData.UV0, MeshData.Colors, TArray<FProcMeshTangent>(), false);
 }
 
-void ABinaryChunk::testingMeshCreation() {
-	TArray<FVector> Vertices;
-	TArray<int32> Triangles;
-	TArray<FVector> Normals;
-	TArray<FColor> Colors;
-	TArray<FVector2D> UV0;
-	TArray<FProcMeshTangent> Tangents;
-
-	int VertexCount = 0;
-	int Width = 1;
-	int Height = 2;
-
-	// x, z, y
-	int axis{ 0 };
-	FVector voxelPosition1 = { 1, 1, 1 }; // X, Y, Z order in FVector
-	// FVector voxelPosition2 = { 0, 1, 1 };
-
-	// for up and down (axis 0 and 1) Y 
-		// This points downwards 
-		FVector v1_downwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
-		FVector v2_downwards = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z); // top - left
-		FVector v3_downwards = FVector(voxelPosition1.X + 1, voxelPosition1.Y + 1, voxelPosition1.Z); // top - right
-		FVector v4_downwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z); // bottom - right
-
-		// This points upwards
-		FVector v1_upwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
-		FVector v2_upwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z); // bottom - right
-		FVector v3_upwards = FVector(voxelPosition1.X + 1, voxelPosition1.Y + 1, voxelPosition1.Z); // top - right
-		FVector v4_upwards = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z); // top - left
-
-	// for left and right (axis 2 and 3) X
-		// This points left
-		FVector v1_left = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
-		FVector v2_left = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z); // bottom - right
-		FVector v3_left = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z + 1); // top - right
-		FVector v4_left = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z + 1); // top - left
-	 
-		// This points right
-		FVector v1_right = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
-		FVector v2_right = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z + 1); // top - left
-		FVector v3_right = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z + 1); // top - right
-		FVector v4_right = FVector(voxelPosition1.X + 1, voxelPosition1.Y, voxelPosition1.Z); // bottom - right
-
-	// for forwards and backwards (axis 4 and 5) Z
-		// This points forwards 
-		FVector v1_forwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
-		FVector v2_forwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z + 1); // bottom - right
-		FVector v3_forwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z + 1); // top - right
-		FVector v4_forwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z); // top - left
-
-		// This points backwards 
-		FVector v1_backwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z); // bottom-left
-		FVector v2_backwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z); // top - left
-		FVector v3_backwards = FVector(voxelPosition1.X, voxelPosition1.Y + 1, voxelPosition1.Z + 1); // top - right
-		FVector v4_backwards = FVector(voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z + 1); // bottom - right
-
-
-	// Define vertices
-	/*FVector V1 = FVector(0 * 100, 0 * 100, 0 * 100);
-	FVector V2 = FVector(0 * 100, 1 * 100, 0 * 100);
-	FVector V3 = FVector(1 * 100, 1 * 100, 0 * 100);
-	FVector V4 = FVector(1 * 100, 0 * 100, 0 * 100);*/
-
-	Vertices.Append({
-		v1_downwards * 100, v2_downwards * 100, v3_downwards * 100, v4_downwards * 100,
-		v1_upwards * 100, v2_upwards * 100, v3_upwards * 100, v4_upwards * 100,
-		v1_left * 100, v2_left * 100, v3_left * 100, v4_left * 100,
-		v1_right * 100, v2_right * 100, v3_right * 100, v4_right * 100,
-		v1_forwards * 100, v2_forwards * 100, v3_forwards * 100, v4_forwards * 100,
-		v1_backwards * 100, v2_backwards * 100, v3_backwards * 100, v4_backwards * 100
-	});
-
-	// Define triangles
-	Triangles.Append({
-		VertexCount, VertexCount + 1, VertexCount + 2,
-		VertexCount + 2, VertexCount + 3, VertexCount
-	});
-
-	VertexCount += 4;
-
-	Triangles.Append({
-		VertexCount, VertexCount + 1, VertexCount + 2,
-		VertexCount + 2, VertexCount + 3, VertexCount
-	});
-
-	VertexCount += 4;
-
-	Triangles.Append({
-		VertexCount, VertexCount + 1, VertexCount + 2,
-		VertexCount + 2, VertexCount + 3, VertexCount
-	});
-
-	VertexCount += 4;
-
-	Triangles.Append({
-		VertexCount, VertexCount + 1, VertexCount + 2,
-		VertexCount + 2, VertexCount + 3, VertexCount
-	});
-
-	VertexCount += 4;
-
-	Triangles.Append({
-		VertexCount, VertexCount + 1, VertexCount + 2,
-		VertexCount + 2, VertexCount + 3, VertexCount
-	});
-
-	VertexCount += 4;
-
-	Triangles.Append({
-		VertexCount, VertexCount + 1, VertexCount + 2,
-		VertexCount + 2, VertexCount + 3, VertexCount
-	});
-
-
-	// Calculate normals (optional)
-	// FVector Normal = FVector::CrossProduct(v2 - v1, v4 - v1).GetSafeNormal(); // Example of calculating normal
-	// Normals.Init(Normal, Vertices.Num());
-
-	// Normals for the downward face
-	FVector edge1 = v2_downwards - v1_downwards;
-	FVector edge2 = v4_downwards - v1_downwards;
-	FVector Normal = FVector::CrossProduct(edge2, edge1).GetSafeNormal();
-	Normals.Append({ Normal, Normal, Normal, Normal });
-
-	// Normals for the upward face
-	edge1 = v2_upwards - v1_upwards;
-	edge2 = v4_upwards - v1_upwards;
-	Normal = FVector::CrossProduct(edge1, edge2).GetSafeNormal();
-	Normals.Append({ Normal, Normal, Normal, Normal });
-
-	// Normals for the left face
-	edge1 = v2_left - v1_left;
-	edge2 = v4_left - v1_left;
-	Normal = FVector::CrossProduct(edge1, edge2).GetSafeNormal();
-	Normals.Append({ Normal, Normal, Normal, Normal });
-
-	// Normals for the right face
-	edge1 = v2_right - v1_right;
-	edge2 = v4_right - v1_right;
-	Normal = FVector::CrossProduct(edge2, edge1).GetSafeNormal();
-	Normals.Append({ Normal, Normal, Normal, Normal });
-
-	// Normals for the forward face
-	edge1 = v2_forwards - v1_forwards;
-	edge2 = v4_forwards - v1_forwards;
-	Normal = FVector::CrossProduct(edge1, edge2).GetSafeNormal();
-	Normals.Append({ Normal, Normal, Normal, Normal });
-
-	// Normals for the backward face
-	edge1 = v2_backwards - v1_backwards;
-	edge2 = v4_backwards - v1_backwards;
-	Normal = FVector::CrossProduct(edge2, edge1).GetSafeNormal();
-	Normals.Append({ Normal, Normal, Normal, Normal });
-
-
-	// Define UV coordinates
-	UV0.Append({
-		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
-		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
-		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
-		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
-		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0),
-		FVector2D(Width, Height), FVector2D(0, Height), FVector2D(Width, 0), FVector2D(0, 0)
-	});
-
-	// Optionally define colors (optional)
-	FColor Color = FColor(18, 126, 20, 255); // White color
-	Colors.Init(Color, Vertices.Num());
-
-	// Create procedural mesh section
-	Mesh->CreateMeshSection(0, Vertices, Triangles, TArray<FVector>(), UV0, TArray<FColor>(), TArray<FProcMeshTangent>(), false);
-
-
-	// Increment vertex count for potential future use
-	VertexCount += 4;
-}
-
 void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functionName) {
 	std::chrono::duration<double, std::milli> duration = end - start;
 	UE_LOG(LogTemp, Log, TEXT("%s() took %f milliseconds to execute."), *FString(functionName), duration.count());
@@ -657,7 +604,7 @@ void ABinaryChunk::BeginPlay() {
 
 	Time start = std::chrono::high_resolution_clock::now();
 
-	createBinarySolidColumnsYXZ();
+	 createBinarySolidColumnsYXZ();
 
 	Time end = std::chrono::high_resolution_clock::now();
 
@@ -665,7 +612,7 @@ void ABinaryChunk::BeginPlay() {
 
 	start = std::chrono::high_resolution_clock::now();
 
-	faceCullingBinaryColumnsYXZ();
+	 faceCullingBinaryColumnsYXZ();
 
 	end = std::chrono::high_resolution_clock::now();
 
@@ -673,16 +620,16 @@ void ABinaryChunk::BeginPlay() {
 
 	start = std::chrono::high_resolution_clock::now();
 
-	generateChunkMeshes();
+	 generateChunkMeshes();
 
 	end = std::chrono::high_resolution_clock::now();
 
 	printExecutionTime(start, end, "generateChunkMeshes");
 
-	// testingMeshCreation();
 
-
-
+	// Testing generating simple cube
+	// testingMeshingCreation();
+	// generateChunkMeshes();
 
 }
 
