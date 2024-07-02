@@ -53,18 +53,30 @@ private:
 
 	void createBinarySolidColumnsYXZ();
 
-	void faceCullingBinaryColumnsYXZ();
+	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
+
+	FVector getVoxelStartingPosition(uint64_t& column, const int& axis, const int& x, const int& z, const int& bitIndex, const int& columnIndex);
+
+	void createAllVoxelPositionsFromOriginal(
+		FVector& voxelPosition1, 
+		FVector& voxelPosition2, 
+		FVector& voxelPosition3, 
+		FVector& voxelPosition4, 
+		const int& width, 
+		const int& height,
+		const int& axis);
 
 	void createQuadAndAddToMeshData(
-		FVector* voxelPosition1,
-		FVector* voxelPosition2,
-		FVector* voxelPosition3,
-		FVector* voxelPosition4,
-		int* height, int* width,
-		int* axis);
+		const FVector& voxelPosition1,
+		const FVector& voxelPosition2,
+		const FVector& voxelPosition3,
+		const FVector& voxelPosition4,
+		const int& height, const int& width,
+		const int& axis);
 
-	void generateChunkMeshes();
-	// void generateChunkMesh();
+	void createTerrainMeshesData();
+
+	void spawnTerrainChunkMeshes();
 
 	void testingMeshingCreation();
 
