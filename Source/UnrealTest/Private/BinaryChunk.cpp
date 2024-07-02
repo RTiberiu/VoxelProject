@@ -121,7 +121,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					continue;
 				}
 
-				for (int y = 0; y < chunkHeight; y++) {
+				for (int y = 0; y < chunkSize; y++) {
 					// Next Y index (column) means the same X index (column), but a change in Y bit index
 					int xIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + x };
 
@@ -149,18 +149,23 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					// Assign to actual bit the change
 					binaryChunk.zBinaryColumn[zIndex] = (zBitTemp << x) | binaryChunk.zBinaryColumn[zIndex];
 
+					// UE_LOG(LogTemp, Warning, TEXT("x: %d z: %d bitIndex: %d y: %d  --  xIndex: %d  zIndex: %d"), x, z, bitIndex, y, xIndex, zIndex);
+
 					loops++;
 				}
-
+				// UE_LOG(LogTemp, Warning, TEXT("--- NEXT BIT INDEX ---"));
 			}
+			// UE_LOG(LogTemp, Warning, TEXT("------ NEXT Z ------"));
+
 		}
+		// UE_LOG(LogTemp, Warning, TEXT("--------- NEXT X ---------"));
 	}
 
 	// Testing
-	UE_LOG(LogTemp, Log, TEXT("Loops: %d"), loops);
-	UE_LOG(LogTemp, Log, TEXT("Vector size Y: %d"), binaryChunk.yBinaryColumn.size());
-	UE_LOG(LogTemp, Log, TEXT("Vector size X: %d"), binaryChunk.xBinaryColumn.size());
-	UE_LOG(LogTemp, Log, TEXT("Vector size Z: %d"), binaryChunk.zBinaryColumn.size());
+	UE_LOG(LogTemp, Warning, TEXT("Loops: %d"), loops);
+	UE_LOG(LogTemp, Warning, TEXT("Vector size Y: %d"), binaryChunk.yBinaryColumn.size());
+	UE_LOG(LogTemp, Warning, TEXT("Vector size X: %d"), binaryChunk.xBinaryColumn.size());
+	UE_LOG(LogTemp, Warning, TEXT("Vector size Z: %d"), binaryChunk.zBinaryColumn.size());
 
 	// TODO FIX xBinaryColumn
 	/*for (int i = 0; i < binaryChunk.xBinaryColumn.size(); ++i) {
@@ -215,11 +220,9 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 						break;
 					}
 
-					// TODO Important note:
+					// TODO Important note: 
 					// For the Y axis, I should only do face culling IF the bit is not all 1 or when is the last bitIndex
 					// That's because I don't want voxels between my height chunks, since I have 4 64-bit for the height. 
-					
-					// UE_LOG(LogTemp, Warning, TEXT("\tColumn index: %d\n\tIndex ascending: axis: %d  index: %d\n\tIndex descending: axis: %d  index: %d"), columnIndex, axis * 2 + 0, columnIndex + chunkSize, axis * 2 + 1, columnIndex);
 					
 					// Sample ascending axis and set to true when air meets solid
 					columnFaceMasks[axis * 2 + 0][columnIndex] = column & ~(column >> 1); // INDEX VERIFIED!
@@ -243,35 +246,11 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 
 					// TODO Remove padding once I add it 
 
-					uint64_t column = columnFaceMasks[axis][columnIndex]; 
-
-					// TESTING: Printing all columns of X to inspect.
-					if (axis == 4 || axis == 5) {
-						// UE_LOG(LogTemp, Warning, TEXT("axis: %d  columnIndex: %d "), axis, columnIndex);
-						// printBinary(column, 8);
-					}
+					uint64_t column = columnFaceMasks[axis][columnIndex];  // this goes from 0 - 16,383
 
 					while (column != 0) {
-
-						// TODO
-						// The problem seems to be either with the faces, or how the faces get built.
-						// I think the X and Z positions are correct now, since I am waiting for a
-						// 64x64 chunk to be filled before I increment the height to 64.
-						// 
-						// Things to double-check:
-						// 1.	How X and Z gets added to the array (I think this is correct already, as
-						//		I fixed it yesterday).
-						// 2.	How the faces get built with createQuadAndAddToMeshData()
-						//		2.1. Check the vectors passed to this function.
-						//		2.2. Check if the faces are pointing at the right direction.
-						//		2.3. Check if the faces are spawning at the right location.
-						//		Note: Do this steps 2. in a small test environment (one cube only).
-
-						
-
 						// Get the trailing zeros for the current column
 						int y = std::countr_zero(column);
-
 
 						// Clear the position 
 						column &= column - 1;
@@ -283,46 +262,27 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 							// Get y's starting position, depending on the current bitIndex
 							int startingPositionY = bitIndex * chunkSize;
 							//									  X                      Y                     Z
-							voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(y + startingPositionY) }; // up / down  // TODO VALIDATE THIS VALUE
+							voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(y + startingPositionY) }; // up / down 
 							break;
 						}
 						case 2:
 						case 3: {
-							int startingPositionX = 0;
-							int currentPositionX = 0;
-							if (columnIndex > 0) {
-								startingPositionX = (columnIndex / (chunkSize * chunkSize)) * chunkSize;
-								currentPositionX = columnIndex / chunkSize;
-							}
-							
+							int currentPositionX = columnIndex > 0 ? columnIndex / chunkSize : 0;
 
 							// Ensures X goes to 64 and resets to 0 every time; this is done because
 							// there is the bitIndex inner loop that increments 4 with every Z
 							int xAltered{ ((z * intsPerHeight) % chunkSize) + bitIndex };
 
-							voxelPosition1 = { static_cast<float>(xAltered), static_cast<float>(y), static_cast<float>(currentPositionX) }; // right / left // TODO VALIDATE THIS VALUE)
-
-							// Z needs to be incremented every 64 columnIndex. 
-							// Since Z goes to 64, this would normally be just X
-							// BUT Z goes to 64 and then bitIndex to 4 each time.
-							// Meaning Z goes in fact to 256.
-							
+							voxelPosition1 = { static_cast<float>(xAltered), static_cast<float>(y), static_cast<float>(currentPositionX) }; // right / left 
 							break;
 						}
 						case 4:
 						case 5: {
-							int startingPositionZ = 0;
-							int currentPositionZ = 0;
-							if (columnIndex > 0) {
-								startingPositionZ = (columnIndex / (chunkSize * chunkSize)) * chunkSize;
-								currentPositionZ = columnIndex / chunkSize;
-							}
+							int currentPositionZ = columnIndex > 0 ? columnIndex / chunkSize : 0;
 
-							int xAltered{ ((z * intsPerHeight) % chunkSize) + bitIndex };
+							int zAltered{ ((z * intsPerHeight) % chunkSize) + bitIndex };
 
-							// UE_LOG(LogTemp, Warning, TEXT("currentPositionZ: %d  xAltered: %d"), currentPositionZ, xAltered);
-
-							voxelPosition1 = { static_cast<float>(y), static_cast<float>(xAltered), static_cast<float>(currentPositionZ) }; // forward / backwards // TODO VALIDATE THIS VALUE
+							voxelPosition1 = { static_cast<float>(y), static_cast<float>(zAltered), static_cast<float>(currentPositionZ) }; // forward / backwards 
 							break;
 						}
 						default:
@@ -371,9 +331,6 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
 							heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
 
-							// Adjust face direction
-							// voxelPosition1 += topFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
-
 							voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
 							voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
@@ -393,9 +350,6 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 							widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
 							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
 
-							// Adjust face direction
-							// voxelPosition1 += forwardFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
-
 							voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
 							voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
@@ -405,7 +359,7 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
 
 							// Adjust face direction
-							voxelPosition1 += rightFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
+							voxelPosition1 += rightFace; 
 
 							voxelPosition2 = voxelPosition1 + heightPositionModifier; // top - left
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
@@ -414,9 +368,6 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 						case 5: // Z axis descending
 							widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
 							heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-
-							// Adjust face direction
-							// voxelPosition1 += leftFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
 
 							voxelPosition2 = voxelPosition1 + widthPositionModifier; // bottom - right
 							voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
@@ -428,27 +379,16 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ() {
 							break;
 						}
 
-						
-						/*UE_LOG(LogTemp, Warning, TEXT("Voxel Positions:\nvoxelPosition1: x: %f y: %f z: %f\nvoxelPosition2: x: %f y: %f z: %f\nvoxelPosition3: x: %f y: %f z: %f\nvoxelPosition4: x: %f y: %f z: %f"),
-							voxelPosition1.X, voxelPosition1.Y, voxelPosition1.Z,
-							voxelPosition2.X, voxelPosition2.Y, voxelPosition2.Z,
-							voxelPosition3.X, voxelPosition3.Y, voxelPosition3.Z,
-							voxelPosition4.X, voxelPosition4.Y, voxelPosition4.Z);*/
-						// TESTING
-						/*if (logsToPrint > 0) {
-							logsToPrint--;
-						}*/
-
 						// Create the quads
 						createQuadAndAddToMeshData(&voxelPosition1, &voxelPosition2, &voxelPosition3, &voxelPosition4, &width, &height, &axis);
 
 					}
 				}
-				UE_LOG(LogTemp, Warning, TEXT("--------------------- Z: %d"), z);
+				// UE_LOG(LogTemp, Warning, TEXT("--------------------- Z: %d"), z);
 			}
-			UE_LOG(LogTemp, Warning, TEXT("####################### X: %d"), x);
+			// UE_LOG(LogTemp, Warning, TEXT("####################### X: %d"), x);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ AXIS: % d"), axis);
+		// UE_LOG(LogTemp, Warning, TEXT("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ AXIS: % d"), axis);
 	}
 }
 
@@ -548,79 +488,7 @@ void ABinaryChunk::testingMeshingCreation() {
 			break;
 		}
 
-		//
-
-		//switch (axis) {
-		//case 0: // Y axis ascending
-
-		//	voxelPosition1 = { 0, 0, 1 }; // bottom face
-
-
-		//	widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-		//	heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
-		//	voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
-		//	voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-		//	voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
-		//	break;
-		//case 1: // Y axis descending
-
-		//	voxelPosition1 = { 0, 0, 0 }; // top face
-
-		//	widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-		//	heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
-		//	voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
-		//	voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-		//	voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
-		//	break;
-		//case 2:	// X axis ascending
-
-		//	voxelPosition1 = { 0, 0, 0 }; // right face
-
-		//	widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-		//	heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-		//	voxelPosition2 = voxelPosition1 + heightPositionModifier; // top - left
-		//	voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-		//	voxelPosition4 = voxelPosition1 + widthPositionModifier; // bottom - right
-		//	break;
-		//case 3: // X axis descending
-
-		//	voxelPosition1 = { 0, 1, 0 }; // left face
-
-		//	widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-		//	heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-		//	voxelPosition2 = voxelPosition1 + widthPositionModifier; // bottom - right
-		//	voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-		//	voxelPosition4 = voxelPosition1 + heightPositionModifier;// top - left
-		//	break;
-		//case 4: // Z axis ascending
-
-		//	voxelPosition1 = { 0, 0, 0 }; // backwards face
-
-
-		//	widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
-		//	heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-		//	voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
-		//	voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-		//	voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
-		//	break;
-		//case 5: // Z axis descending
-
-		//	voxelPosition1 = { 1, 0, 0 }; // forwards face
-
-
-		//	widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
-		//	heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-		//	voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
-		//	voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-		//	voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
-		//	break;
-		//default:
-		//	UE_LOG(LogTemp, Error, TEXT("Invalid axis value: %d"), axis);
-		//	ensureMsgf(false, TEXT("Unhandled case in switch statement for axis: %d"), axis);
-		//	break;
-		//}
-
-
+		
 		// Log voxel positions
 		UE_LOG(LogTemp, Warning, TEXT("Axis: %d"), axis);
 		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition1: %s"), *voxelPosition1.ToString());
@@ -690,7 +558,7 @@ void ABinaryChunk::generateChunkMeshes() {
 
 void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functionName) {
 	std::chrono::duration<double, std::milli> duration = end - start;
-	UE_LOG(LogTemp, Log, TEXT("%s() took %f milliseconds to execute."), *FString(functionName), duration.count());
+	UE_LOG(LogTemp, Warning, TEXT("%s() took %f milliseconds to execute."), *FString(functionName), duration.count());
 }
 
 // Called when the game starts or when spawned
