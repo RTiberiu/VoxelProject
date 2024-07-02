@@ -657,7 +657,7 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 	vertexCount += 4;
 
 	FVector Normal;
-	if (*axis == 0 || *axis == 2 || *axis == 4) {
+	if (*axis == 0 || *axis == 3 || *axis == 5) {
 		// Calculate the normals for counter clockwise vectors arrangement
 		Normal = FVector::CrossProduct(*voxelPosition4 - *voxelPosition1, *voxelPosition2 - *voxelPosition1).GetSafeNormal();
 	} else {
