@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <chrono>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ChunkWorld.generated.h"
@@ -22,7 +23,14 @@ public:
 	int DrawDistance = 5;
 
 	UPROPERTY(EditAnywhere, Category = "Chunk World")
-	int ChunkSize = 32;
+	int ChunkSize = 64;
+
+private:
+	// Create chrono type alias // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header
+	using Time = std::chrono::high_resolution_clock::time_point;
+
+	void printExecutionTime(Time& start, Time& end, const char* functionName); // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header
+
 
 protected:
 	// Called when the game starts or when spawned

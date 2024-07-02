@@ -162,25 +162,10 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 	}
 
 	// Testing
-	UE_LOG(LogTemp, Warning, TEXT("Loops: %d"), loops);
-	UE_LOG(LogTemp, Warning, TEXT("Vector size Y: %d"), binaryChunk.yBinaryColumn.size());
-	UE_LOG(LogTemp, Warning, TEXT("Vector size X: %d"), binaryChunk.xBinaryColumn.size());
-	UE_LOG(LogTemp, Warning, TEXT("Vector size Z: %d"), binaryChunk.zBinaryColumn.size());
-
-	// TODO FIX xBinaryColumn
-	/*for (int i = 0; i < binaryChunk.xBinaryColumn.size(); ++i) {
-		uint64_t column = binaryChunk.xBinaryColumn[i];
-		UE_LOG(LogTemp, Warning, TEXT("createBinarySolidColumnsYXZ() X Index: %d"), i);
-		printBinary(column, 8);
-	}*/
-
-	// TODO FIX xBinaryColumn
-	/*for (int i = 0; i < binaryChunk.zBinaryColumn.size(); ++i) {
-		uint64_t column = binaryChunk.zBinaryColumn[i];
-		UE_LOG(LogTemp, Warning, TEXT("createBinarySolidColumnsYXZ() Z Index: %d"), i);
-		printBinary(column, 8);
-	}*/
-	
+	// UE_LOG(LogTemp, Warning, TEXT("Loops: %d"), loops);
+	// UE_LOG(LogTemp, Warning, TEXT("Vector size Y: %d"), binaryChunk.yBinaryColumn.size());
+	// UE_LOG(LogTemp, Warning, TEXT("Vector size X: %d"), binaryChunk.xBinaryColumn.size());
+	// UE_LOG(LogTemp, Warning, TEXT("Vector size Z: %d"), binaryChunk.zBinaryColumn.size());
 }
 
 void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
@@ -567,6 +552,13 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 	});
 }
 
+void ABinaryChunk::greedyMeshingBinaryPlane() {
+	// TODO Create infinite world 
+	//		
+	// TODO Add padding to the chunk and remove sides (also the ones between heights)
+	// 
+	// TODO Implement greedy meshing for all planes
+}
 
 
 void ABinaryChunk::spawnTerrainChunkMeshes() {
@@ -588,7 +580,7 @@ void ABinaryChunk::BeginPlay() {
 
 	Time end = std::chrono::high_resolution_clock::now();
 
-	printExecutionTime(start, end, "createBinarySolidColumnsYXZ");
+	// printExecutionTime(start, end, "createBinarySolidColumnsYXZ");
 
 	start = std::chrono::high_resolution_clock::now();
 
@@ -596,7 +588,7 @@ void ABinaryChunk::BeginPlay() {
 
 	end = std::chrono::high_resolution_clock::now();
 
-	printExecutionTime(start, end, "createTerrainMeshesData");
+	// printExecutionTime(start, end, "createTerrainMeshesData");
 
 	start = std::chrono::high_resolution_clock::now();
 
@@ -604,7 +596,7 @@ void ABinaryChunk::BeginPlay() {
 
 	end = std::chrono::high_resolution_clock::now();
 
-	printExecutionTime(start, end, "spawnTerrainChunkMeshes");
+	// printExecutionTime(start, end, "spawnTerrainChunkMeshes");
 
 
 	// Testing generating simple cube

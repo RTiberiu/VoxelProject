@@ -74,6 +74,8 @@ private:
 		const int& height, const int& width,
 		const int& axis);
 
+	void greedyMeshingBinaryPlane();
+
 	void createTerrainMeshesData();
 
 	void spawnTerrainChunkMeshes();
