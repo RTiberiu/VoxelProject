@@ -20,7 +20,7 @@ public:
 	TSubclassOf<AActor> Chunk;
 
 	UPROPERTY(EditAnywhere, Category = "Chunk World")
-	int DrawDistance = 5;
+	int DrawDistance = 2;
 
 	UPROPERTY(EditAnywhere, Category = "Chunk World")
 	int ChunkSize = 64;

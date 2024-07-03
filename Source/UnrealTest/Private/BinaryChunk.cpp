@@ -59,6 +59,9 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize) {
 }
 
 void ABinaryChunk::createBinarySolidColumnsYXZ() {
+	// Get current chunk world position
+	const FVector chunkWorldLocation = GetActorLocation();
+
 	constexpr std::array<float, 3> octaveFrequencies{ 0.02f, 0.025f, 0.03f };
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
@@ -77,7 +80,10 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 			for (const float octave : octaveFrequencies) {
 				// Set frequency and get value between 0 and 2
 				noise->SetFrequency(octave);
-				const float noiseValue = noise->GetNoise(static_cast<float>(x), static_cast<float>(z)) + 1;
+				// Getting perlin noise position, adjusted to the Unreal Engine grid system 
+				const float noisePositionX = static_cast<float>((x * 100 + chunkWorldLocation.X) / 100);
+				const float noisePositionZ = static_cast<float>((z * 100 + chunkWorldLocation.Y) / 100);
+				const float noiseValue = noise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
 				// Adding multiple splines to the perlinValue
 				if (noiseValue <= 1) {
@@ -558,7 +564,7 @@ void ABinaryChunk::greedyMeshingBinaryPlane() {
 	// TODO Add padding to the chunk and remove sides (also the ones between heights)
 	// 
 	// TODO Implement greedy meshing for all planes
-}
+} 
 
 
 void ABinaryChunk::spawnTerrainChunkMeshes() {
