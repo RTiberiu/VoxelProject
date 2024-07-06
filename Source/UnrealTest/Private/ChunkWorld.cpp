@@ -22,6 +22,9 @@ void AChunkWorld::BeginPlay()
 	Super::BeginPlay();
 
 
+	// FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+
+
 	int spawnedChunks{ 0 };
 	Time start = std::chrono::high_resolution_clock::now();
 

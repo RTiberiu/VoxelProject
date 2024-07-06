@@ -23,7 +23,7 @@ public:
 	int DrawDistance = 2;
 
 	UPROPERTY(EditAnywhere, Category = "Chunk World")
-	int ChunkSize = 64;
+	int ChunkSize = 62;
 
 private:
 	// Create chrono type alias // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header

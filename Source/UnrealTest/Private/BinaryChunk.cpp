@@ -6,6 +6,7 @@
 #include <iostream>
 #include <array>
 #include <bitset>
+#include <limits>
 #include "FastNoiseLite.h"
 
 // Sets default values
@@ -65,14 +66,13 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 	constexpr std::array<float, 3> octaveFrequencies{ 0.02f, 0.025f, 0.03f };
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
-	binaryChunk.yBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
-	binaryChunk.xBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
-	binaryChunk.zBinaryColumn = std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight, 0);
+	binaryChunk.yBinaryColumn = std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight, 0);
+	binaryChunk.xBinaryColumn = std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight, 0);
+	binaryChunk.zBinaryColumn = std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight, 0);
 
-	int loops{ 0 }; // TESTING 
 	// Loop over the chunk dimensions (X, Y, Z)
-	for (int x = 0; x < chunkSize; x++) {
-		for (int z = 0; z < chunkSize; z++) {
+	for (int x = 0; x < chunkSizePadding; x++) {
+		for (int z = 0; z < chunkSizePadding; z++) {
 
 			// Looping over the different octaves to get the final height
 			int amplitude{ 0 };
@@ -116,7 +116,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 				}
 
 				// Get index of y 
-				int yIndex{ (x * chunkSize * intsPerHeight) + (z * intsPerHeight) + bitIndex };
+				int yIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
 
 				// Add blocks height data (Y) to the current X and Z
 				binaryChunk.yBinaryColumn[yIndex] = yHeight;
@@ -127,9 +127,9 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					continue;
 				}
 
-				for (int y = 0; y < chunkSize; y++) {
+				for (int y = 0; y < chunkSizePadding; y++) {
 					// Next Y index (column) means the same X index (column), but a change in Y bit index
-					int xIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + x };
+					int xIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + x };
 
 					// y'th bit of column Y
 					uint8_t nthBitY = (currentYCol >> y) & 1;
@@ -144,7 +144,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					binaryChunk.xBinaryColumn[xIndex] = (xBitTemp << z) | binaryChunk.xBinaryColumn[xIndex];
 
 					// Next Y index (column) means the next Z index (column), but the same Y bit index
-					int zIndex{ (y * chunkSize) + (bitIndex * chunkSize * chunkSize) + z }; // FUCKING VERIFIED
+					int zIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + z }; // FUCKING VERIFIED
 
 					// Create temporary variable for column Z
 					uint64_t zBitTemp = binaryChunk.zBinaryColumn[zIndex];
@@ -155,9 +155,6 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					// Assign to actual bit the change
 					binaryChunk.zBinaryColumn[zIndex] = (zBitTemp << x) | binaryChunk.zBinaryColumn[zIndex];
 
-					// UE_LOG(LogTemp, Warning, TEXT("x: %d z: %d bitIndex: %d y: %d  --  xIndex: %d  zIndex: %d"), x, z, bitIndex, y, xIndex, zIndex);
-
-					loops++;
 				}
 				// UE_LOG(LogTemp, Warning, TEXT("--- NEXT BIT INDEX ---"));
 			}
@@ -177,10 +174,10 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
 	// Face culling for all the 3 axis (Y, X, Z)
 	for (int axis = 0; axis < 3; axis++) {
-		for (int x = 0; x < chunkSize; x++) {
-			for (int z = 0; z < chunkSize; z++) {
+		for (int x = 0; x < chunkSizePadding; x++) {
+			for (int z = 0; z < chunkSizePadding; z++) {
 				for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
-					int columnIndex{ (x * chunkSize * intsPerHeight) + (z * intsPerHeight) + bitIndex };
+					int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
 
 					uint64_t column = 0;
 					switch (axis) {
@@ -195,15 +192,45 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>
 						break;
 					}
 
-					// TODO Important note: 
-					// For the Y axis, I should only do face culling IF the bit is not all 1 or when is the last bitIndex
-					// That's because I don't want voxels between my height chunks, since I have 4 64-bit for the height. 
+					// If is the Y axis and not the last bitIndex
+					if (axis == 0 && bitIndex < intsPerHeight - 1) {
+						bool isAboveSolid = binaryChunk.yBinaryColumn[columnIndex + 1] != 0;
+						bool columnAllSolid = column == std::numeric_limits<uint64_t>::max();
+
+						// Skip creating face between height chunks if there's more solid blocks above 
+						if (isAboveSolid && columnAllSolid) {
+							continue;
+						}
+					}
 
 					// Sample ascending axis and set to true when air meets solid
 					columnFaceMasks[axis * 2 + 0][columnIndex] = column & ~(column >> 1); // INDEX VERIFIED!
 
 					// Sample descending axis and set to true when air meets solid
 					columnFaceMasks[axis * 2 + 1][columnIndex] = column & ~(column << 1); // INDEX VERIFIED!
+
+					// Remove bottom face between height chunk if there are solid blocks underneath
+					if (axis == 0) {
+						if (bitIndex > 0) {
+							bool isFaceMaskSolid = columnFaceMasks[axis * 2 + 1][columnIndex] != 0;
+
+							// Check if the leftmost bit is 1
+							uint64_t leftmostBitMask = 1ULL << 63;
+							bool isLeftmostBitSet = (binaryChunk.yBinaryColumn[columnIndex - 1] & leftmostBitMask) != 0;
+						
+							// Remove bottom face if there are solid blocks beneath chunk
+							if (isFaceMaskSolid && isLeftmostBitSet) {
+								// Flip the rightmost bit to 0
+								uint64_t rightmostBitMask = ~1ULL;
+								columnFaceMasks[axis * 2 + 1][columnIndex] &= rightmostBitMask;
+							}
+						} else {
+							// Remove the bottom face of the world for the bottom chunk
+							uint64_t rightmostBitMask = ~1ULL;
+							columnFaceMasks[axis * 2 + 1][columnIndex] &= rightmostBitMask;
+						}
+					}
+
 				}
 			}
 		}
@@ -223,27 +250,27 @@ FVector ABinaryChunk::getVoxelStartingPosition(uint64_t& column, const int& axis
 	case 0:
 	case 1: {
 		// Get y's starting position, depending on the current bitIndex
-		int startingPositionY = bitIndex * chunkSize;
+		int startingPositionY = bitIndex * chunkSizePadding;
 		//									  X                      Y                     Z
 		voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(y + startingPositionY) }; // up / down 
 		break;
 	}
 	case 2:
 	case 3: {
-		int currentPositionX = columnIndex > 0 ? columnIndex / chunkSize : 0;
+		int currentPositionX = columnIndex > 0 ? columnIndex / chunkSizePadding : 0;
 
 		// Ensures X goes to 64 and resets to 0 every time; this is done because
 		// there is the bitIndex inner loop that increments 4 with every Z
-		int xAltered{ ((z * intsPerHeight) % chunkSize) + bitIndex };
+		int xAltered{ ((z * intsPerHeight) % chunkSizePadding) + bitIndex };
 
 		voxelPosition1 = { static_cast<float>(xAltered), static_cast<float>(y), static_cast<float>(currentPositionX) }; // right / left 
 		break;
 	}
 	case 4:
 	case 5: {
-		int currentPositionZ = columnIndex > 0 ? columnIndex / chunkSize : 0;
+		int currentPositionZ = columnIndex > 0 ? columnIndex / chunkSizePadding : 0;
 
-		int zAltered{ ((z * intsPerHeight) % chunkSize) + bitIndex };
+		int zAltered{ ((z * intsPerHeight) % chunkSizePadding) + bitIndex };
 
 		voxelPosition1 = { static_cast<float>(y), static_cast<float>(zAltered), static_cast<float>(currentPositionZ) }; // forward / backwards 
 		break;
@@ -346,12 +373,12 @@ void ABinaryChunk::createTerrainMeshesData() {
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint64_t>> columnFaceMasks{
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // Y ascending
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // Y descending
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // X ascending
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // X descending
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // Z ascending
-		std::vector<uint64_t>(chunkSize * chunkSize * intsPerHeight), // Z descending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y ascending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y descending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X ascending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X descending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z ascending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z descending
 	};
 
 	// Face cull the binary columns on the 3 axis, ascending and descending
@@ -359,15 +386,21 @@ void ABinaryChunk::createTerrainMeshesData() {
 
 	// Find faces and build binary planes based on the voxel block
 	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending // 6 value
-		for (int x = 0; x < chunkSize; x++) {
-			for (int z = 0; z < chunkSize; z++) {
+		for (int x = 0; x < chunkSizePadding; x++) {
+			for (int z = 0; z < chunkSizePadding; z++) {
 				for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
 
-					int columnIndex{ (x * chunkSize * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
+					int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
 
 					// TODO Remove padding once I add it 
 
 					uint64_t column = columnFaceMasks[axis][columnIndex];  // this goes from 0 - 16,383
+
+					// Remove padding only for X and Z axis 
+					if (axis != 0 && axis != 1) {
+						// Remove the leftmost bit and the rightmost bit and replace them with 0
+						column = (column & ~(1ULL << 63)) & ~1ULL;
+					}
 
 					while (column != 0) {
 

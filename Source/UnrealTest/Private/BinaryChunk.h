@@ -45,8 +45,10 @@ private:
 
 	FChunkMeshData MeshData; // store vertices, normals, triangles, etc.
 	
-	const uint16_t chunkHeight{ 256 }; // 4 bits (320 for 5 bits)
-	const uint8_t chunkSize{ 64 };
+	const uint16_t chunkHeight{ 248 }; // 4 bits (320 for 5 bits)
+	const uint8_t chunkSize{ 62 };
+	const uint8_t chunkSizePadding{ 64 };
+
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 	
 	int vertexCount{ 0 };
