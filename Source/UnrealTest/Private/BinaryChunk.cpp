@@ -392,8 +392,6 @@ void ABinaryChunk::createTerrainMeshesData() {
 
 					int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
 
-					// TODO Remove padding once I add it 
-
 					uint64_t column = columnFaceMasks[axis][columnIndex];  // this goes from 0 - 16,383
 
 					// Remove padding only for X and Z axis 
