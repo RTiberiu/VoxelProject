@@ -23,7 +23,6 @@ private:
 	// Create chrono type alias // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header
 	using Time = std::chrono::high_resolution_clock::time_point;
 
-
 	void printExecutionTime(Time& start, Time& end, const char* functionName); // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header
 
 	// Ensure that the Tick() function runs after the BeginPlay() is done initializing the world
@@ -35,7 +34,7 @@ private:
 	TerrainRunnable* terrainRunnable;
 	FRunnableThread* terrainRunnableThread;
 	FThreadSafeBool isTaskRunning;
-	
+
 	// Handle 
 	void onNewTerrainGenerated();
 

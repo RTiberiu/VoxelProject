@@ -3,10 +3,11 @@
 #include <condition_variable> 
 #include <mutex> 
 #include <atomic>
+#include "ChunkLocationData.h"
 
 // World settings
 static int UnrealScale{ 100 };
-static std::atomic<int> DrawDistance{5};
+static std::atomic<int> DrawDistance{ 5 };
 
 // Single chunk settings
 static const uint16_t chunkHeight{ 248 }; // 4 bits 
@@ -24,8 +25,9 @@ static FCriticalSection MapCriticalSection;
 static FCriticalSection UpdateChunkCriticalSection;
 static FCriticalSection DrawDistanceCriticalSection;
 
-
 static FEvent* UpdateGameThreadEvent;
 
 // Map to store spawned chunks with 2D coordinates as keys
 static TMap<FIntPoint, AActor*> SpawnedChunksMap;
+
+

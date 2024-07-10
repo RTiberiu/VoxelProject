@@ -29,12 +29,12 @@ void AChunkWorld::spawnInitialWorld() {
 	for (int x = -DrawDistance.load(); x < DrawDistance.load(); x++) {
 		for (int z = -DrawDistance.load(); z < DrawDistance.load(); z++) {
 			FVector ChunkPosition = FVector(x * chunkSize * UnrealScale, z * chunkSize * UnrealScale, 0);
-            AActor* SpawnedChunk = GetWorld()->SpawnActor<AActor>(Chunk, ChunkPosition, FRotator::ZeroRotator);
-            if (SpawnedChunk) {
+			AActor* SpawnedChunk = GetWorld()->SpawnActor<AActor>(Chunk, ChunkPosition, FRotator::ZeroRotator);
+			if (SpawnedChunk) {
 				UE_LOG(LogTemp, Warning, TEXT("Chunk counter: %d"), spawnedChunks);
 				TerrainRunnable::AddChunkToMap(FIntPoint(x, z), SpawnedChunk);
 				spawnedChunks++;
-            }
+			}
 		}
 	}
 
@@ -60,7 +60,7 @@ void AChunkWorld::BeginPlay() {
 	Super::BeginPlay();
 
 	spawnInitialWorld();
-	
+
 	// Set player's initial position
 	TerrainRunnable::updateInitialPlayerPosition(GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation());
 
@@ -91,56 +91,99 @@ FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
 	return FIntPoint(ChunkX, ChunkY);
 }
 
-// Called every frame
-void AChunkWorld::Tick(float DeltaSeconds) {
-	Super::Tick(DeltaSeconds);
+	// Called every frame
+	void AChunkWorld::Tick(float DeltaSeconds) {
+		Super::Tick(DeltaSeconds);
 
-	// Continue running only if the BeginPlay() is done initializing the world
-	if (!isInitialWorldGenerated) {
-		UE_LOG(LogTemp, Warning, TEXT("World not yet initialized. Tick() will exit now."));
-		return;
-	}
-
-	TickCriticalSection.Lock();
-
-	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-
-	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
-	FIntPoint InitialChunkCoords = GetChunkCoordinates(TerrainRunnable::getInitialPlayerPosition());
-
-	bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X;
-	bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y;
-
-
-	if (!isTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
-		isTaskRunning = true;
-
-		UE_LOG(LogTemp, Warning, TEXT("Created new thread!"));
-
-		terrainRunnable = new TerrainRunnable(GetWorld(), &Chunk);
-		terrainRunnableThread = FRunnableThread::Create(terrainRunnable, TEXT("terrainRunnableThread"), 0, TPri_Normal);
-	}
-
-	if (terrainRunnable && terrainRunnable->IsTaskComplete()) {
-		UE_LOG(LogTemp, Warning, TEXT("Destroyed new thread!"));
-
-		onNewTerrainGenerated();
-
-		// Clean up
-		if (terrainRunnableThread) {
-			terrainRunnableThread->Kill(true);
-			delete terrainRunnableThread;
-			terrainRunnableThread = nullptr;
-		}
-		if (terrainRunnable) {
-			delete terrainRunnable;
-			terrainRunnable = nullptr;
+		// Continue running only if the BeginPlay() is done initializing the world
+		if (!isInitialWorldGenerated) {
+			UE_LOG(LogTemp, Warning, TEXT("World not yet initialized. Tick() will exit now."));
+			return;
 		}
 
-		isTaskRunning = false;
+		TickCriticalSection.Lock();
+
+		FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+
+		FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
+		FIntPoint InitialChunkCoords = GetChunkCoordinates(TerrainRunnable::getInitialPlayerPosition());
+
+		bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X;
+		bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y;
+
+
+		if (!isTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
+			isTaskRunning = true;
+
+			UE_LOG(LogTemp, Warning, TEXT("Created new thread!"));
+
+			terrainRunnable = new TerrainRunnable(GetWorld(), &Chunk);
+			terrainRunnableThread = FRunnableThread::Create(terrainRunnable, TEXT("terrainRunnableThread"), 0, TPri_Normal);
+		}
+
+		if (terrainRunnable && terrainRunnable->IsTaskComplete()) {
+			UE_LOG(LogTemp, Warning, TEXT("Destroyed new thread!"));
+
+			onNewTerrainGenerated();
+
+			// Clean up
+			if (terrainRunnableThread) {
+				terrainRunnableThread->Kill(true);
+				delete terrainRunnableThread;
+				terrainRunnableThread = nullptr;
+			}
+			if (terrainRunnable) {
+				delete terrainRunnable;
+				terrainRunnable = nullptr;
+			}
+
+			isTaskRunning = false;
+		}
+
+		// Spawn and destroy one chunk if there is one waiting
+		FChunkLocationData chunkToSpawnPosition;
+		bool isSpawnPositionReturned = FChunkLocationData::getChunkToSpawnPosition(chunkToSpawnPosition);
+
+
+		UE_LOG(LogTemp, Warning, TEXT("[chunkworld] isSpawnPositionReturned: %s, ChunkToSpawnPosition: ChunkPosition=(%f, %f, %f), ChunkWorldCoords: X=%d, Y=%d"),
+			isSpawnPositionReturned ? TEXT("true") : TEXT("false"),
+			chunkToSpawnPosition.ChunkPosition.X,
+			chunkToSpawnPosition.ChunkPosition.Y,
+			chunkToSpawnPosition.ChunkPosition.Z,
+			chunkToSpawnPosition.ChunkWorldCoords.X,
+			chunkToSpawnPosition.ChunkWorldCoords.Y);
+
+		if (isSpawnPositionReturned) {
+			UE_LOG(LogTemp, Warning, TEXT("Got chunk to spawn..."));
+
+			// Only proceed if a valid ChunkToSpawnPosition was dequeued
+			if (!chunkToSpawnPosition.ChunkPosition.IsZero()) {
+				AActor* SpawnedChunk = GetWorld()->SpawnActor<AActor>(Chunk, chunkToSpawnPosition.ChunkPosition, FRotator::ZeroRotator);
+				if (SpawnedChunk) {
+					UE_LOG(LogTemp, Warning, TEXT("Spawned chunk"));
+					TerrainRunnable::AddChunkToMap(chunkToSpawnPosition.ChunkWorldCoords, SpawnedChunk);
+				}
+			}
+		}
+
+		FIntPoint chunkToDestroyPosition;
+		bool isDestroyPositionReturned = FChunkLocationData::getChunkToDestroyPosition(chunkToDestroyPosition);
+
+		UE_LOG(LogTemp, Warning, TEXT("[chunkworld] isDestroyPositionReturned: %s, ChunkToDestroyPosition: X=%d, Y=%d"),
+			isDestroyPositionReturned ? TEXT("true") : TEXT("false"),
+			chunkToDestroyPosition.X,
+			chunkToDestroyPosition.Y);
+
+		if (isDestroyPositionReturned) {
+			UE_LOG(LogTemp, Warning, TEXT("Got chunk to destroy..."));
+			AActor* chunkToRemove = TerrainRunnable::GetAndRemoveChunkFromMap(chunkToDestroyPosition);
+			if (chunkToRemove) {
+				chunkToRemove->Destroy();
+				UE_LOG(LogTemp, Warning, TEXT("Destroyed chunk"));
+			}
+		}
+
+		TickCriticalSection.Unlock();
+
 	}
-
-	TickCriticalSection.Unlock();
-
-}
 

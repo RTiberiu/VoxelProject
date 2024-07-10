@@ -72,7 +72,6 @@ void TerrainRunnable::UpdateChunks() {
 		int lastRowX{ 0 };
 		int newRowX{ 0 };
 		if (PlayerChunkCoords.X > InitialChunkCoords.X) {
-			UE_LOG(LogTemp, Warning, TEXT("MINUS drawsitance for lastRowX"));
 			// Get the first row by adding the draw distance to the player's X
 			lastRowX = PlayerChunkCoords.X - DrawDistance.load(); // MAYBE -1 ; STILL TESTING
 			newRowX = PlayerChunkCoords.X + DrawDistance.load();
@@ -80,106 +79,63 @@ void TerrainRunnable::UpdateChunks() {
 			// Get the last row by substracting the draw distance from the the initial X
 			lastRowX = InitialChunkCoords.X + DrawDistance.load(); // MAYBE -1 ; STILL TESTING
 			newRowX = InitialChunkCoords.X - DrawDistance.load(); // MAYBE -1 ; STILL TESTING
-			UE_LOG(LogTemp, Warning, TEXT("PLUS drawsitance for lastRowX"));
 		}
 
 		// Add new chunks and remove old chunks based on the player's new X position
-		UE_LOG(LogTemp, Warning, TEXT("Player moved on X axis to chunk: X=%d"), PlayerChunkCoords.X);
-
-		// Print SpawnedChunksMap keys before destroying
-		printMapElements("SpawnedChunksMap Keys BEFORE X update");
-
 		int firstIndexChunkZ = InitialChunkCoords.Y - DrawDistance.load();
 		int lastIndexChunkZ = InitialChunkCoords.Y + DrawDistance.load();
 
-		UE_LOG(LogTemp, Warning, TEXT("Attempting to get: X=%d - Z=%d to Z=%d"), lastRowX, firstIndexChunkZ, lastIndexChunkZ);
-		UE_LOG(LogTemp, Warning, TEXT("InitialChunkCoords: X=%d Z=%d "), InitialChunkCoords.X, InitialChunkCoords.Y);
-		UE_LOG(LogTemp, Warning, TEXT("PlayerChunkCoords: X=%d Z=%d "), PlayerChunkCoords.X, PlayerChunkCoords.Y);
-		UE_LOG(LogTemp, Warning, TEXT("Adding to row X=%d"), newRowX);
-
 		// Loop and remove the entire row of chunks 
 		for (int z = firstIndexChunkZ; z < lastIndexChunkZ; z++) {
-			UE_LOG(LogTemp, Warning, TEXT("Getting from map X=%d Z=%d"), lastRowX, z);
-			AActor* currentChunk = GetAndRemoveChunkFromMap(FIntPoint(lastRowX, z));
+			FIntPoint oldChunkCoords = FIntPoint(lastRowX, z);
 
-			UpdateGameThreadEvent->Reset();
-			AsyncTask(ENamedThreads::GameThread, [currentChunk]() {
-				currentChunk->Destroy();
-				UpdateGameThreadEvent->Trigger();
-			});
+			UE_LOG(LogTemp, Warning, TEXT("X -- Added coords to DESTROY: X=%d Z=%d"), oldChunkCoords.X, oldChunkCoords.Y);
+			FChunkLocationData::addChunksToDestroyPosition(oldChunkCoords);
 
-			// Wait for the game thread to update the world
-			UpdateGameThreadEvent->Wait();
+			/*FIntPoint chunkToDestroyPosition;
+			bool isDestroyPositionReturned = getChunkToDestroyPosition(chunkToDestroyPosition);
 
-			// currentChunk->Destroy();
-			UE_LOG(LogTemp, Warning, TEXT("Got the coordinates and destroyed object"));
+			UE_LOG(LogTemp, Warning, TEXT("[TerrainRunnable] isDestroyPositionReturned: %s, ChunkToDestroyPosition: X=%d, Y=%d"),
+				isDestroyPositionReturned ? TEXT("true") : TEXT("false"),
+				chunkToDestroyPosition.X,
+				chunkToDestroyPosition.Y);*/
+
 
 			// Adding new row 
 			FIntPoint newChunkCoords = FIntPoint(newRowX, z);
 			FVector ChunkPosition = FVector(newRowX * chunkSize * UnrealScale, z * chunkSize * UnrealScale, 0);
-			/*AActor* SpawnedChunk = World->SpawnActor<AActor>(*Chunk, ChunkPosition, FRotator::ZeroRotator);
-			if (SpawnedChunk) {
-				UE_LOG(LogTemp, Warning, TEXT("Adding to map X=%d Z=%d"), newRowX, z);
-				AddChunkToMap(newChunkCoords, SpawnedChunk);
-				UE_LOG(LogTemp, Warning, TEXT("Added to map new coordinates and chunk."));
-			}*/
 
-			UpdateGameThreadEvent->Reset();
-			AsyncTask(ENamedThreads::GameThread, [this, ChunkPosition, newChunkCoords]() {
-				FIntPoint testChunkCoord = GetChunkCoordinates(ChunkPosition);
-				// UE_LOG(LogTemp, Warning, TEXT("ATTEMPTING to spawn chunk at coordinates X=%d Z=%d"), testChunkCoord.X, testChunkCoord.Y);
-				AActor* SpawnedChunk = World->SpawnActor<AActor>(*Chunk, ChunkPosition, FRotator::ZeroRotator);
-				if (SpawnedChunk) {
-					// UE_LOG(LogTemp, Warning, TEXT("Added to map chunk at coordinates X=%d Z=%d"), newChunkCoords.X, newChunkCoords.Y);
-					AddChunkToMap(newChunkCoords, SpawnedChunk);
-				}
-				UpdateGameThreadEvent->Trigger();
-			});
+			UE_LOG(LogTemp, Warning, TEXT("X -- Added coords to SPAWN: X=%d Z=%d"), newChunkCoords.X, newChunkCoords.Y);
+			FChunkLocationData::addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
 
-			// Wait for the game thread to update the world
-			UpdateGameThreadEvent->Wait();
+			/*FChunkLocation chunkToSpawnPosition;
+			bool isSpawnPositionReturned = getChunkToSpawnPosition(chunkToSpawnPosition);
 
+			UE_LOG(LogTemp, Warning, TEXT("[TerrainRunnable] isSpawnPositionReturned: %s, ChunkToSpawnPosition: ChunkPosition=(%f, %f, %f), ChunkWorldCoords: X=%d, Y=%d"),
+				isSpawnPositionReturned ? TEXT("true") : TEXT("false"),
+				chunkToSpawnPosition.ChunkPosition.X,
+				chunkToSpawnPosition.ChunkPosition.Y,
+				chunkToSpawnPosition.ChunkPosition.Z,
+				chunkToSpawnPosition.ChunkWorldCoords.X,
+				chunkToSpawnPosition.ChunkWorldCoords.Y);*/
 		}
-
-		// Print SpawnedChunksMap keys after adding
-		printMapElements("SpawnedChunksMap Keys AFTER X update");
 	}
-
-	// Update the initial position for the next frame
-	//PlayerPositionCriticalSection.Lock();
-	//playerInitialPosition = PlayerPosition;
-
-	//// Testing position
-	//FIntPoint playerPositionTest1 = GetChunkCoordinates(playerInitialPosition);
-	//UE_LOG(LogTemp, Warning, TEXT("Change playerInitialPosition to X=%d Z=%d"), static_cast<int>(playerPositionTest1.X), static_cast<int>(playerPositionTest1.Y));
-	//PlayerPositionCriticalSection.Unlock();
 
 	// Update the initial position for the next frame
 	PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	InitialChunkCoords = GetChunkCoordinates(getInitialPlayerPosition());
 
-	// Testing position
-	FIntPoint playerPositionTest1 = GetChunkCoordinates(PlayerPosition);
-	UE_LOG(LogTemp, Warning, TEXT("Inside Thread: Change playerInitialPosition BEFORE VALIDATING FOR Z CHANGE:  X=%d Z=%d"), playerPositionTest1.X, playerPositionTest1.Y);
-
 	// Add and remove chunks on the Y axis 
 	if (PlayerChunkCoords.Y != InitialChunkCoords.Y) {
 		// Add new chunks and remove old chunks based on the player's new Y position
-		UE_LOG(LogTemp, Warning, TEXT("Player moved on Z axis to chunk: Z=%d"), PlayerChunkCoords.Y);
-
-		// Print SpawnedChunksMap keys before destroying
-		printMapElements("SpawnedChunksMap Keys BEFORE Z update");
-
 		int lastRowZ{ 0 };
 		int newRowZ{ 0 };
 		if (PlayerChunkCoords.Y > InitialChunkCoords.Y) {
 			// Get the first row by adding the draw distance to the player's Z
-			UE_LOG(LogTemp, Warning, TEXT("MINUS drawsitance for lastRowZ"));
 			lastRowZ = InitialChunkCoords.Y - DrawDistance.load();
 			newRowZ = InitialChunkCoords.Y + DrawDistance.load();
 		} else {
 			// Get the last row by substracting the draw distance from the the initial Z
-			UE_LOG(LogTemp, Warning, TEXT("PLUS drawsitance for lastRowZ"));
 			lastRowZ = PlayerChunkCoords.Y + DrawDistance.load();
 			newRowZ = PlayerChunkCoords.Y - DrawDistance.load();
 		}
@@ -187,66 +143,25 @@ void TerrainRunnable::UpdateChunks() {
 		int firstIndexChunkX = PlayerChunkCoords.X - DrawDistance.load() + 1;
 		int lastIndexChunkX = PlayerChunkCoords.X + DrawDistance.load() + 1;
 
-		UE_LOG(LogTemp, Warning, TEXT("Attempting to get: X=%d to X=%d - Z=%d"), firstIndexChunkX, lastIndexChunkX, lastRowZ);
-		UE_LOG(LogTemp, Warning, TEXT("InitialChunkCoords: X=%d Z=%d "), InitialChunkCoords.X, InitialChunkCoords.Y);
-		UE_LOG(LogTemp, Warning, TEXT("PlayerChunkCoords: X=%d Z=%d "), PlayerChunkCoords.X, PlayerChunkCoords.Y);
-		UE_LOG(LogTemp, Warning, TEXT("Adding to row Z=%d"), newRowZ);
-
-
 		// Loop and remove the entire row of chunks 
 		for (int x = firstIndexChunkX; x < lastIndexChunkX; x++) {
 			FIntPoint oldChunkCoords = FIntPoint(x, lastRowZ);
-			UE_LOG(LogTemp, Warning, TEXT("Getting from map X=%d Z=%d"), oldChunkCoords.X, oldChunkCoords.Y);
-			AActor* currentChunk = GetAndRemoveChunkFromMap(oldChunkCoords);
-			// currentChunk->Destroy();
 
-			UpdateGameThreadEvent->Reset();
-			AsyncTask(ENamedThreads::GameThread, [currentChunk]() {
-				currentChunk->Destroy();
-				UpdateGameThreadEvent->Trigger();
-			});
+			UE_LOG(LogTemp, Warning, TEXT("Z -- Added coords to DESTROY: X=%d Z=%d"), oldChunkCoords.X, oldChunkCoords.Y);
+			FChunkLocationData::addChunksToDestroyPosition(oldChunkCoords);
 
-			// Wait for the game thread to update the world
-			UpdateGameThreadEvent->Wait();
-
-			UE_LOG(LogTemp, Warning, TEXT("Got the coordinates and destroyed object"));
 
 			FIntPoint newChunkCoords = FIntPoint(x, newRowZ);
 			FVector ChunkPosition = FVector(x * chunkSize * UnrealScale, newRowZ * chunkSize * UnrealScale, 0);
-			/*AActor* SpawnedChunk = World->SpawnActor<AActor>(*Chunk, ChunkPosition, FRotator::ZeroRotator);
 
-			if (SpawnedChunk) {
-				UE_LOG(LogTemp, Warning, TEXT("Adding to map X=%d Z=%d"), newChunkCoords.X, newChunkCoords.Y);
-				AddChunkToMap(newChunkCoords, SpawnedChunk);
-				UE_LOG(LogTemp, Warning, TEXT("Added the new coordinates"));
-			}*/
+			UE_LOG(LogTemp, Warning, TEXT("Z -- Added coords to SPAWN: X=%d Z=%d"), newChunkCoords.X, newChunkCoords.Y);
+			FChunkLocationData::addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
 
-			UpdateGameThreadEvent->Reset();
-			AsyncTask(ENamedThreads::GameThread, [this, ChunkPosition, newChunkCoords]() {
-				FIntPoint testChunkCoord = GetChunkCoordinates(ChunkPosition);
-				// UE_LOG(LogTemp, Warning, TEXT("ATTEMPTING to spawn chunk at coordinates X=%d Z=%d"), testChunkCoord.X, testChunkCoord.Y);
-				AActor* SpawnedChunk = World->SpawnActor<AActor>(*Chunk, ChunkPosition, FRotator::ZeroRotator);
-				if (SpawnedChunk) {
-					// UE_LOG(LogTemp, Warning, TEXT("Added to map chunk at coordinates X=%d Z=%d"), newChunkCoords.X, newChunkCoords.Y);
-					AddChunkToMap(newChunkCoords, SpawnedChunk);
-				}
-				UpdateGameThreadEvent->Trigger();
-			});
-
-			// Wait for the game thread to update the world
-			UpdateGameThreadEvent->Wait();
 		}
-
-		// Print SpawnedChunksMap keys after adding
-		printMapElements("SpawnedChunksMap Keys AFTER Z update");
 	}
 
 	// Update the initial position for the next frame
 	updateInitialPlayerPosition(PlayerPosition);
-
-	// Testing position
-	FIntPoint playerPositionTest = GetChunkCoordinates(PlayerPosition);
-	UE_LOG(LogTemp, Warning, TEXT("Inside Thread: Change playerInitialPosition to X=%d Z=%d"), playerPositionTest.X, playerPositionTest.Y);
 }
 
 FIntPoint TerrainRunnable::GetChunkCoordinates(FVector Position) const {
