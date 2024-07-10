@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <chrono>
+#include "WorldTerrainSettings.h"
 #include "ChunkMeshData.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -31,7 +32,6 @@ public:
 	// Sets default values for this actor's properties
 	ABinaryChunk();
 
-
 private: 
 	// Create chrono type alias
 	using Time = std::chrono::high_resolution_clock::time_point;
@@ -44,12 +44,6 @@ private:
 	std::vector<uint64_t> columnsFaceMask;
 
 	FChunkMeshData MeshData; // store vertices, normals, triangles, etc.
-	
-	const uint16_t chunkHeight{ 248 }; // 4 bits (320 for 5 bits)
-	const uint8_t chunkSize{ 62 };
-	const uint8_t chunkSizePadding{ 64 };
-
-	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 	
 	int vertexCount{ 0 };
 

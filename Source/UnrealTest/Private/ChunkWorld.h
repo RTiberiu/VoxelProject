@@ -3,6 +3,7 @@
 #pragma once
 
 #include <chrono>
+#include "TerrainRunnable.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ChunkWorld.generated.h"
@@ -15,20 +16,8 @@ public:
 	// Sets default values for this actor's properties
 	AChunkWorld();
 
-	void UpdateChunks();
-
 	UPROPERTY(EditAnywhere, Category = "Chunk World")
 	TSubclassOf<AActor> Chunk;
-
-	UPROPERTY(EditAnywhere, Category = "Chunk World")
-	int DrawDistance = 2;
-
-	UPROPERTY(EditAnywhere, Category = "Chunk World")
-	int ChunkSize = 62;
-
-	int UnrealScale = 100;
-
-
 
 private:
 	// Create chrono type alias // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header
@@ -37,18 +26,24 @@ private:
 
 	void printExecutionTime(Time& start, Time& end, const char* functionName); // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header
 
+	// Ensure that the Tick() function runs after the BeginPlay() is done initializing the world
+	FThreadSafeBool isInitialWorldGenerated;
+
 	void spawnInitialWorld();
 
-	FIntPoint GetChunkCoordinates(FVector Position) const;
-
-	FVector playerInitialPosition;
-
-	// Map to store spawned chunks with 2D coordinates as keys
-	TMap<FIntPoint, AActor*> SpawnedChunksMap;
+	// Runnable to handle spawning the chunks
+	TerrainRunnable* terrainRunnable;
+	FRunnableThread* terrainRunnableThread;
+	FThreadSafeBool isTaskRunning;
+	
+	// Handle 
+	void onNewTerrainGenerated();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	FIntPoint GetChunkCoordinates(FVector Position) const;
 
 	virtual void Tick(float DeltaSeconds) override;
 };
