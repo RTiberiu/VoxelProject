@@ -3,16 +3,19 @@
 #pragma once
 
 #include "WorldTerrainSettings.h"
+#include "ChunkLocationData.h"
+
 #include "Async/Async.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+
 
 /**
  *
  */
 class TerrainRunnable : public FRunnable {
 public:
-	TerrainRunnable(UWorld* World, TSubclassOf<AActor>* Chunk);
+	TerrainRunnable(FVector PlayerPosition);
 	virtual ~TerrainRunnable() override;
 
 	virtual bool Init() override;
@@ -32,9 +35,6 @@ public:
 	static void printMapElements(FString message);
 
 private:
-	UWorld* World;
-	TSubclassOf<AActor>* Chunk;
-
 	FVector PlayerPosition;
 
 	void UpdateChunks();

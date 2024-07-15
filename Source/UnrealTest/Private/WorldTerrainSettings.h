@@ -3,7 +3,6 @@
 #include <condition_variable> 
 #include <mutex> 
 #include <atomic>
-#include "ChunkLocationData.h"
 
 // World settings
 static int UnrealScale{ 100 };

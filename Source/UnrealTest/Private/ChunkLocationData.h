@@ -1,26 +1,39 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Queue.h"
+#include "Misc/ScopeLock.h"
 #include "ChunkLocationData.generated.h"
 
-USTRUCT()
 struct FChunkLocationData {
-	GENERATED_BODY()
+    FVector ChunkPosition;
+    FIntPoint ChunkWorldCoords;
+};
+
+UCLASS()
+class  UChunkLocationData : public UObject {
+    GENERATED_BODY()
 
 public:
-	FVector ChunkPosition;
-	FIntPoint ChunkWorldCoords;
+    UChunkLocationData(const UChunkLocationData&) = delete;
+    UChunkLocationData& operator=(const UChunkLocationData&) = delete;
 
-	static bool getChunkToSpawnPosition(FChunkLocationData& OutLocation);
-	static bool getChunkToDestroyPosition(FIntPoint& OutPosition);
-	static void addChunksToSpawnPosition(const FChunkLocationData& position);
-	static void addChunksToDestroyPosition(const FIntPoint& position);
+    // Retrieve the singleton instance of this class
+    static UChunkLocationData& getInstance();
+
+    bool getChunkToSpawnPosition(FChunkLocationData& OutLocation);
+    bool getChunkToDestroyPosition(FIntPoint& OutPosition);
+    void addChunksToSpawnPosition(const FChunkLocationData& position);
+    void addChunksToDestroyPosition(const FIntPoint& position);
+
 private:
-	// Queue for storing chunks position that need to be spawned
-	static TQueue<FChunkLocationData> chunksToSpawnPositions;
-	static FCriticalSection chunksToSpawnMutex;
+    UChunkLocationData() {}
 
-	// Queue for storing chunks position that need to be destroyed
-	static TQueue<FIntPoint> chunksToDestroyPositions;
-	static FCriticalSection chunksToDestroyMutex;
+    // Queue for storing chunks position that need to be spawned
+    TQueue<FChunkLocationData> chunksToSpawnPositions;
+    FCriticalSection chunksToSpawnMutex;
+
+    // Queue for storing chunks position that need to be destroyed
+    TQueue<FIntPoint> chunksToDestroyPositions;
+    FCriticalSection chunksToDestroyMutex;
 };

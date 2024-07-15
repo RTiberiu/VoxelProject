@@ -117,7 +117,7 @@ FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
 
 			UE_LOG(LogTemp, Warning, TEXT("Created new thread!"));
 
-			terrainRunnable = new TerrainRunnable(GetWorld(), &Chunk);
+			terrainRunnable = new TerrainRunnable(PlayerPosition);
 			terrainRunnableThread = FRunnableThread::Create(terrainRunnable, TEXT("terrainRunnableThread"), 0, TPri_Normal);
 		}
 
@@ -142,7 +142,7 @@ FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
 
 		// Spawn and destroy one chunk if there is one waiting
 		FChunkLocationData chunkToSpawnPosition;
-		bool isSpawnPositionReturned = FChunkLocationData::getChunkToSpawnPosition(chunkToSpawnPosition);
+		bool isSpawnPositionReturned = UChunkLocationData::getInstance().getChunkToSpawnPosition(chunkToSpawnPosition);
 
 
 		UE_LOG(LogTemp, Warning, TEXT("[chunkworld] isSpawnPositionReturned: %s, ChunkToSpawnPosition: ChunkPosition=(%f, %f, %f), ChunkWorldCoords: X=%d, Y=%d"),
@@ -167,7 +167,7 @@ FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
 		}
 
 		FIntPoint chunkToDestroyPosition;
-		bool isDestroyPositionReturned = FChunkLocationData::getChunkToDestroyPosition(chunkToDestroyPosition);
+		bool isDestroyPositionReturned = UChunkLocationData::getInstance().getChunkToDestroyPosition(chunkToDestroyPosition);
 
 		UE_LOG(LogTemp, Warning, TEXT("[chunkworld] isDestroyPositionReturned: %s, ChunkToDestroyPosition: X=%d, Y=%d"),
 			isDestroyPositionReturned ? TEXT("true") : TEXT("false"),

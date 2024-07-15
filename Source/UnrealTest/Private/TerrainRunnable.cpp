@@ -1,9 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "TerrainRunnable.h"
 
-TerrainRunnable::TerrainRunnable(UWorld* World, TSubclassOf<AActor>* Chunk) : World(World), Chunk(Chunk), isRunning(false), isTaskComplete(false) {
+TerrainRunnable::TerrainRunnable(FVector PlayerPosition) : PlayerPosition(PlayerPosition), isRunning(false), isTaskComplete(false) {
 	UpdateGameThreadEvent = FPlatformProcess::GetSynchEventFromPool(true);
 }
 
@@ -54,15 +53,6 @@ void TerrainRunnable::UpdateChunks() {
 	// THE ONLY FUCKED UP ONE I THINK IS THE PLAYERPOSITION FOR NOW. GOT TO MAKE SURE 
 	// THAT IT IS UPDATING CORRECTLY. 
 
-	UpdateGameThreadEvent->Reset();
-	AsyncTask(ENamedThreads::GameThread, [this]() {
-		PlayerPosition = World->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-		UpdateGameThreadEvent->Trigger();
-	});
-
-	// Wait for the game thread to update the world
-	UpdateGameThreadEvent->Wait();
-
 	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	FIntPoint InitialChunkCoords = GetChunkCoordinates(getInitialPlayerPosition());
 
@@ -90,7 +80,7 @@ void TerrainRunnable::UpdateChunks() {
 			FIntPoint oldChunkCoords = FIntPoint(lastRowX, z);
 
 			UE_LOG(LogTemp, Warning, TEXT("X -- Added coords to DESTROY: X=%d Z=%d"), oldChunkCoords.X, oldChunkCoords.Y);
-			FChunkLocationData::addChunksToDestroyPosition(oldChunkCoords);
+			UChunkLocationData::getInstance().addChunksToDestroyPosition(oldChunkCoords);
 
 			/*FIntPoint chunkToDestroyPosition;
 			bool isDestroyPositionReturned = getChunkToDestroyPosition(chunkToDestroyPosition);
@@ -106,8 +96,9 @@ void TerrainRunnable::UpdateChunks() {
 			FVector ChunkPosition = FVector(newRowX * chunkSize * UnrealScale, z * chunkSize * UnrealScale, 0);
 
 			UE_LOG(LogTemp, Warning, TEXT("X -- Added coords to SPAWN: X=%d Z=%d"), newChunkCoords.X, newChunkCoords.Y);
-			FChunkLocationData::addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
+			UChunkLocationData::getInstance().addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
 
+			
 			/*FChunkLocation chunkToSpawnPosition;
 			bool isSpawnPositionReturned = getChunkToSpawnPosition(chunkToSpawnPosition);
 
@@ -148,14 +139,14 @@ void TerrainRunnable::UpdateChunks() {
 			FIntPoint oldChunkCoords = FIntPoint(x, lastRowZ);
 
 			UE_LOG(LogTemp, Warning, TEXT("Z -- Added coords to DESTROY: X=%d Z=%d"), oldChunkCoords.X, oldChunkCoords.Y);
-			FChunkLocationData::addChunksToDestroyPosition(oldChunkCoords);
+			UChunkLocationData::getInstance().addChunksToDestroyPosition(oldChunkCoords);
 
 
 			FIntPoint newChunkCoords = FIntPoint(x, newRowZ);
 			FVector ChunkPosition = FVector(x * chunkSize * UnrealScale, newRowZ * chunkSize * UnrealScale, 0);
 
 			UE_LOG(LogTemp, Warning, TEXT("Z -- Added coords to SPAWN: X=%d Z=%d"), newChunkCoords.X, newChunkCoords.Y);
-			FChunkLocationData::addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
+			UChunkLocationData::getInstance().addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
 
 		}
 	}
