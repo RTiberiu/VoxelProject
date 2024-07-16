@@ -1,19 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "WorldTerrainSettings.h" // TODO NOT VERIFIED YET
-#include "ChunkLocationData.h" // TODO NOT VERIFIED YET
+#include "WorldTerrainSettings.h"
+#include "ChunkLocationData.h"
 #include "TerrainRunnable.h"
 
 TerrainRunnable::TerrainRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : PlayerPosition(PlayerPosition), isRunning(false), isTaskComplete(false) {
 	WorldTerrainSettingsRef = InWorldTerrainSettingsRef;
 	ChunkLocationDataRef = InChunkLocationDataRef;
-
-	WorldTerrainSettingsRef->UpdateGameThreadEvent = FPlatformProcess::GetSynchEventFromPool(true);
 }
 
 TerrainRunnable::~TerrainRunnable() {
-	FPlatformProcess::ReturnSynchEventToPool(WorldTerrainSettingsRef->UpdateGameThreadEvent);
-	WorldTerrainSettingsRef->UpdateGameThreadEvent = nullptr;
 }
 
 bool TerrainRunnable::Init() {

@@ -6,10 +6,6 @@
 UWorldTerrainSettings::UWorldTerrainSettings() {
 	// Reserve memory for double the draw distance for X and Z 
 	SpawnedChunksMap.Reserve(DrawDistance * DrawDistance * 2); 
-
-	// Initialize the critical sections locks
-
-
 }
 
 void UWorldTerrainSettings::AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor) {

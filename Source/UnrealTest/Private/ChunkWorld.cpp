@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "WorldTerrainSettings.h" // TODO NOT VERIFIED YET
-#include "ChunkLocationData.h" // TODO NOT VERIFIED YET
-#include "BinaryChunk.h" // TODO NOT VERIFIED YET
+#include "WorldTerrainSettings.h"
+#include "ChunkLocationData.h"
+#include "BinaryChunk.h" 
 
 #include "ChunkWorld.h"
 #include "GameFramework/DefaultPawn.h"
@@ -12,7 +12,7 @@
 // Sets default values
 AChunkWorld::AChunkWorld() : terrainRunnable(nullptr), terrainRunnableThread(nullptr), isTaskRunning(false) {
 	// Set this actor to call Tick() every frame.  Yosu can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true; // TODO Stopped tick to test the fucking implementation
+	PrimaryActorTick.bCanEverTick = true;
 
 	isInitialWorldGenerated = false;
 
@@ -123,8 +123,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		return;
 	}
 
-	WorldTerrainSettingsRef->TickCriticalSection.Lock();
-
+	// TODO There are still some crashes when moving at high speed in the world. 
+	FScopeLock Lock(&WorldTerrainSettingsRef->TickCriticalSection);
+	
 	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
 	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
@@ -205,8 +206,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			chunkToRemove->Destroy();
 		}
 	}
-
-	WorldTerrainSettingsRef->TickCriticalSection.Unlock();
 
 }
 

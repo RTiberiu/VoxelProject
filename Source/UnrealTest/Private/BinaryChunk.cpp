@@ -64,10 +64,6 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize) {
 }
 
 void ABinaryChunk::createBinarySolidColumnsYXZ() {
-	if (!WorldTerrainSettingsRef) { // TODO TESTING THE REFERENCE
-		UE_LOG(LogTemp, Error, TEXT("WorldTerrainSettingsRef is null in createBinarySolidColumnsYXZ()"));
-	}
-
 	// Get current chunk world position
 	const FVector chunkWorldLocation = GetActorLocation();
 
@@ -164,19 +160,10 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					binaryChunk.zBinaryColumn[zIndex] = (zBitTemp << x) | binaryChunk.zBinaryColumn[zIndex];
 
 				}
-				// UE_LOG(LogTemp, Warning, TEXT("--- NEXT BIT INDEX ---"));
 			}
-			// UE_LOG(LogTemp, Warning, TEXT("------ NEXT Z ------"));
 
 		}
-		// UE_LOG(LogTemp, Warning, TEXT("--------- NEXT X ---------"));
 	}
-
-	// Testing
-	// UE_LOG(LogTemp, Warning, TEXT("Loops: %d"), loops);
-	// UE_LOG(LogTemp, Warning, TEXT("Vector size Y: %d"), binaryChunk.yBinaryColumn.size());
-	// UE_LOG(LogTemp, Warning, TEXT("Vector size X: %d"), binaryChunk.xBinaryColumn.size());
-	// UE_LOG(LogTemp, Warning, TEXT("Vector size Z: %d"), binaryChunk.zBinaryColumn.size());
 }
 
 void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
@@ -378,10 +365,6 @@ void ABinaryChunk::createAllVoxelPositionsFromOriginal(
 
 
 void ABinaryChunk::createTerrainMeshesData() {
-	if (!WorldTerrainSettingsRef) { // TODO TESTING THE REFERENCE
-		UE_LOG(LogTemp, Error, TEXT("WorldTerrainSettingsRef is null in createTerrainMeshesData()"));
-	}
-
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint64_t>> columnFaceMasks{
@@ -433,11 +416,8 @@ void ABinaryChunk::createTerrainMeshesData() {
 
 					}
 				}
-				// UE_LOG(LogTemp, Warning, TEXT("--------------------- Z: %d"), z);
 			}
-			// UE_LOG(LogTemp, Warning, TEXT("####################### X: %d"), x);
 		}
-		// UE_LOG(LogTemp, Warning, TEXT("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ AXIS: % d"), axis);
 	}
 }
 
@@ -602,10 +582,6 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 }
 
 void ABinaryChunk::greedyMeshingBinaryPlane() {
-	// TODO Create infinite world 
-	//		
-	// TODO Add padding to the chunk and remove sides (also the ones between heights)
-	// 
 	// TODO Implement greedy meshing for all planes
 } 
 
