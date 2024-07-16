@@ -1,8 +1,6 @@
 #include "ChunkLocationData.h"
 
-UChunkLocationData& UChunkLocationData::getInstance() {
-    static UChunkLocationData instance;
-    return instance;
+UChunkLocationData::UChunkLocationData() {
 }
 
 bool UChunkLocationData::getChunkToSpawnPosition(FChunkLocationData& OutLocation) {

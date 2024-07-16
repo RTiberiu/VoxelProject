@@ -15,11 +15,7 @@ class  UChunkLocationData : public UObject {
     GENERATED_BODY()
 
 public:
-    UChunkLocationData(const UChunkLocationData&) = delete;
-    UChunkLocationData& operator=(const UChunkLocationData&) = delete;
-
-    // Retrieve the singleton instance of this class
-    static UChunkLocationData& getInstance();
+    UChunkLocationData();
 
     bool getChunkToSpawnPosition(FChunkLocationData& OutLocation);
     bool getChunkToDestroyPosition(FIntPoint& OutPosition);
@@ -27,8 +23,6 @@ public:
     void addChunksToDestroyPosition(const FIntPoint& position);
 
 private:
-    UChunkLocationData() {}
-
     // Queue for storing chunks position that need to be spawned
     TQueue<FChunkLocationData> chunksToSpawnPositions;
     FCriticalSection chunksToSpawnMutex;

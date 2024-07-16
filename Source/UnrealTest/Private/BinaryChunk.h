@@ -4,12 +4,12 @@
 
 #include <vector>
 #include <chrono>
-#include "WorldTerrainSettings.h"
 #include "ChunkMeshData.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BinaryChunk.generated.h"
 
+class UWorldTerrainSettings;
 class FastNoiseLite;
 class UProceduralMeshComponent;
 
@@ -32,7 +32,11 @@ public:
 	// Sets default values for this actor's properties
 	ABinaryChunk();
 
+	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
+
 private: 
+	UWorldTerrainSettings* WorldTerrainSettingsRef;
+
 	// Create chrono type alias
 	using Time = std::chrono::high_resolution_clock::time_point;
 
@@ -81,6 +85,17 @@ private:
 	void printExecutionTime(Time& start, Time& end, const char* functionName);
 
 	void printBinary(uint64_t value, int groupSize);
+
+
+	// TODO MAYBE DELETE THIS ONCE I GET THE REFERENCES SORTED
+	int UnrealScale{ 100 };
+	std::atomic<int> DrawDistance{ 5 };
+
+	// Single chunk settings
+	const uint16_t chunkHeight{ 248 }; // 4 bits 
+	const uint8_t chunkSize{ 62 }; // 62
+	const uint8_t chunkSizePadding{ 64 }; // 64
+	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 
 protected:
 	// Called when the game starts or when spawned

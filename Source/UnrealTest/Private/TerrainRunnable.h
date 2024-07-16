@@ -2,20 +2,19 @@
 
 #pragma once
 
-#include "WorldTerrainSettings.h"
-#include "ChunkLocationData.h"
+// #include "WorldTerrainSettings.h"
+//#include "ChunkLocationData.h"
 
 #include "Async/Async.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
+class UWorldTerrainSettings; // forward declaration to the world settings
+class UChunkLocationData;
 
-/**
- *
- */
 class TerrainRunnable : public FRunnable {
 public:
-	TerrainRunnable(FVector PlayerPosition);
+	TerrainRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
 	virtual ~TerrainRunnable() override;
 
 	virtual bool Init() override;
@@ -25,16 +24,13 @@ public:
 
 	FThreadSafeBool IsTaskComplete() const;
 
-	// Methods to interact with the world chunks
-	static void AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor);
-	static AActor* GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates);
-	static int GetMapSize();
-	static void updateInitialPlayerPosition(FVector newPosition);
-	static FVector getInitialPlayerPosition();
-	static void EmptyChunkMap();
-	static void printMapElements(FString message);
+	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
+	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 
 private:
+	UWorldTerrainSettings* WorldTerrainSettingsRef;
+	UChunkLocationData* ChunkLocationDataRef;
+
 	FVector PlayerPosition;
 
 	void UpdateChunks();

@@ -2,11 +2,17 @@
 
 #pragma once
 
+// #include "BinaryChunk.h"
 #include "TerrainRunnable.h"
 #include <chrono>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ChunkWorld.generated.h"
+
+
+class ABinaryChunk;
+class WorldTerrainSettings; // forward declaration to the world settings
+class UChunkLocationData;
 
 UCLASS()
 class AChunkWorld : public AActor {
@@ -16,10 +22,15 @@ public:
 	// Sets default values for this actor's properties
 	AChunkWorld();
 
-	UPROPERTY(EditAnywhere, Category = "Chunk World")
-	TSubclassOf<AActor> Chunk;
+	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
+	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 
 private:
+	UWorldTerrainSettings* WorldTerrainSettingsRef;
+	UChunkLocationData* ChunkLocationDataRef;
+
+	TSubclassOf<AActor> Chunk;
+
 	// Create chrono type alias // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header
 	using Time = std::chrono::high_resolution_clock::time_point;
 
@@ -35,7 +46,7 @@ private:
 	FRunnableThread* terrainRunnableThread;
 	FThreadSafeBool isTaskRunning;
 
-	// Handle 
+	// Handle logic after the terrain is generated 
 	void onNewTerrainGenerated();
 
 protected:

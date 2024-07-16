@@ -9,6 +9,7 @@
 #include <limits>
 #include "FastNoiseLite.h"
 
+
 // Sets default values
 ABinaryChunk::ABinaryChunk() {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -27,6 +28,9 @@ ABinaryChunk::ABinaryChunk() {
 	SetRootComponent(Mesh);
 }
 
+void ABinaryChunk::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
+	WorldTerrainSettingsRef = InWorldTerrainSettings;
+}
 
 // Debugging function that prints a 64-bit integer in groups
 void ABinaryChunk::printBinary(uint64_t value, int groupSize) {
@@ -60,6 +64,10 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize) {
 }
 
 void ABinaryChunk::createBinarySolidColumnsYXZ() {
+	if (!WorldTerrainSettingsRef) { // TODO TESTING THE REFERENCE
+		UE_LOG(LogTemp, Error, TEXT("WorldTerrainSettingsRef is null in createBinarySolidColumnsYXZ()"));
+	}
+
 	// Get current chunk world position
 	const FVector chunkWorldLocation = GetActorLocation();
 
@@ -370,6 +378,10 @@ void ABinaryChunk::createAllVoxelPositionsFromOriginal(
 
 
 void ABinaryChunk::createTerrainMeshesData() {
+	if (!WorldTerrainSettingsRef) { // TODO TESTING THE REFERENCE
+		UE_LOG(LogTemp, Error, TEXT("WorldTerrainSettingsRef is null in createTerrainMeshesData()"));
+	}
+
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint64_t>> columnFaceMasks{
