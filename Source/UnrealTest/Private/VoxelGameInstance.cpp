@@ -29,9 +29,6 @@ void UVoxelGameInstance::Init() {
 
     chunkWorld = GetWorld()->SpawnActorDeferred<AChunkWorld>(ChunkWorldClass, FTransform(FRotator::ZeroRotator, FVector::ZeroVector), OwnerActor, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
-    // Spawn the actor first
-    // chunkWorld = GetWorld()->SpawnActor<AChunkWorld>(AChunkWorld::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-
     if (chunkWorld) {
         // Set the chunk world references to terrain settings and chunk location data
         chunkWorld->SetChunkLocationData(chunkLocationData);

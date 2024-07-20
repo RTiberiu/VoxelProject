@@ -233,13 +233,7 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>
 }
 
 // Calculate the starting position of a voxel, depending on the current column and axis 
-FVector ABinaryChunk::getVoxelStartingPosition(uint64_t& column, const int& axis, const int& x, const int& z, const int& bitIndex, const int& columnIndex) {
-	// Get the trailing zeros for the current column
-	int y = std::countr_zero(column);
-
-	// Clear the position 
-	column &= column - 1;
-
+FVector ABinaryChunk::getVoxelStartingPosition(const int& height, const int& axis, const int& x, const int& z, const int& bitIndex, const int& columnIndex) {
 	FVector voxelPosition1(3);
 	switch (axis) {
 	case 0:
@@ -247,7 +241,7 @@ FVector ABinaryChunk::getVoxelStartingPosition(uint64_t& column, const int& axis
 		// Get y's starting position, depending on the current bitIndex
 		int startingPositionY = bitIndex * chunkSizePadding;
 		//									  X                      Y                     Z
-		voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(y + startingPositionY) }; // up / down 
+		voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(height + startingPositionY) }; // up / down 
 		break;
 	}
 	case 2:
@@ -258,7 +252,7 @@ FVector ABinaryChunk::getVoxelStartingPosition(uint64_t& column, const int& axis
 		// there is the bitIndex inner loop that increments 4 with every Z
 		int xAltered{ ((z * intsPerHeight) % chunkSizePadding) + bitIndex };
 
-		voxelPosition1 = { static_cast<float>(xAltered), static_cast<float>(y), static_cast<float>(currentPositionX) }; // right / left 
+		voxelPosition1 = { static_cast<float>(xAltered), static_cast<float>(height), static_cast<float>(currentPositionX) }; // right / left 
 		break;
 	}
 	case 4:
@@ -267,7 +261,7 @@ FVector ABinaryChunk::getVoxelStartingPosition(uint64_t& column, const int& axis
 
 		int zAltered{ ((z * intsPerHeight) % chunkSizePadding) + bitIndex };
 
-		voxelPosition1 = { static_cast<float>(y), static_cast<float>(zAltered), static_cast<float>(currentPositionZ) }; // forward / backwards 
+		voxelPosition1 = { static_cast<float>(height), static_cast<float>(zAltered), static_cast<float>(currentPositionZ) }; // forward / backwards 
 		break;
 	}
 	default:
@@ -379,6 +373,27 @@ void ABinaryChunk::createTerrainMeshesData() {
 	// Face cull the binary columns on the 3 axis, ascending and descending
 	faceCullingBinaryColumnsYXZ(columnFaceMasks);
 
+	// Storing planes for all axis, ascending and descending
+	std::vector<std::vector<uint64_t>> binaryPlanes{
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y ascending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y descending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X ascending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X descending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z ascending
+		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z descending
+	};
+
+	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending // 6 value
+
+		// Create the binary plane for each axis
+		buildBinaryPlanes(columnFaceMasks[axis], binaryPlanes[axis], axis);
+
+		// Greedy mesh each plane and create planes
+		greedyMeshingBinaryPlane(binaryPlanes[axis], axis);
+	}
+
+	// --------------------------------------------------
+
 	// Find faces and build binary planes based on the voxel block
 	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending // 6 value
 		for (int x = 0; x < chunkSizePadding; x++) {
@@ -396,9 +411,15 @@ void ABinaryChunk::createTerrainMeshesData() {
 					}
 
 					while (column != 0) {
+						// Get the trailing zeros for the current column
+						int y = std::countr_zero(column);
 
-						FVector voxelPosition1 = getVoxelStartingPosition(column, axis, x, z, bitIndex, columnIndex);
+						// Clear the position 
+						column &= column - 1;
+
+						FVector voxelPosition1 = getVoxelStartingPosition(y, axis, x, z, bitIndex, columnIndex);
 						
+
 						// TODO Add greedy meshing and get the height and width 
 						
 						int width{ 1 }; // TODO change after greeding meshing
@@ -419,6 +440,116 @@ void ABinaryChunk::createTerrainMeshesData() {
 			}
 		}
 	}
+}
+
+void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis) {
+	for (int x = 0; x < chunkSizePadding; x++) {
+		for (int z = 0; z < chunkSizePadding; z++) {
+			for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
+
+				int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
+			
+				uint64_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
+
+				// Remove padding only for X and Z axis 
+				if (axis != 0 && axis != 1) {
+					// Remove the leftmost bit and the rightmost bit and replace them with 0
+					column = (column & ~(1ULL << 63)) & ~1ULL;
+				}
+
+				while (column != 0) {
+					// Get the trailing zeros for the current column
+					int y = std::countr_zero(column);
+
+					switch (axis) {
+					case 0:
+					case 1:
+						binaryPlane[y * chunkSizePadding * bitIndex] |= (1ULL << (columnIndex % chunkSizePadding)); // NOT VERIFIED!
+						break;
+					case 2:
+					case 3:
+						binaryPlane[columnIndex] |= (1ULL < y); // NOT VERIFIED!
+						break;
+					case 4:
+					case 5:
+						binaryPlane[columnIndex] |= (1ULL < y); // NOT VERIFIED!
+						break;
+					}
+					// TODO Set the correct bit to create each plane
+					// 
+					// For axis 0 and 1 (up and down) Y
+					// 
+					// y * chunkSizePadding * bitIndex = index in binaryPlane;
+					//			That's because each y value represents a new plane that goes from 0 to max height (254)
+					// 
+					// columnIndex = the n-th bit to flip for the current index 64 bits
+					
+					// For axis 2 and 3 (left and right) X
+					//
+					// columnIndex = index in binaryPlane;
+					// 
+					// y = the n-th bit to flip for the current index 64 bits
+
+
+					// For axis 4 and 5 (backward and forward) Z
+					//
+					// columnIndex = index in binaryPlane;
+					// 
+					// y = the n-th bit to flip for the current index 64 bits
+
+
+					// Clear the position 
+					column &= column - 1;
+
+				}
+			
+			}
+		}
+	}
+}
+
+// THIS IS ALL WORK IN PROGRESS. I HAVE TO VALIDATE THE ENTIRE LOGIC AND CONTINUE.
+// The idea is to traverse each plane, expand and get the points for the planes for the current plane
+// and then create the vertices with the current height and width
+//
+// I also still have to validate the planes value. 
+void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis) {
+	// Build greedy plane 
+	for (int row = 0; row < planes.size(); row++) {
+
+		uint64_t y = std::countr_zero(planes[row] >> y);
+
+
+		if (y >= chunkSizePadding) {
+			continue;
+		}
+
+		int height = std::countr_one(planes[row] >> y);
+
+		uint64_t heightMask = (1ULL << height) - 1;
+
+		int width = 1;
+
+		while ((row % chunkSizePadding) + width < chunkSizePadding) {
+			// Get the bits spanning height for the next row
+			int nextRowHeight = (planes[(row % chunkSizePadding) + width] >> y) & heightMask;
+
+
+			if (nextRowHeight != heightMask) {
+				break; // Can't expand horizontally
+			}
+
+			// Remove the bits we expanded into
+			planes[(row % chunkSizePadding) + width] = planes[(row % chunkSizePadding) + width] & ~heightMask;
+
+			width++; 
+		}
+
+
+
+
+	}
+
 }
 
 void ABinaryChunk::testingMeshingCreation() {
@@ -580,11 +711,6 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 		Color, Color, Color, Color
 	});
 }
-
-void ABinaryChunk::greedyMeshingBinaryPlane() {
-	// TODO Implement greedy meshing for all planes
-} 
-
 
 void ABinaryChunk::spawnTerrainChunkMeshes() {
 	Mesh->CreateMeshSection(0, MeshData.Vertices, MeshData.Triangles, MeshData.Normals, MeshData.UV0, MeshData.Colors, TArray<FProcMeshTangent>(), false);

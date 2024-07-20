@@ -55,7 +55,7 @@ private:
 
 	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
 
-	FVector getVoxelStartingPosition(uint64_t& column, const int& axis, const int& x, const int& z, const int& bitIndex, const int& columnIndex);
+	FVector getVoxelStartingPosition(const int& height, const int& axis, const int& x, const int& z, const int& bitIndex, const int& columnIndex);
 
 	void createAllVoxelPositionsFromOriginal(
 		FVector& voxelPosition1, 
@@ -74,9 +74,11 @@ private:
 		const int& height, const int& width,
 		const int& axis);
 
-	void greedyMeshingBinaryPlane();
+	void greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis);
 
 	void createTerrainMeshesData();
+
+	void buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis);
 
 	void spawnTerrainChunkMeshes();
 
