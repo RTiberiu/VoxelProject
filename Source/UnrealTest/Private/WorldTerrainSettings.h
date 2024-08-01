@@ -18,7 +18,7 @@ public:
 	UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 100 };
-	const uint8_t DrawDistance{ 5 };
+	const uint8_t DrawDistance{ 5 }; // 5 
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits 

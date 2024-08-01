@@ -33,7 +33,7 @@ void ABinaryChunk::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrain
 }
 
 // Debugging function that prints a 64-bit integer in groups
-void ABinaryChunk::printBinary(uint64_t value, int groupSize) {
+void ABinaryChunk::printBinary(uint64_t value, int groupSize, const std::string& otherData) {
 	// Ensure groupSize is a positive integer
 	if (groupSize <= 0) {
 		std::cerr << "Group size must be a positive integer" << std::endl;
@@ -59,7 +59,8 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize) {
 	FString formattedFString = FString(formattedString.c_str());
 
 	// Print the formatted binary string
-	UE_LOG(LogTemp, Warning, TEXT("Column value: %s"), *formattedFString);
+	FString otherDataFString = FString(otherData.c_str());
+	UE_LOG(LogTemp, Warning, TEXT("%s %s"), *otherDataFString, *formattedFString);
 
 }
 
@@ -374,7 +375,7 @@ void ABinaryChunk::createTerrainMeshesData() {
 	faceCullingBinaryColumnsYXZ(columnFaceMasks);
 
 	// Storing planes for all axis, ascending and descending
-	std::vector<std::vector<uint64_t>> binaryPlanes{
+	std::vector<std::vector<uint64_t>> binaryPlanes{ 
 		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y ascending
 		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y descending
 		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X ascending
@@ -388,58 +389,92 @@ void ABinaryChunk::createTerrainMeshesData() {
 		// Create the binary plane for each axis
 		buildBinaryPlanes(columnFaceMasks[axis], binaryPlanes[axis], axis);
 
+		//  PRINTING THE PLANES FOR TESTING 
+		//UE_LOG(LogTemp, Warning, TEXT("-------------- Planes for axis %d --------------"), axis);
+		//for (int row = 2880; row < 3072; row++) { // for (int row = 0; row < binaryPlanes[axis].size(); row++) 
+
+		//	if (row == 0) {
+		//		UE_LOG(LogTemp, Warning, TEXT("--- Plane %d --- "), 1);
+		//	} else if (row % chunkSizePadding == 0) {
+		//		UE_LOG(LogTemp, Warning, TEXT("\n\n--- Plane %d Row: %d  --- "), row / chunkSizePadding, row);
+		//	}
+
+		//	const std::string message = "Row " + std::to_string(row) + ": ";
+
+		//	printBinary(binaryPlanes[axis][row], 8, message);
+		//}
+
+		// PRINTING THE 3 LAYERS ONE AT THE TIME 
+		/*UE_LOG(LogTemp, Warning, TEXT("-------------- Slices of Z axis --------------"), axis);
+		int counter{ 0 };
+		for (int row = 2880; row < 2944; row++) { 
+			const std::string message = "Row " + std::to_string(counter) + ": ";
+
+			printBinary(binaryPlanes[axis][row], 8, message);
+			printBinary(binaryPlanes[axis][row + 64], 8, message);
+			printBinary(binaryPlanes[axis][row + 64 + 64], 8, message);
+
+			UE_LOG(LogTemp, Warning, TEXT("\n----------------------------\n"));
+
+			counter++;
+		}*/
+
 		// Greedy mesh each plane and create planes
 		greedyMeshingBinaryPlane(binaryPlanes[axis], axis);
 	}
 
+	
+
+	// --------------------------------------------------
+	//  Below is the old implementation without greedy meshing (that still works)
 	// --------------------------------------------------
 
 	// Find faces and build binary planes based on the voxel block
-	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending // 6 value
-		for (int x = 0; x < chunkSizePadding; x++) {
-			for (int z = 0; z < chunkSizePadding; z++) {
-				for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
+	//for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending // 6 value
+	//	for (int x = 0; x < chunkSizePadding; x++) {
+	//		for (int z = 0; z < chunkSizePadding; z++) {
+	//			for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
 
-					int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
+	//				int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
 
-					uint64_t column = columnFaceMasks[axis][columnIndex];  // this goes from 0 - 16,383
+	//				uint64_t column = columnFaceMasks[axis][columnIndex];  // this goes from 0 - 16,383
 
-					// Remove padding only for X and Z axis 
-					if (axis != 0 && axis != 1) {
-						// Remove the leftmost bit and the rightmost bit and replace them with 0
-						column = (column & ~(1ULL << 63)) & ~1ULL;
-					}
+	//				// Remove padding only for X and Z axis 
+	//				if (axis != 0 && axis != 1) {
+	//					// Remove the leftmost bit and the rightmost bit and replace them with 0
+	//					column = (column & ~(1ULL << 63)) & ~1ULL;
+	//				}
 
-					while (column != 0) {
-						// Get the trailing zeros for the current column
-						int y = std::countr_zero(column);
+	//				while (column != 0) {
+	//					// Get the trailing zeros for the current column
+	//					int y = std::countr_zero(column);
 
-						// Clear the position 
-						column &= column - 1;
+	//					// Clear the position 
+	//					column &= column - 1;
 
-						FVector voxelPosition1 = getVoxelStartingPosition(y, axis, x, z, bitIndex, columnIndex);
-						
+	//					FVector voxelPosition1 = getVoxelStartingPosition(y, axis, x, z, bitIndex, columnIndex);
+	//					
 
-						// TODO Add greedy meshing and get the height and width 
-						
-						int width{ 1 }; // TODO change after greeding meshing
-						int height{ 1 }; // TODO change after greeding meshing
+	//					// TODO Add greedy meshing and get the height and width 
+	//					
+	//					int width{ 1 }; // TODO change after greeding meshing
+	//					int height{ 1 }; // TODO change after greeding meshing
 
-						FVector voxelPosition2(3);
-						FVector voxelPosition3(3);
-						FVector voxelPosition4(3);
+	//					FVector voxelPosition2(3);
+	//					FVector voxelPosition3(3);
+	//					FVector voxelPosition4(3);
 
-						// Modify the original voxel position and create the remaining three quad position
-						createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+	//					// Modify the original voxel position and create the remaining three quad position
+	//					createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
 
-						// Create the quads
-						createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+	//					// Create the quads
+	//					createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
 
-					}
-				}
-			}
-		}
-	}
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 }
 
 void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis) {
@@ -451,7 +486,7 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 			
 				uint64_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
 
-				// Remove padding only for X and Z axis 
+				// Remove padding only for Y axis 
 				if (axis != 0 && axis != 1) {
 					// Remove the leftmost bit and the rightmost bit and replace them with 0
 					column = (column & ~(1ULL << 63)) & ~1ULL;
@@ -460,43 +495,47 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 				while (column != 0) {
 					// Get the trailing zeros for the current column
 					int y = std::countr_zero(column);
-
+					int planeIndex;
+					int currentPlaneIndex;
+					int planeRowIndex;
 					switch (axis) {
 					case 0:
 					case 1:
-						binaryPlane[y * chunkSizePadding * bitIndex] |= (1ULL << (columnIndex % chunkSizePadding)); // NOT VERIFIED!
+						// Get to the correct plane and then add x to get to the correct row in the plane
+						planeIndex = planeIndex = (y + bitIndex * chunkSizePadding) * chunkSizePadding + x; // THIS IS CORRECT NOW! 
+
+						binaryPlane[planeIndex] |= (1ULL << z); // VERIFIED!
 						break;
 					case 2:
 					case 3:
-						binaryPlane[columnIndex] |= (1ULL < y); // NOT VERIFIED!
+					
+						planeRowIndex = y; 
+						if (columnIndex > 0) {
+							currentPlaneIndex = (columnIndex / chunkSizePadding) * chunkSizePadding;
+
+							planeIndex = currentPlaneIndex + planeRowIndex;
+						} else {
+							planeIndex = planeRowIndex;
+						}
+
+						binaryPlane[planeIndex] |= (1ULL << columnIndex % chunkSizePadding); 
+						
 						break;
 					case 4:
-					case 5:
-						binaryPlane[columnIndex] |= (1ULL < y); // NOT VERIFIED!
+					case 5: // WORK IN PROGRESS
+						// planeRowIndex = (chunkSizePadding - y - 1);
+						planeRowIndex = y; 
+						if (columnIndex > 0) {
+							currentPlaneIndex = (columnIndex / chunkSizePadding) * chunkSizePadding;
+
+							planeIndex = currentPlaneIndex + planeRowIndex;
+						} else {
+							planeIndex = planeRowIndex;
+						}
+
+						binaryPlane[planeIndex] |= (1ULL << columnIndex % chunkSizePadding);
 						break;
 					}
-					// TODO Set the correct bit to create each plane
-					// 
-					// For axis 0 and 1 (up and down) Y
-					// 
-					// y * chunkSizePadding * bitIndex = index in binaryPlane;
-					//			That's because each y value represents a new plane that goes from 0 to max height (254)
-					// 
-					// columnIndex = the n-th bit to flip for the current index 64 bits
-					
-					// For axis 2 and 3 (left and right) X
-					//
-					// columnIndex = index in binaryPlane;
-					// 
-					// y = the n-th bit to flip for the current index 64 bits
-
-
-					// For axis 4 and 5 (backward and forward) Z
-					//
-					// columnIndex = index in binaryPlane;
-					// 
-					// y = the n-th bit to flip for the current index 64 bits
-
 
 					// Clear the position 
 					column &= column - 1;
@@ -508,49 +547,272 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 	}
 }
 
-// THIS IS ALL WORK IN PROGRESS. I HAVE TO VALIDATE THE ENTIRE LOGIC AND CONTINUE.
-// The idea is to traverse each plane, expand and get the points for the planes for the current plane
-// and then create the vertices with the current height and width
+//// THIS IS ALL WORK IN PROGRESS. I HAVE TO VALIDATE THE ENTIRE LOGIC AND CONTINUE.
+//// The idea is to traverse each plane, expand and get the points for the planes for the current plane
+//// and then create the vertices with the current height and width
+////
+//// I also still have to validate the planes value. 
+//void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis) {
+//	// Cycle through the plane
+//	for (int x = 0; x < chunkSizePadding; x++) {
+//		for (int z = 0; z < chunkSizePadding; z++) {
+//			for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
 //
-// I also still have to validate the planes value. 
+//				int row{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
+//
+//				// I think I still have to create the planes, otherwise I have to go row by row to expand
+//				// The idea is that I already face culled the binary columns, so my height will always be 1 in that case
+//				// That's why I need to create a plane, to get the "true" height. 
+//				// That "true" height is actually multiple columns that share the same height. 
+//				// After getting the height, I can expand to the next row and try to expand again width wise.
+//				// Moving to the next row in reality means try to expand the same columns but on a different row. 
+//				
+//
+//				// Create vertices up until there are no more to create in the current row (this allows 3D terrain)
+//				while (planes[row] != 0) {
+//					// Get the starting point of the vertex
+//					int y = std::countr_zero(planes[row]);
+//
+//					// Trailing ones are the height of the vertex
+//					int height = std::countr_one(planes[row] >> y);
+//
+//					uint64_t heightMask = ((1ULL << height) - 1) << y;
+//
+//					// Flip the solid bits used to create the height mask 
+//					planes[row] = planes[row] & ~heightMask;
+//
+//					int width = 1;
+//					int currentPlaneIndex{ 0 };
+//					const uint16_t* currentPlaneLimit{};
+//
+//					// Get the expanding limit depending on the axis
+//					switch (axis) {
+//					case 0:
+//					case 1:
+//						currentPlaneIndex = row % chunkSizePadding; // plane for Y goes from 0 to 64 
+//						currentPlaneLimit = &chunkSizePadding; // plane Y max limit is 64
+//						break;
+//					case 2:
+//					case 3:
+//					case 4:
+//					case 5:
+//						currentPlaneIndex = row % chunkHeight; // plane for X and Z goes from 0 to 248
+//						currentPlaneLimit = &chunkHeight; // plane X and Z max limit is 248
+//						break;
+//					}
+//
+//					// Check if the next row can be expanded while in the bounds of the current plane 
+//					while (currentPlaneIndex + width < *currentPlaneLimit) {
+//						// Get the bits spanning height for the next row
+//						int nextRowHeight = planes[row + width + intsPerHeight] & heightMask;
+//
+//						if (nextRowHeight != heightMask) {
+//							break; // Can't expand horizontally
+//						}
+//
+//						// Remove the bits we expanded into
+//						planes[row + width + intsPerHeight] = planes[row + width + intsPerHeight] & ~heightMask;
+//
+//						width++;
+//					}
+//
+//					// Create quad from 
+//					// FVector voxelPosition1 = getVoxelStartingPosition(y, axis, x, z, bitIndex, row); // old version
+//					FVector voxelPosition1 = getVoxelStartingPosition(y, axis, x, z, bitIndex, row);
+//
+//					// int width{ 1 }; // TODO change after greeding meshing
+//					// int height{ 1 }; // TODO change after greeding meshing
+//
+//					FVector voxelPosition2(3);
+//					FVector voxelPosition3(3);
+//					FVector voxelPosition4(3);
+//
+//					// Modify the original voxel position and create the remaining three quad position
+//					createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+//
+//					// Create the quads
+//					createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+//				}
+//			}
+//		}
+//	}
+//}
+
 void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis) {
-	// Build greedy plane 
-	for (int row = 0; row < planes.size(); row++) {
+	for (int row = 0; row < planes.size(); row++) { // int row = 2880; row < 2907; // int row = 0; row < planes.size();
 
-		uint64_t y = std::countr_zero(planes[row] >> y);
+		//UE_LOG(LogTemp, Warning, TEXT("--- NEXT ROW ---"));
+		while (planes[row] != 0) {
+			// Get the starting point of the vertex
+			int y = std::countr_zero(planes[row]);
 
+			// Trailing ones are the height of the vertex
+			int height = std::countr_one(planes[row] >> y);
 
-		if (y >= chunkSizePadding) {
-			continue;
-		}
+			//printBinary(planes[row], 8, "Row: " + std::to_string(row) + " Planes row : ");
 
-		int height = std::countr_one(planes[row] >> y);
+			uint64_t heightMask = ((1ULL << height) - 1) << y;
 
-		uint64_t heightMask = (1ULL << height) - 1;
+			//printBinary(heightMask, 8, "Height mask: ");
 
-		int width = 1;
+			// Flip the solid bits used to create the height mask 
+			planes[row] = planes[row] & ~heightMask;
 
-		while ((row % chunkSizePadding) + width < chunkSizePadding) {
-			// Get the bits spanning height for the next row
-			int nextRowHeight = (planes[(row % chunkSizePadding) + width] >> y) & heightMask;
+			//printBinary(planes[row], 8, "Planes row after flipping with height mask: ");
 
+			int width = 1;
+			int currentPlaneLimit{};
 
-			if (nextRowHeight != heightMask) {
-				break; // Can't expand horizontally
+			// Get the expanding limit depending on the axis
+			switch (axis) {
+			case 0:
+			case 1: // TODO There is no greedy meshing for the height/width, not sure which one 
+				currentPlaneLimit = chunkSizePadding; // plane Y max limit is 64
+
+				// Check if the next row can be expanded while in the bounds of the current plane 
+				while ((row % chunkSizePadding) + width < currentPlaneLimit) {
+
+					// Get the correct row to expand into, depending on the axis 
+					int planesIndex = row + width;
+
+					// Get the bits spanning height for the next row
+					uint64_t nextRowHeight = planes[planesIndex] & heightMask;
+
+					//UE_LOG(LogTemp, Warning, TEXT("nextRowHeight: "));
+					//printBinary(nextRowHeight, 8);
+
+					if (nextRowHeight != heightMask) {
+						break; // Can't expand horizontally
+					}
+
+					// Remove the bits we expanded into
+					planes[planesIndex] = planes[planesIndex] & ~heightMask;
+
+					//UE_LOG(LogTemp, Warning, TEXT("Incremented width for axis %d"), axis);
+
+					width++;
+				}
+				break;
+			case 2:
+			case 3: // THIS PART SHOULD BE FINE. If there is an issue, it might be below when creating the vertices
+			case 4:
+			case 5:
+				currentPlaneLimit = chunkHeight * chunkSizePadding; // plane X and Z max limit is 64x248  (64 for each layer, and 248 layers)
+
+				//UE_LOG(LogTemp, Warning, TEXT("\tPlane limit: %d\tValue to be lower than plane limit: %d\tNext row index: %d"), currentPlaneLimit, row + (width * chunkSizePadding), row + (width * chunkSizePadding));
+
+				// Check if the next row can be expanded while in the bounds of the current plane 
+				while (row + (width * chunkSizePadding) < currentPlaneLimit) {
+
+					// Get the row above the current one
+					int planesIndex = row + (width * chunkSizePadding);
+
+					// Get the bits spanning height for the next row
+					uint64_t nextRowHeight = planes[planesIndex] & heightMask;
+
+					//printBinary(planes[planesIndex], 8, "Plane limit: " + std::to_string(currentPlaneLimit) + " Value to be lower than plane limit: " + std::to_string(row + (width * chunkSizePadding)) + " Next row index: " + std::to_string(row + (width * chunkSizePadding)) + " Width: " + std::to_string(width) + " Next row : ");
+
+					//printBinary(nextRowHeight, 8, "nextRowHeight (next row & heightMask): ");
+
+					//UE_LOG(LogTemp, Warning, TEXT("Is nextRowHeight and heightMask equal: %s"), (nextRowHeight == heightMask) ? TEXT("true") : TEXT("false"));
+
+					if (nextRowHeight != heightMask) {
+						break; // Can't expand horizontally
+					}
+
+					// Remove the bits we expanded into
+					planes[planesIndex] = planes[planesIndex] & ~heightMask;
+
+					//printBinary(planes[planesIndex], 8, "Next row after flipping bits we expanded into: ");
+
+					width++;
+				}
+				
+				break;
+		
+				
+
+				// break;
 			}
 
-			// Remove the bits we expanded into
-			planes[(row % chunkSizePadding) + width] = planes[(row % chunkSizePadding) + width] & ~heightMask;
+			// Create quad from 
+					// FVector voxelPosition1 = getVoxelStartingPosition(y, axis, x, z, bitIndex, row); // old version
 
-			width++; 
+			
+			// THIS IS FOR THE Y AXIS
+			FVector voxelPosition1(3);
+			FVector voxelPosition2(3);
+			FVector voxelPosition3(3);
+			FVector voxelPosition4(3);
+			double voxelX{ 0.0 };
+			double voxelZ{ 0.0 };
+			double voxelY{ 0.0 };
+			switch (axis) {
+			case 0:
+			case 1:
+				voxelX = static_cast<double>(row % chunkSizePadding);
+				voxelZ = static_cast<double>(y);
+
+				voxelY = row > 0 ? static_cast<double>(row / chunkSizePadding) : 0.0;
+				voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
+
+				// UE_LOG(LogTemp, Log, TEXT("voxelX: %f, voxelZ: %f, voxelY: %f, width: %d, height: %d, axis: %d"), voxelX, voxelZ, voxelY, width, height, axis);
+				
+				// Modify the original voxel position and create the remaining three quad position
+				createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+
+				// Create the quads
+				createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+				break;
+			case 2:
+			case 3:
+				voxelZ = static_cast<double>(row % chunkSizePadding);
+				voxelX = static_cast<double>(y);
+
+				// Height increases with each 64 rows for X and Z
+				voxelY = row > 0 ? std::floor(static_cast<double>(row / chunkSizePadding)) : 0.0;
+
+				voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
+
+				// Modify the original voxel position and create the remaining three quad position
+				createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, height, width, axis);
+
+				// UE_LOG(LogTemp, Warning, TEXT("Width: %d, Height: %d\n\tVoxel position 1: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 2: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 3: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 4: voxelX: %f, voxelZ: %f, voxelY: %f"), width, height, voxelX, voxelZ, voxelY, voxelPosition2.X, voxelPosition2.Y, voxelPosition2.Z, voxelPosition3.X, voxelPosition3.Y, voxelPosition3.Z, voxelPosition4.X, voxelPosition4.Y, voxelPosition4.Z);
+
+				// Create the quads
+				createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, height, width, axis);
+				break;
+			case 4:
+			case 5:
+				voxelX = static_cast<double>(row % chunkSizePadding);
+				voxelZ = static_cast<double>(y);
+
+				// Height increases with each 64 rows for X and Z
+				voxelY = row > 0 ? std::floor(static_cast<double>(row / chunkSizePadding)) : 0.0;
+
+				voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
+
+				// Modify the original voxel position and create the remaining three quad position
+				createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, height, width, axis);
+
+				// UE_LOG(LogTemp, Warning, TEXT("Width: %d, Height: %d\n\tVoxel position 1: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 2: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 3: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 4: voxelX: %f, voxelZ: %f, voxelY: %f"), width, height, voxelX, voxelZ, voxelY, voxelPosition2.X, voxelPosition2.Y, voxelPosition2.Z, voxelPosition3.X, voxelPosition3.Y, voxelPosition3.Z, voxelPosition4.X, voxelPosition4.Y, voxelPosition4.Z);
+
+				// Create the quads
+				createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, height, width, axis);
+				break;
+			}
+
+			
+
+			
+
 		}
-
 
 
 
 	}
-
 }
+
 
 void ABinaryChunk::testingMeshingCreation() {
 	int width{ 1 }; // TODO change after greeding meshing

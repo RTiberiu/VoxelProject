@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
+#include "ChunkWorld.h"
 #include "WorldTerrainSettings.h"
 #include "ChunkLocationData.h"
 #include "BinaryChunk.h" 
-
-#include "ChunkWorld.h"
 #include "GameFramework/DefaultPawn.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include <Kismet/GameplayStatics.h>
@@ -12,7 +12,7 @@
 // Sets default values
 AChunkWorld::AChunkWorld() : terrainRunnable(nullptr), terrainRunnableThread(nullptr), isTaskRunning(false) {
 	// Set this actor to call Tick() every frame.  Yosu can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = true; // true; testing spawning a single chunk for now. put to true for infinite world
 
 	isInitialWorldGenerated = false;
 

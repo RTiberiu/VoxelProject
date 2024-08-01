@@ -86,7 +86,7 @@ private:
 
 	void printExecutionTime(Time& start, Time& end, const char* functionName);
 
-	void printBinary(uint64_t value, int groupSize);
+	void printBinary(uint64_t value, int groupSize, const std::string& otherData ="Column value: ");
 
 
 	// TODO MAYBE DELETE THIS ONCE I GET THE REFERENCES SORTED
@@ -95,8 +95,8 @@ private:
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits 
-	const uint8_t chunkSize{ 62 }; // 62
-	const uint8_t chunkSizePadding{ 64 }; // 64
+	const uint16_t chunkSize{ 62 }; // 62
+	const uint16_t chunkSizePadding{ 64 }; // 64
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 
 protected:
