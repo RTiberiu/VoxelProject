@@ -233,47 +233,6 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>
 	}
 }
 
-// Calculate the starting position of a voxel, depending on the current column and axis 
-FVector ABinaryChunk::getVoxelStartingPosition(const int& height, const int& axis, const int& x, const int& z, const int& bitIndex, const int& columnIndex) {
-	FVector voxelPosition1(3);
-	switch (axis) {
-	case 0:
-	case 1: {
-		// Get y's starting position, depending on the current bitIndex
-		int startingPositionY = bitIndex * chunkSizePadding;
-		//									  X                      Y                     Z
-		voxelPosition1 = { static_cast<float>(x), static_cast<float>(z), static_cast<float>(height + startingPositionY) }; // up / down 
-		break;
-	}
-	case 2:
-	case 3: {
-		int currentPositionX = columnIndex > 0 ? columnIndex / chunkSizePadding : 0;
-
-		// Ensures X goes to 64 and resets to 0 every time; this is done because
-		// there is the bitIndex inner loop that increments 4 with every Z
-		int xAltered{ ((z * intsPerHeight) % chunkSizePadding) + bitIndex };
-
-		voxelPosition1 = { static_cast<float>(xAltered), static_cast<float>(height), static_cast<float>(currentPositionX) }; // right / left 
-		break;
-	}
-	case 4:
-	case 5: {
-		int currentPositionZ = columnIndex > 0 ? columnIndex / chunkSizePadding : 0;
-
-		int zAltered{ ((z * intsPerHeight) % chunkSizePadding) + bitIndex };
-
-		voxelPosition1 = { static_cast<float>(height), static_cast<float>(zAltered), static_cast<float>(currentPositionZ) }; // forward / backwards 
-		break;
-	}
-	default:
-		UE_LOG(LogTemp, Error, TEXT("Invalid axis value: %d"), axis);
-		ensureMsgf(false, TEXT("Unhandled case in switch statement for axis: %d"), axis);
-		break;
-	}
-
-	return voxelPosition1;
-}
-
 // Modify the original voxel position and create the remaining three quad position
 void ABinaryChunk::createAllVoxelPositionsFromOriginal(
 	FVector& voxelPosition1, 
@@ -295,8 +254,8 @@ void ABinaryChunk::createAllVoxelPositionsFromOriginal(
 
 	switch (axis) {
 	case 0: // Y axis ascending
-		widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-		heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
+		widthPositionModifier[0] = width;
+		heightPositionModifier[1] = height;
 
 		// Adjust face direction
 		voxelPosition1 += bottomFace;
@@ -306,16 +265,16 @@ void ABinaryChunk::createAllVoxelPositionsFromOriginal(
 		voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
 		break;
 	case 1: // Y axis descending
-		widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-		heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
+		widthPositionModifier[0] = width;
+		heightPositionModifier[1] = height;
 
 		voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
 		voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
 		voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
 		break;
 	case 2: // X axis ascending
-		widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-		heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+		widthPositionModifier[0] = height;
+		heightPositionModifier[2] = width;
 
 		// Adjust face direction
 		voxelPosition1 += backwardFace;
@@ -325,16 +284,16 @@ void ABinaryChunk::createAllVoxelPositionsFromOriginal(
 		voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
 		break;
 	case 3: // X axis descending
-		widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-		heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+		widthPositionModifier[0] = height;
+		heightPositionModifier[2] = width;
 
 		voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
 		voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
 		voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
 		break;
 	case 4:	// Z axis ascending
-		widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
-		heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+		widthPositionModifier[1] = height;
+		heightPositionModifier[2] = width;
 
 		// Adjust face direction
 		voxelPosition1 += rightFace;
@@ -344,8 +303,8 @@ void ABinaryChunk::createAllVoxelPositionsFromOriginal(
 		voxelPosition4 = voxelPosition1 + widthPositionModifier; // bottom - right
 		break;
 	case 5: // Z axis descending
-		widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
-		heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
+		widthPositionModifier[1] = height;
+		heightPositionModifier[2] = width;
 
 		voxelPosition2 = voxelPosition1 + widthPositionModifier; // bottom - right
 		voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
@@ -384,42 +343,9 @@ void ABinaryChunk::createTerrainMeshesData() {
 		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z descending
 	};
 
-	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending // 6 value
-
+	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending 
 		// Create the binary plane for each axis
 		buildBinaryPlanes(columnFaceMasks[axis], binaryPlanes[axis], axis);
-
-		//  PRINTING THE PLANES FOR TESTING 
-		//if (axis == 0) {
-		//	UE_LOG(LogTemp, Warning, TEXT("-------------- Planes for axis %d --------------"), axis);
-		//	for (int row = 0; row < binaryPlanes[axis].size(); row++) { // for (int row = 0; row < binaryPlanes[axis].size(); row++) 
-
-		//		if (row == 0) {
-		//			UE_LOG(LogTemp, Warning, TEXT("--- Plane %d --- "), 1);
-		//		} else if (row % chunkSizePadding == 0) {
-		//			UE_LOG(LogTemp, Warning, TEXT("\n\n--- Plane %d Row: %d  --- "), row / chunkSizePadding, row);
-		//		}
-
-		//		const std::string message = "Row " + std::to_string(row) + ": ";
-
-		//		printBinary(binaryPlanes[axis][row], 8, message);
-		//	}
-		//}
-		
-		// PRINTING THE 3 LAYERS ONE AT THE TIME 
-		/*UE_LOG(LogTemp, Warning, TEXT("-------------- Slices of Z axis --------------"), axis);
-		int counter{ 0 };
-		for (int row = 2880; row < 2944; row++) { 
-			const std::string message = "Row " + std::to_string(counter) + ": ";
-
-			printBinary(binaryPlanes[axis][row], 8, message);
-			printBinary(binaryPlanes[axis][row + 64], 8, message);
-			printBinary(binaryPlanes[axis][row + 64 + 64], 8, message);
-
-			UE_LOG(LogTemp, Warning, TEXT("\n----------------------------\n"));
-
-			counter++;
-		}*/
 
 		// Greedy mesh each plane and create planes
 		greedyMeshingBinaryPlane(binaryPlanes[axis], axis);
@@ -451,37 +377,22 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 					case 0:
 					case 1:
 						// Get to the correct plane and then add x to get to the correct row in the plane
-						planeIndex = planeIndex = (y + bitIndex * chunkSizePadding) * chunkSizePadding + x; // THIS IS CORRECT NOW! 
-
-						binaryPlane[planeIndex] |= (1ULL << z); // VERIFIED!
+						planeIndex = (y + bitIndex * chunkSizePadding) * chunkSizePadding + x;
+						binaryPlane[planeIndex] |= (1ULL << z);
 						break;
 					case 2:
 					case 3:
-					
+					case 4:
+					case 5:
 						planeRowIndex = y; 
 						if (columnIndex > 0) {
 							currentPlaneIndex = (columnIndex / chunkSizePadding) * chunkSizePadding;
-
 							planeIndex = currentPlaneIndex + planeRowIndex;
 						} else {
 							planeIndex = planeRowIndex;
 						}
 
 						binaryPlane[planeIndex] |= (1ULL << columnIndex % chunkSizePadding); 
-						break;
-					case 4:
-					case 5: // WORK IN PROGRESS
-						// planeRowIndex = (chunkSizePadding - y - 1);
-						planeRowIndex = y; 
-						if (columnIndex > 0) {
-							currentPlaneIndex = (columnIndex / chunkSizePadding) * chunkSizePadding;
-
-							planeIndex = currentPlaneIndex + planeRowIndex;
-						} else {
-							planeIndex = planeRowIndex;
-						}
-
-						binaryPlane[planeIndex] |= (1ULL << columnIndex % chunkSizePadding);
 						break;
 					}
 
@@ -490,7 +401,6 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 
 					// Clear the position 
 					column &= column - 1;
-
 				}
 			
 			}
@@ -499,13 +409,12 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 }
 
 void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis) {
-	for (int row = 0; row < planes.size(); row++) { // int row = 2880; row < 2907; // int row = 0; row < planes.size();
+	for (int row = 0; row < planes.size(); row++) {
 
-		// Skipping the first and last row in the plane
+		// Removing padding by skipping the first and last row in the plane
 		if (row == 0) continue;
 		else if (row % chunkSizePadding == 0 || row % chunkSizePadding == chunkSizePadding - 1) continue;
 
-		//UE_LOG(LogTemp, Warning, TEXT("--- NEXT ROW ---"));
 		while (planes[row] != 0) {
 			// Get the starting point of the vertex
 			int y = std::countr_zero(planes[row]);
@@ -513,16 +422,10 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			// Trailing ones are the height of the vertex
 			int height = std::countr_one(planes[row] >> y);
 
-			//printBinary(planes[row], 8, "Row: " + std::to_string(row) + " Planes row : ");
-
 			uint64_t heightMask = ((1ULL << height) - 1) << y;
-
-			//printBinary(heightMask, 8, "Height mask: ");
 
 			// Flip the solid bits used to create the height mask 
 			planes[row] = planes[row] & ~heightMask;
-
-			//printBinary(planes[row], 8, "Planes row after flipping with height mask: ");
 
 			int width = 1;
 			int currentPlaneLimit{};
@@ -530,7 +433,7 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			// Get the expanding limit depending on the axis
 			switch (axis) {
 			case 0:
-			case 1: // TODO There is no greedy meshing for the height/width, not sure which one 
+			case 1:
 				currentPlaneLimit = chunkSize; // plane Y max limit is 64
 
 				// Check if the next row can be expanded while in the bounds of the current plane 
@@ -542,17 +445,12 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 					// Get the bits spanning height for the next row
 					uint64_t nextRowHeight = planes[planesIndex] & heightMask;
 
-					//UE_LOG(LogTemp, Warning, TEXT("nextRowHeight: "));
-					//printBinary(nextRowHeight, 8);
-
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
 					}
 
 					// Remove the bits we expanded into
 					planes[planesIndex] = planes[planesIndex] & ~heightMask;
-
-					//UE_LOG(LogTemp, Warning, TEXT("Incremented width for axis %d"), axis);
 
 					width++;
 				}
@@ -563,8 +461,6 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			case 5:
 				currentPlaneLimit = chunkHeight * chunkSize; // plane X and Z max limit is 64x248  (64 for each layer, and 248 layers)
 
-				//UE_LOG(LogTemp, Warning, TEXT("\tPlane limit: %d\tValue to be lower than plane limit: %d\tNext row index: %d"), currentPlaneLimit, row + (width * chunkSizePadding), row + (width * chunkSizePadding));
-
 				// Check if the next row can be expanded while in the bounds of the current plane 
 				while (row + (width * chunkSizePadding) < currentPlaneLimit) {
 
@@ -574,12 +470,6 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 					// Get the bits spanning height for the next row
 					uint64_t nextRowHeight = planes[planesIndex] & heightMask;
 
-					//printBinary(planes[planesIndex], 8, "Plane limit: " + std::to_string(currentPlaneLimit) + " Value to be lower than plane limit: " + std::to_string(row + (width * chunkSizePadding)) + " Next row index: " + std::to_string(row + (width * chunkSizePadding)) + " Width: " + std::to_string(width) + " Next row : ");
-
-					//printBinary(nextRowHeight, 8, "nextRowHeight (next row & heightMask): ");
-
-					//UE_LOG(LogTemp, Warning, TEXT("Is nextRowHeight and heightMask equal: %s"), (nextRowHeight == heightMask) ? TEXT("true") : TEXT("false"));
-
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
 					}
@@ -587,18 +477,11 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 					// Remove the bits we expanded into
 					planes[planesIndex] = planes[planesIndex] & ~heightMask;
 
-					//printBinary(planes[planesIndex], 8, "Next row after flipping bits we expanded into: ");
-
 					width++;
 				}
 				break;
 			}
-
-			// Create quad from 
-					// FVector voxelPosition1 = getVoxelStartingPosition(y, axis, x, z, bitIndex, row); // old version
-
 			
-			// THIS IS FOR THE Y AXIS
 			FVector voxelPosition1(3);
 			FVector voxelPosition2(3);
 			FVector voxelPosition3(3);
@@ -606,178 +489,32 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			double voxelX{ 0.0 };
 			double voxelZ{ 0.0 };
 			double voxelY{ 0.0 };
+
 			switch (axis) {
 			case 0:
 			case 1:
+			case 4:
+			case 5:
 				voxelX = static_cast<double>(row % chunkSizePadding);
 				voxelZ = static_cast<double>(y);
-
-				voxelY = row > 0 ? static_cast<double>(row / chunkSizePadding) : 0.0;
-				voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
-
-				// UE_LOG(LogTemp, Log, TEXT("voxelX: %f, voxelZ: %f, voxelY: %f, width: %d, height: %d, axis: %d"), voxelX, voxelZ, voxelY, width, height, axis);
-				
-				// Modify the original voxel position and create the remaining three quad position
-				createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
-
-				// Create the quads
-				createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
 				break;
 			case 2:
 			case 3:
 				voxelZ = static_cast<double>(row % chunkSizePadding);
 				voxelX = static_cast<double>(y);
-
-				// Height increases with each 64 rows for X and Z
-				voxelY = row > 0 ? std::floor(static_cast<double>(row / chunkSizePadding)) : 0.0;
-
-				voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
-
-				// Modify the original voxel position and create the remaining three quad position
-				createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, height, width, axis);
-
-				// UE_LOG(LogTemp, Warning, TEXT("Width: %d, Height: %d\n\tVoxel position 1: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 2: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 3: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 4: voxelX: %f, voxelZ: %f, voxelY: %f"), width, height, voxelX, voxelZ, voxelY, voxelPosition2.X, voxelPosition2.Y, voxelPosition2.Z, voxelPosition3.X, voxelPosition3.Y, voxelPosition3.Z, voxelPosition4.X, voxelPosition4.Y, voxelPosition4.Z);
-
-				// Create the quads
-				createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, height, width, axis);
-				break;
-			case 4:
-			case 5:
-				voxelX = static_cast<double>(row % chunkSizePadding);
-				voxelZ = static_cast<double>(y);
-
-				// Height increases with each 64 rows for X and Z
-				voxelY = row > 0 ? std::floor(static_cast<double>(row / chunkSizePadding)) : 0.0;
-
-				voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
-
-				// Modify the original voxel position and create the remaining three quad position
-				createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, height, width, axis);
-
-				// UE_LOG(LogTemp, Warning, TEXT("Width: %d, Height: %d\n\tVoxel position 1: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 2: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 3: voxelX: %f, voxelZ: %f, voxelY: %f\n\tVoxel position 4: voxelX: %f, voxelZ: %f, voxelY: %f"), width, height, voxelX, voxelZ, voxelY, voxelPosition2.X, voxelPosition2.Y, voxelPosition2.Z, voxelPosition3.X, voxelPosition3.Y, voxelPosition3.Z, voxelPosition4.X, voxelPosition4.Y, voxelPosition4.Z);
-
-				// Create the quads
-				createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, height, width, axis);
 				break;
 			}
 
+			// Height increases with each 64 rows for X and Z
+			voxelY = row > 0 ? std::floor(static_cast<double>(row / chunkSizePadding)) : 0.0;
+			voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
 			
+			// Modify the original voxel position and create the remaining three quad position
+			createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
 
-			
-
+			// Create the quads
+			createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
 		}
-
-
-
-	}
-}
-
-
-void ABinaryChunk::testingMeshingCreation() {
-	int width{ 1 }; // TODO change after greeding meshing
-	int height{ 1 }; // TODO change after greeding meshing
-
-
-	FVector voxelPosition1 = { 0, 0, 0 };
-
-	for (int axis = 0; axis < 4; axis++) {
-
-		FVector widthPositionModifier = { 0, 0, 0 };
-		FVector heightPositionModifier = { 0, 0, 0 };
-		FVector voxelPosition2(3);
-		FVector voxelPosition3(3);
-		FVector voxelPosition4(3);
-
-		// Vector for face directions // TODO Maybe delete this. Double-check after fixing X and Z faces
-		FVector bottomFace = { 0, 0, 1 };
-		FVector topFace = { 0, 0, -1 };
-		FVector leftFace = { 0, 1, 0 };
-		FVector rightFace = { 0, -1, 0 };
-		FVector forwardFace = { 1, 0, 0 };
-		FVector backwardFace = { -1, 0, 0 };
-
-		switch (axis) {
-		case 0: // Y axis ascending
-			widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-			heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
-
-			// Adjust face direction
-			voxelPosition1 += bottomFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
-
-			voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
-			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-			voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
-			break;
-		case 1: // Y axis descending
-			widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-			heightPositionModifier[1] = height; // NOT SURE IF IT'S HEIGHT HERE
-
-			// Adjust face direction
-			voxelPosition1 += topFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
-
-			voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
-			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-			voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
-			break;
-		case 2: // X axis descending
-			widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
-			heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-
-			// Adjust face direction
-			voxelPosition1 += forwardFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
-
-			voxelPosition2 = voxelPosition1 + heightPositionModifier; // bottom - right
-			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-			voxelPosition4 = voxelPosition1 + widthPositionModifier;// top - left
-			break;
-		case 3: // X axis ascending
-			widthPositionModifier[1] = width; // NOT SURE IF IT'S WIDTH HERE
-			heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-
-			// Adjust face direction
-			voxelPosition1 += backwardFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
-
-			voxelPosition2 = voxelPosition1 + widthPositionModifier; // top - left
-			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-			voxelPosition4 = voxelPosition1 + heightPositionModifier; // bottom - right
-			break;
-		case 4: // Z axis descending
-			widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-			heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-
-			// Adjust face direction
-			voxelPosition1 += leftFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
-
-			voxelPosition2 = voxelPosition1 + widthPositionModifier; // bottom - right
-			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-			voxelPosition4 = voxelPosition1 + heightPositionModifier;// top - left
-			break;
-		case 5:	// Z axis ascending
-			widthPositionModifier[0] = width; // NOT SURE IF IT'S WIDTH HERE
-			heightPositionModifier[2] = height; // NOT SURE IF IT'S HEIGHT HERE
-		
-			// Adjust face direction
-			voxelPosition1 += rightFace; // TODO Maybe delete this. Double-check after fixing X and Z faces
-
-			voxelPosition2 = voxelPosition1 + heightPositionModifier; // top - left
-			voxelPosition3 = voxelPosition1 + widthPositionModifier + heightPositionModifier; // top - right
-			voxelPosition4 = voxelPosition1 + widthPositionModifier; // bottom - right
-			break;
-		default:
-			UE_LOG(LogTemp, Error, TEXT("Invalid axis value: %d"), axis);
-			ensureMsgf(false, TEXT("Unhandled case in switch statement for axis: %d"), axis);
-			break;
-		}
-
-		
-		// Log voxel positions
-		UE_LOG(LogTemp, Warning, TEXT("Axis: %d"), axis);
-		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition1: %s"), *voxelPosition1.ToString());
-		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition2: %s"), *voxelPosition2.ToString());
-		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition3: %s"), *voxelPosition3.ToString());
-		UE_LOG(LogTemp, Warning, TEXT("VoxelPosition4: %s"), *voxelPosition4.ToString());
-
-		createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
 	}
 }
 
@@ -786,7 +523,7 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 	const FVector& voxelPosition2,
 	const FVector& voxelPosition3,
 	const FVector& voxelPosition4,
-	const int& height, const int& width,
+	const int& width, const int& height,
 	const int& axis
 	) {
 
@@ -816,9 +553,16 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 
 	MeshData.Normals.Append({ Normal, Normal, Normal, Normal });
 
-	MeshData.UV0.Append({
-		FVector2D(0, 0), FVector2D(0, height), FVector2D(width, height), FVector2D(width, 0)
-	});
+	// Invert the width with the height for the X and Z axis
+	if (axis == 0 || axis == 1) {
+		MeshData.UV0.Append({
+			FVector2D(0, 0), FVector2D(0, width), FVector2D(height, width), FVector2D(height, 0)
+		});
+	} else {
+		MeshData.UV0.Append({
+			FVector2D(0, 0), FVector2D(0, height), FVector2D(width, height), FVector2D(width, 0)
+		});
+	}
 
 	// Randomize the RGB values
 	uint8 Red = FMath::RandRange(0, 255);
