@@ -39,8 +39,8 @@ void AChunkWorld::spawnInitialWorld() {
 	int spawnedChunks{ 0 };
 	Time start = std::chrono::high_resolution_clock::now();
 
-	for (int x = -WorldTerrainSettingsRef->DrawDistance; x < WorldTerrainSettingsRef->DrawDistance; x++) {
-		for (int z = -WorldTerrainSettingsRef->DrawDistance; z < WorldTerrainSettingsRef->DrawDistance; z++) {
+	for (int x = -WorldTerrainSettingsRef->DrawDistance; x < WorldTerrainSettingsRef->DrawDistance; x++) { // for (int x = -WorldTerrainSettingsRef->DrawDistance; x < WorldTerrainSettingsRef->DrawDistance; x++) {
+		for (int z = -WorldTerrainSettingsRef->DrawDistance; z < WorldTerrainSettingsRef->DrawDistance; z++) { // for (int z = -WorldTerrainSettingsRef->DrawDistance; z < WorldTerrainSettingsRef->DrawDistance; z++) {
 			FVector ChunkPosition = FVector(x * WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale, z * WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale, 0);
 
 			// ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActor<ABinaryChunk>(Chunk, ChunkPosition, FRotator::ZeroRotator);
