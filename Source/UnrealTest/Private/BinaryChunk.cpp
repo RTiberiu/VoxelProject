@@ -121,11 +121,11 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 				}
 
 				// Get index of y 
-				int yIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
+				const int yIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
 
 				// Add blocks height data (Y) to the current X and Z
 				binaryChunk.yBinaryColumn[yIndex] = yHeight;
-				uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex]; // TODO MAYBE COMBINE THIS TWO LINES (the one above)
+				const uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex]; // TODO MAYBE COMBINE THIS TWO LINES (the one above)
 
 				// Skip iteration if Y column is all air
 				if (currentYCol == 0) {
@@ -134,10 +134,10 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 
 				for (int y = 0; y < chunkSizePadding; y++) {
 					// Next Y index (column) means the same X index (column), but a change in Y bit index
-					int xIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + x };
+					const int xIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + x };
 
 					// y'th bit of column Y
-					uint8_t nthBitY = (currentYCol >> y) & 1;
+					const uint8_t nthBitY = (currentYCol >> y) & 1;
 
 					// Create temporary variable for column X
 					uint64_t xBitTemp = binaryChunk.xBinaryColumn[xIndex];
@@ -149,7 +149,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					binaryChunk.xBinaryColumn[xIndex] = (xBitTemp << z) | binaryChunk.xBinaryColumn[xIndex];
 
 					// Next Y index (column) means the next Z index (column), but the same Y bit index
-					int zIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + z }; // FUCKING VERIFIED
+					const int zIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + z }; // FUCKING VERIFIED
 
 					// Create temporary variable for column Z
 					uint64_t zBitTemp = binaryChunk.zBinaryColumn[zIndex];
@@ -173,7 +173,7 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>
 		for (int x = 0; x < chunkSizePadding; x++) {
 			for (int z = 0; z < chunkSizePadding; z++) {
 				for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
-					int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
+					const int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
 
 					uint64_t column = 0;
 					switch (axis) {
@@ -190,8 +190,8 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>
 
 					// If is the Y axis and not the last bitIndex
 					if (axis == 0 && bitIndex < intsPerHeight - 1) {
-						bool isAboveSolid = binaryChunk.yBinaryColumn[columnIndex + 1] != 0;
-						bool columnAllSolid = column == std::numeric_limits<uint64_t>::max();
+						const bool isAboveSolid = binaryChunk.yBinaryColumn[columnIndex + 1] != 0;
+						const bool columnAllSolid = column == std::numeric_limits<uint64_t>::max();
 
 						// Skip creating face between height chunks if there's more solid blocks above 
 						if (isAboveSolid && columnAllSolid) {
@@ -208,22 +208,20 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>
 					// Remove bottom face between height chunk if there are solid blocks underneath
 					if (axis == 0) {
 						if (bitIndex > 0) {
-							bool isFaceMaskSolid = columnFaceMasks[axis * 2 + 1][columnIndex] != 0;
+							const bool isFaceMaskSolid = columnFaceMasks[axis * 2 + 1][columnIndex] != 0;
 
 							// Check if the leftmost bit is 1
-							uint64_t leftmostBitMask = 1ULL << 63;
-							bool isLeftmostBitSet = (binaryChunk.yBinaryColumn[columnIndex - 1] & leftmostBitMask) != 0;
+							const uint64_t leftmostBitMask = 1ULL << 63;
+							const bool isLeftmostBitSet = (binaryChunk.yBinaryColumn[columnIndex - 1] & leftmostBitMask) != 0;
 						
 							// Remove bottom face if there are solid blocks beneath chunk
 							if (isFaceMaskSolid && isLeftmostBitSet) {
 								// Flip the rightmost bit to 0
-								uint64_t rightmostBitMask = ~1ULL;
-								columnFaceMasks[axis * 2 + 1][columnIndex] &= rightmostBitMask;
+								columnFaceMasks[axis * 2 + 1][columnIndex] &= ~1ULL;
 							}
 						} else {
 							// Remove the bottom face of the world for the bottom chunk
-							uint64_t rightmostBitMask = ~1ULL;
-							columnFaceMasks[axis * 2 + 1][columnIndex] &= rightmostBitMask;
+							columnFaceMasks[axis * 2 + 1][columnIndex] &= ~1ULL;
 						}
 					}
 
@@ -357,7 +355,7 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 		for (int z = 0; z < chunkSizePadding; z++) {
 			for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
 
-				int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
+				const int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
 			
 				uint64_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
 
@@ -369,7 +367,7 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 
 				while (column != 0) {
 					// Get the trailing zeros for the current column
-					int y = std::countr_zero(column);
+					const int y = std::countr_zero(column);
 					int planeIndex;
 					int currentPlaneIndex;
 					int planeRowIndex;
@@ -417,10 +415,10 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 
 		while (planes[row] != 0) {
 			// Get the starting point of the vertex
-			int y = std::countr_zero(planes[row]);
+			const int y = std::countr_zero(planes[row]);
 
 			// Trailing ones are the height of the vertex
-			int height = std::countr_one(planes[row] >> y);
+			const int height = std::countr_one(planes[row] >> y);
 
 			uint64_t heightMask = ((1ULL << height) - 1) << y;
 
@@ -440,10 +438,10 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 				while ((row % chunkSizePadding) + width < currentPlaneLimit) {
 
 					// Get the correct row to expand into, depending on the axis 
-					int planesIndex = row + width;
+					const int planesIndex = row + width;
 
 					// Get the bits spanning height for the next row
-					uint64_t nextRowHeight = planes[planesIndex] & heightMask;
+					const uint64_t nextRowHeight = planes[planesIndex] & heightMask;
 
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
@@ -465,10 +463,10 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 				while (row + (width * chunkSizePadding) < currentPlaneLimit) {
 
 					// Get the row above the current one
-					int planesIndex = row + (width * chunkSizePadding);
+					const int planesIndex = row + (width * chunkSizePadding);
 
 					// Get the bits spanning height for the next row
-					uint64_t nextRowHeight = planes[planesIndex] & heightMask;
+					const uint64_t nextRowHeight = planes[planesIndex] & heightMask;
 
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
@@ -488,7 +486,6 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			FVector voxelPosition4(3);
 			double voxelX{ 0.0 };
 			double voxelZ{ 0.0 };
-			double voxelY{ 0.0 };
 
 			switch (axis) {
 			case 0:
@@ -506,7 +503,7 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			}
 
 			// Height increases with each 64 rows for X and Z
-			voxelY = row > 0 ? std::floor(static_cast<double>(row / chunkSizePadding)) : 0.0;
+			const double voxelY = row > 0 ? std::floor(static_cast<double>(row / chunkSizePadding)) : 0.0;
 			voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
 			
 			// Modify the original voxel position and create the remaining three quad position
