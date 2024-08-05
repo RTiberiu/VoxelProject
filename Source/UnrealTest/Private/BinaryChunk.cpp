@@ -125,7 +125,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 
 				// Add blocks height data (Y) to the current X and Z
 				binaryChunk.yBinaryColumn[yIndex] = yHeight;
-				const uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex]; // TODO MAYBE COMBINE THIS TWO LINES (the one above)
+				const uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex];
 
 				// Skip iteration if Y column is all air
 				if (currentYCol == 0) {
@@ -149,7 +149,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					binaryChunk.xBinaryColumn[xIndex] = (xBitTemp << z) | binaryChunk.xBinaryColumn[xIndex];
 
 					// Next Y index (column) means the next Z index (column), but the same Y bit index
-					const int zIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + z }; // FUCKING VERIFIED
+					const int zIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + z };
 
 					// Create temporary variable for column Z
 					uint64_t zBitTemp = binaryChunk.zBinaryColumn[zIndex];
@@ -159,7 +159,6 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 
 					// Assign to actual bit the change
 					binaryChunk.zBinaryColumn[zIndex] = (zBitTemp << x) | binaryChunk.zBinaryColumn[zIndex];
-
 				}
 			}
 

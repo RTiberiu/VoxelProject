@@ -126,13 +126,13 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	// TODO There are still some crashes when moving at high speed in the world. 
 	FScopeLock Lock(&WorldTerrainSettingsRef->TickCriticalSection);
 	
-	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+	const FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
-	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
-	FIntPoint InitialChunkCoords = GetChunkCoordinates(WorldTerrainSettingsRef->getInitialPlayerPosition());
+	const FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
+	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WorldTerrainSettingsRef->getInitialPlayerPosition());
 
-	bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X;
-	bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y;
+	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X;
+	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y;
 
 
 	if (!isTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
@@ -165,7 +165,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	// Spawn and destroy one chunk if there is one waiting
 	FChunkLocationData chunkToSpawnPosition;
-	bool isSpawnPositionReturned = ChunkLocationDataRef->getChunkToSpawnPosition(chunkToSpawnPosition);
+	const bool isSpawnPositionReturned = ChunkLocationDataRef->getChunkToSpawnPosition(chunkToSpawnPosition);
 
 	if (isSpawnPositionReturned) {
 
