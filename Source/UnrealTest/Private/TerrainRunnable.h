@@ -26,7 +26,10 @@ public:
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
+	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
 	UChunkLocationData* ChunkLocationDataRef;
+	UChunkLocationData*& CLDR = ChunkLocationDataRef;
+
 
 	FVector PlayerPosition;
 

@@ -27,7 +27,10 @@ public:
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
+	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
+
 	UChunkLocationData* ChunkLocationDataRef;
+	UChunkLocationData*& CLDR = ChunkLocationDataRef; // creating an alias for the world terrain settings ref
 
 	TSubclassOf<AActor> Chunk;
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "FairSemaphore.h"
+
 #include "CoreMinimal.h"
 #include "Containers/Queue.h"
 #include "Misc/ScopeLock.h"
@@ -17,6 +19,8 @@ class  UChunkLocationData : public UObject {
 public:
     UChunkLocationData();
 
+    ~UChunkLocationData();
+
     bool getChunkToSpawnPosition(FChunkLocationData& OutLocation);
     bool getChunkToDestroyPosition(FIntPoint& OutPosition);
     void addChunksToSpawnPosition(const FChunkLocationData& position);
@@ -25,9 +29,9 @@ public:
 private:
     // Queue for storing chunks position that need to be spawned
     TQueue<FChunkLocationData> chunksToSpawnPositions;
-    FCriticalSection chunksToSpawnMutex;
+    FairSemaphore* ChunksToSpawnSemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
 
     // Queue for storing chunks position that need to be destroyed
     TQueue<FIntPoint> chunksToDestroyPositions;
-    FCriticalSection chunksToDestroyMutex;
+    FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
 };

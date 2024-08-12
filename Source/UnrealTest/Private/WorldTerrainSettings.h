@@ -7,6 +7,8 @@
 #include <mutex> 
 #include <atomic>
 
+#include "FairSemaphore.h"
+
 #include "CoreMinimal.h"
 #include "WorldTerrainSettings.generated.h"
 
@@ -17,7 +19,9 @@ class UWorldTerrainSettings : public UObject {
 public:
 	UWorldTerrainSettings();
 
-	const uint8_t UnrealScale{ 100 };
+	~UWorldTerrainSettings();
+
+	const uint8_t UnrealScale{ 20 }; // this changes the voxel size (100 is 1m)
 	const uint8_t DrawDistance{ 5 }; // 5 
 
 	// Single chunk settings
@@ -33,21 +37,20 @@ public:
 	void updateInitialPlayerPosition(FVector newPosition);
 	FVector getInitialPlayerPosition();
 	void EmptyChunkMap();
+
+	FairSemaphore* UpdateChunkSemaphore;
+	FairSemaphore* TickSemaphore;
+private:
 	void printMapElements(FString message);
 
-	FCriticalSection UpdateChunkCriticalSection;
-	FCriticalSection TickCriticalSection;
-
-private:
 	// Player settings
 	FVector playerInitialPosition;
 
 	// Locks for critical sections
-	FCriticalSection PlayerPositionCriticalSection;
-	FCriticalSection MapCriticalSection;
-	FCriticalSection DrawDistanceCriticalSection;
+	FairSemaphore* PlayerPositionSemaphore;
+	FairSemaphore* MapSemaphore;
+	FairSemaphore* DrawDistanceSemaphore;
 
 	// Map to store spawned chunks with 2D coordinates as keys
 	TMap<FIntPoint, AActor*> SpawnedChunksMap;
-
 };

@@ -9,8 +9,8 @@
 #include "GameFramework/Actor.h"
 #include "BinaryChunk.generated.h"
 
-class UWorldTerrainSettings;
 class FastNoiseLite;
+class UWorldTerrainSettings;
 class UProceduralMeshComponent;
 
 UCLASS()
@@ -36,6 +36,7 @@ public:
 
 private: 
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
+	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
 
 	// Create chrono type alias
 	using Time = std::chrono::high_resolution_clock::time_point;
@@ -86,16 +87,7 @@ private:
 
 	void printBinary(uint64_t value, int groupSize, const std::string& otherData ="Column value: ");
 
-
-	// TODO MAYBE DELETE THIS ONCE I GET THE REFERENCES SORTED
-	int UnrealScale{ 100 };
-	std::atomic<int> DrawDistance{ 5 };
-
-	// Single chunk settings
-	const uint16_t chunkHeight{ 248 }; // 4 bits 
-	const uint16_t chunkSize{ 62 }; // 62
-	const uint16_t chunkSizePadding{ 64 }; // 64
-	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
+	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation);
 
 protected:
 	// Called when the game starts or when spawned

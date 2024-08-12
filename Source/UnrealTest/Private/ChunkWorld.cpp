@@ -39,9 +39,9 @@ void AChunkWorld::spawnInitialWorld() {
 	int spawnedChunks{ 0 };
 	Time start = std::chrono::high_resolution_clock::now();
 
-	for (int x = -WorldTerrainSettingsRef->DrawDistance; x < WorldTerrainSettingsRef->DrawDistance; x++) { // for (int x = -WorldTerrainSettingsRef->DrawDistance; x < WorldTerrainSettingsRef->DrawDistance; x++) {
-		for (int z = -WorldTerrainSettingsRef->DrawDistance; z < WorldTerrainSettingsRef->DrawDistance; z++) { // for (int z = -WorldTerrainSettingsRef->DrawDistance; z < WorldTerrainSettingsRef->DrawDistance; z++) {
-			FVector ChunkPosition = FVector(x * WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale, z * WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale, 0);
+	for (int x = -WTSR->DrawDistance; x < WTSR->DrawDistance; x++) { // for (int x = -WTSR->DrawDistance; x < WTSR->DrawDistance; x++) {
+		for (int z = -WTSR->DrawDistance; z < WTSR->DrawDistance; z++) { // for (int z = -WTSR->DrawDistance; z < WTSR->DrawDistance; z++) {
+			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
 			// ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActor<ABinaryChunk>(Chunk, ChunkPosition, FRotator::ZeroRotator);
 
@@ -50,12 +50,12 @@ void AChunkWorld::spawnInitialWorld() {
 
 			if (SpawnedChunkActor) {
 					// Add WorldTerrainSettingsRef to BinaryChunk
-					SpawnedChunkActor->SetWorldTerrainSettings(WorldTerrainSettingsRef);
+					SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
 
 					// Finish spawning the chunk actor
 					UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, ChunkPosition));
 
-					WorldTerrainSettingsRef->AddChunkToMap(FIntPoint(x, z), SpawnedChunkActor);
+					WTSR->AddChunkToMap(FIntPoint(x, z), SpawnedChunkActor);
 
 					spawnedChunks++;
 			} else {
@@ -68,11 +68,11 @@ void AChunkWorld::spawnInitialWorld() {
 
 	printExecutionTime(start, end, "Spawned entire terrain.");
 	UE_LOG(LogTemp, Warning, TEXT("Chunks spawned: %d"), spawnedChunks);
-	UE_LOG(LogTemp, Warning, TEXT("SpawnedChunkMap size = %d"), WorldTerrainSettingsRef->GetMapSize());
-	UE_LOG(LogTemp, Warning, TEXT("DrawDistance = %d"), WorldTerrainSettingsRef->DrawDistance);
+	UE_LOG(LogTemp, Warning, TEXT("SpawnedChunkMap size = %d"), WTSR->GetMapSize());
+	UE_LOG(LogTemp, Warning, TEXT("DrawDistance = %d"), WTSR->DrawDistance);
 
 	// Print SpawnedChunksMap keys before destroying
-	WorldTerrainSettingsRef->printMapElements("SpawnedChunksMap Keys AFTER spawnInitialWorld");
+	// WTSR->printMapElements("SpawnedChunksMap Keys AFTER spawnInitialWorld");
 }
 
 
@@ -88,7 +88,7 @@ void AChunkWorld::BeginPlay() {
 	spawnInitialWorld();
 
 	// Set player's initial position
-	WorldTerrainSettingsRef->updateInitialPlayerPosition(GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation());
+	WTSR->updateInitialPlayerPosition(GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation());
 
 	// Set the player's maximum speed 
 	ADefaultPawn* PlayerPawn = Cast<ADefaultPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
@@ -108,8 +108,8 @@ void AChunkWorld::BeginPlay() {
 }
 
 FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
-	int32 ChunkX = FMath::FloorToInt(Position.X / (WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale));
-	int32 ChunkY = FMath::FloorToInt(Position.Y / (WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale));
+	int32 ChunkX = FMath::FloorToInt(Position.X / (WTSR->chunkSize * WTSR->UnrealScale));
+	int32 ChunkY = FMath::FloorToInt(Position.Y / (WTSR->chunkSize * WTSR->UnrealScale));
 	return FIntPoint(ChunkX, ChunkY);
 }
 
@@ -123,29 +123,40 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		return;
 	}
 
+	if (WTSR == nullptr) {
+		UE_LOG(LogTemp, Error, TEXT("WTSR is nullptr!"));
+		return;
+	}
+
+	if (WTSR->GetMapSize() == 0) {
+		UE_LOG(LogTemp, Error, TEXT("SpawnedChunksMap is EMPTY!"));
+		// return;
+	}
+
 	// TODO There are still some crashes when moving at high speed in the world. 
-	FScopeLock Lock(&WorldTerrainSettingsRef->TickCriticalSection);
-	
+	// FScopeLock Lock(&WTSR->TickCriticalSection);
+
+	// WTSR->TickSemaphore->Acquire();
+
 	const FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
 	const FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
-	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WorldTerrainSettingsRef->getInitialPlayerPosition());
+	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
 	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X;
 	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y;
 
-
 	if (!isTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
 		isTaskRunning = true;
 
-		UE_LOG(LogTemp, Warning, TEXT("Created new thread!"));
+		// UE_LOG(LogTemp, Warning, TEXT("Created new thread!"));
 
-		terrainRunnable = new TerrainRunnable(PlayerPosition, WorldTerrainSettingsRef, ChunkLocationDataRef);
+		terrainRunnable = new TerrainRunnable(PlayerPosition, WTSR, CLDR);
 		terrainRunnableThread = FRunnableThread::Create(terrainRunnable, TEXT("terrainRunnableThread"), 0, TPri_Normal);
 	}
 
 	if (terrainRunnable && terrainRunnable->IsTaskComplete()) {
-		UE_LOG(LogTemp, Warning, TEXT("Destroyed new thread!"));
+		// UE_LOG(LogTemp, Warning, TEXT("Destroyed new thread!"));
 
 		onNewTerrainGenerated();
 
@@ -165,10 +176,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	// Spawn and destroy one chunk if there is one waiting
 	FChunkLocationData chunkToSpawnPosition;
-	const bool isSpawnPositionReturned = ChunkLocationDataRef->getChunkToSpawnPosition(chunkToSpawnPosition);
+	const bool doesSpawnPositionExist = CLDR->getChunkToSpawnPosition(chunkToSpawnPosition);
 
-	if (isSpawnPositionReturned) {
-
+	if (doesSpawnPositionExist) {
 		// Only proceed if a valid ChunkToSpawnPosition was dequeued
 		if (!chunkToSpawnPosition.ChunkPosition.IsZero()) {
 
@@ -178,34 +188,32 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, chunkToSpawnPosition.ChunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 			if (SpawnedChunkActor) {
-
-					// Add WorldTerrainSettingsRef to BinaryChunk
-					SpawnedChunkActor->SetWorldTerrainSettings(WorldTerrainSettingsRef);
+					// Add WTSR to BinaryChunk
+					SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
 
 					// Finish spawning the chunk actor
 					UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, chunkToSpawnPosition.ChunkPosition));
 
-					WorldTerrainSettingsRef->AddChunkToMap(chunkToSpawnPosition.ChunkWorldCoords, SpawnedChunkActor);
-
+					WTSR->AddChunkToMap(chunkToSpawnPosition.ChunkWorldCoords, SpawnedChunkActor);
 			} else {
 				UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
 			}
 
 			Time endChunkTest = std::chrono::high_resolution_clock::now(); // TODO TESTING SINGLE CHUNK SPAWN TIME
-			printExecutionTime(startChunkTest, endChunkTest, "Spawned a single chunk.");
-
+			// printExecutionTime(startChunkTest, endChunkTest, "Spawned a single chunk.");
 		}
 	}
 
 	FIntPoint chunkToDestroyPosition;
-	bool isDestroyPositionReturned = ChunkLocationDataRef->getChunkToDestroyPosition(chunkToDestroyPosition);
+	bool doesDestroyPositionExist = CLDR->getChunkToDestroyPosition(chunkToDestroyPosition);
 
-	if (isDestroyPositionReturned) {
-		AActor* chunkToRemove = WorldTerrainSettingsRef->GetAndRemoveChunkFromMap(chunkToDestroyPosition);
+	if (doesDestroyPositionExist) {
+		AActor* chunkToRemove = WTSR->GetAndRemoveChunkFromMap(chunkToDestroyPosition);
 		if (chunkToRemove) {
 			chunkToRemove->Destroy();
 		}
 	}
 
+	// WTSR->TickSemaphore->Release();
 }
 

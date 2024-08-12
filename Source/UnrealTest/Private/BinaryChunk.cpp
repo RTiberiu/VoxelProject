@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BinaryChunk.h"
+#include "WorldTerrainSettings.h"
 #include "ProceduralMeshComponent.h"
 
 #include <iostream>
@@ -8,7 +9,6 @@
 #include <bitset>
 #include <limits>
 #include "FastNoiseLite.h"
-
 
 // Sets default values
 ABinaryChunk::ABinaryChunk() {
@@ -64,20 +64,39 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize, const std::string&
 
 }
 
-void ABinaryChunk::createBinarySolidColumnsYXZ() {
+void ABinaryChunk::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation) {
+	// Getting perlin noise position, adjusted to the Unreal Engine grid system 
+	const float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
+	const float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
+	const float noisePositionY = static_cast<float>(((y + bitIndex * WTSR->chunkSizePadding) * WTSR->UnrealScale + chunkWorldLocation.Z) / WTSR->UnrealScale);
+	
+	const float squashingFactor = (y + bitIndex * WTSR->chunkSizePadding) * 0.004;
+
+	constexpr float noiseFrequency3D = 0.04;
+	noise->SetFrequency(noiseFrequency3D);
+
+	const float noiseValue3D = noise->GetNoise(noisePositionX, noisePositionZ, noisePositionY) + 1;
+
+	if (noiseValue3D > 1 && (y + bitIndex * WTSR->chunkSizePadding) > 150) {
+		column |= 1ULL << y;
+	}
+}
+
+void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old createBinarySolidColumnsYXZ() is below and working
 	// Get current chunk world position
 	const FVector chunkWorldLocation = GetActorLocation();
 
-	constexpr std::array<float, 3> octaveFrequencies{ 0.02f, 0.025f, 0.03f };
+	// old values: 0.02f, 0.025f, 0.03f
+	constexpr std::array<float, 3> octaveFrequencies{ 0.003f, 0.005f, 0.008f };
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
-	binaryChunk.yBinaryColumn = std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight, 0);
-	binaryChunk.xBinaryColumn = std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight, 0);
-	binaryChunk.zBinaryColumn = std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight, 0);
+	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+	binaryChunk.xBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+	binaryChunk.zBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 
 	// Loop over the chunk dimensions (X, Y, Z)
-	for (int x = 0; x < chunkSizePadding; x++) {
-		for (int z = 0; z < chunkSizePadding; z++) {
+	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
+		for (int z = 0; z < WTSR->chunkSizePadding; z++) {
 
 			// Looping over the different octaves to get the final height
 			int amplitude{ 0 };
@@ -86,8 +105,8 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 				// Set frequency and get value between 0 and 2
 				noise->SetFrequency(octave);
 				// Getting perlin noise position, adjusted to the Unreal Engine grid system 
-				const float noisePositionX = static_cast<float>((x * 100 + chunkWorldLocation.X) / 100);
-				const float noisePositionZ = static_cast<float>((z * 100 + chunkWorldLocation.Y) / 100);
+				const float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
+				const float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
 				const float noiseValue = noise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
 				// Adding multiple splines to the perlinValue
@@ -96,9 +115,9 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 				} else if (noiseValue <= 1.4) {
 					amplitude = 20;
 				} else if (noiseValue <= 1.8) {
-					amplitude = 30;
+					amplitude = 40;
 				} else if (noiseValue <= 2) {
-					amplitude = 25;
+					amplitude = 30;
 				}
 
 				// Multiply noise by amplitude and reduce to integer
@@ -106,10 +125,10 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 			}
 
 			// Ensuring height remains between chunk borders
-			height = std::clamp(height, 0, static_cast<int>(chunkHeight));
+			height = std::clamp(height, 0, static_cast<int>(WTSR->chunkHeight));
 
 			// Add enough bits to y to cover the entire height (4 64bit integers when the max height is 256)
-			for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
+			for (int bitIndex = 0; bitIndex < WTSR->intsPerHeight; bitIndex++) {
 				uint64_t yHeight;
 
 				if (height >= 64) {
@@ -121,20 +140,25 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 				}
 
 				// Get index of y 
-				const int yIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
+				const int yIndex{ (x * WTSR->chunkSizePadding * WTSR->intsPerHeight) + (z * WTSR->intsPerHeight) + bitIndex };
 
 				// Add blocks height data (Y) to the current X and Z
 				binaryChunk.yBinaryColumn[yIndex] = yHeight;
-				const uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex];
 
 				// Skip iteration if Y column is all air
-				if (currentYCol == 0) {
+				if (binaryChunk.yBinaryColumn[yIndex] == 0) {
 					continue;
 				}
 
-				for (int y = 0; y < chunkSizePadding; y++) {
+				for (int y = 0; y < WTSR->chunkSizePadding; y++) {
+
+					// Apply 3D noise to the Y column
+					// apply3DNoiseToHeightColumn(binaryChunk.yBinaryColumn[yIndex], x, z, y, bitIndex, chunkWorldLocation);
+
+					const uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex];
+
 					// Next Y index (column) means the same X index (column), but a change in Y bit index
-					const int xIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + x };
+					const int xIndex{ (y * WTSR->chunkSizePadding) + (bitIndex * WTSR->chunkSizePadding * WTSR->chunkSizePadding) + x };
 
 					// y'th bit of column Y
 					const uint8_t nthBitY = (currentYCol >> y) & 1;
@@ -149,7 +173,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 					binaryChunk.xBinaryColumn[xIndex] = (xBitTemp << z) | binaryChunk.xBinaryColumn[xIndex];
 
 					// Next Y index (column) means the next Z index (column), but the same Y bit index
-					const int zIndex{ (y * chunkSizePadding) + (bitIndex * chunkSizePadding * chunkSizePadding) + z };
+					const int zIndex{ (y * WTSR->chunkSizePadding) + (bitIndex * WTSR->chunkSizePadding * WTSR->chunkSizePadding) + z };
 
 					// Create temporary variable for column Z
 					uint64_t zBitTemp = binaryChunk.zBinaryColumn[zIndex];
@@ -166,13 +190,184 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() {
 	}
 }
 
+
+//void ABinaryChunk::createBinarySolidColumnsYXZ() {
+//	// Get current chunk world position
+//	const FVector chunkWorldLocation = GetActorLocation();
+//
+//	constexpr std::array<float, 3> octaveFrequencies{ 0.02f, 0.025f, 0.03f };
+//
+//	// Set the chunk values to air for all 3 axis (Y, X, Z)
+//	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+//	binaryChunk.xBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+//	binaryChunk.zBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+//
+//	// Loop over the chunk dimensions (X, Y, Z)
+//	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
+//		for (int z = 0; z < WTSR->chunkSizePadding; z++) {
+//			for (int bitIndex = 0; bitIndex < WTSR->intsPerHeight; bitIndex++) {
+//				for (int y = 0; y < WTSR->chunkSizePadding; y++) {
+//				
+//					noise->SetFrequency(octaveFrequencies[0]);
+//					// Getting perlin noise position, adjusted to the Unreal Engine grid system 
+//					const float noisePositionX = static_cast<float>((x * 100 + chunkWorldLocation.X) / 100);
+//					const float noisePositionZ = static_cast<float>((z * 100 + chunkWorldLocation.Y) / 100);
+//					const float noisePositionY = static_cast<float>(((y + bitIndex * WTSR->chunkSizePadding) * 100 + chunkWorldLocation.Z) / 100);
+//					const float noiseValue = noise->GetNoise(noisePositionX, noisePositionZ, noisePositionY) + 1;
+//
+//					// Only set solid blocks for values above 1
+//					if (noiseValue < 1) continue;
+//
+//					// Get index of y 
+//					const int yIndex{ (x * WTSR->chunkSizePadding * WTSR->intsPerHeight) + (z * WTSR->intsPerHeight) + bitIndex };
+//
+//					// Set the current y as solid block
+//					binaryChunk.yBinaryColumn[yIndex] |= 1ULL << y;
+//
+//					const uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex];
+// 
+//					// Next Y index (column) means the same X index (column), but a change in Y bit index
+//					const int xIndex{ (y * WTSR->chunkSizePadding) + (bitIndex * WTSR->chunkSizePadding * WTSR->chunkSizePadding) + x };
+//
+//					// y'th bit of column Y
+//					const uint8_t nthBitY = (currentYCol >> y) & 1;
+//
+//					// Create temporary variable for column X
+//					uint64_t xBitTemp = binaryChunk.xBinaryColumn[xIndex];
+//
+//					// Apply the change to the temporary X bit
+//					xBitTemp = (xBitTemp >> z) | nthBitY;
+//
+//					// Assign to actual bit the change
+//					binaryChunk.xBinaryColumn[xIndex] = (xBitTemp << z) | binaryChunk.xBinaryColumn[xIndex];
+//
+//					// Next Y index (column) means the next Z index (column), but the same Y bit index
+//					const int zIndex{ (y * WTSR->chunkSizePadding) + (bitIndex * WTSR->chunkSizePadding * WTSR->chunkSizePadding) + z };
+//
+//					// Create temporary variable for column Z
+//					uint64_t zBitTemp = binaryChunk.zBinaryColumn[zIndex];
+//
+//					// Apply the change to the temporary Z bit
+//					zBitTemp = (zBitTemp >> x) | nthBitY;
+//
+//					// Assign to actual bit the change
+//					binaryChunk.zBinaryColumn[zIndex] = (zBitTemp << x) | binaryChunk.zBinaryColumn[zIndex];
+//				}
+//			}
+//
+//		}
+//	}
+//}
+
+//void ABinaryChunk::createBinarySolidColumnsYXZ() {
+//	// Get current chunk world position
+//	const FVector chunkWorldLocation = GetActorLocation();
+//
+//	constexpr std::array<float, 3> octaveFrequencies{ 0.02f, 0.025f, 0.03f };
+//
+//	// Set the chunk values to air for all 3 axis (Y, X, Z)
+//	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+//	binaryChunk.xBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+//	binaryChunk.zBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+//
+//	// Loop over the chunk dimensions (X, Y, Z)
+//	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
+//		for (int z = 0; z < WTSR->chunkSizePadding; z++) {
+//
+//			// Looping over the different octaves to get the final height
+//			int amplitude{ 0 };
+//			int height{ 0 };
+//			for (const float octave : octaveFrequencies) {
+//				// Set frequency and get value between 0 and 2
+//				noise->SetFrequency(octave);
+//				// Getting perlin noise position, adjusted to the Unreal Engine grid system 
+//				const float noisePositionX = static_cast<float>((x * 100 + chunkWorldLocation.X) / 100);
+//				const float noisePositionZ = static_cast<float>((z * 100 + chunkWorldLocation.Y) / 100);
+//				const float noiseValue = noise->GetNoise(noisePositionX, noisePositionZ) + 1;
+//
+//				// Adding multiple splines to the perlinValue
+//				if (noiseValue <= 1) {
+//					amplitude = 15;
+//				} else if (noiseValue <= 1.4) {
+//					amplitude = 20;
+//				} else if (noiseValue <= 1.8) {
+//					amplitude = 30;
+//				} else if (noiseValue <= 2) {
+//					amplitude = 25;
+//				}
+//
+//				// Multiply noise by amplitude and reduce to integer
+//				height += static_cast<int>(std::floor(noiseValue * amplitude));
+//			}
+//
+//			// Ensuring height remains between chunk borders
+//			height = std::clamp(height, 0, static_cast<int>(WTSR->chunkHeight));
+//
+//			// Add enough bits to y to cover the entire height (4 64bit integers when the max height is 256)
+//			for (int bitIndex = 0; bitIndex < WTSR->intsPerHeight; bitIndex++) {
+//				uint64_t yHeight;
+//
+//				if (height >= 64) {
+//					yHeight = ~0ULL; // Set all bits to 1
+//					height -= 64;
+//				} else {
+//					yHeight = (1ULL << height) - 1; // Set bits = height
+//					height = 0;
+//				}
+//
+//				// Get index of y 
+//				const int yIndex{ (x * WTSR->chunkSizePadding * WTSR->intsPerHeight) + (z * WTSR->intsPerHeight) + bitIndex };
+//
+//				// Add blocks height data (Y) to the current X and Z
+//				binaryChunk.yBinaryColumn[yIndex] = yHeight;
+//				const uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex];
+//
+//				// Skip iteration if Y column is all air
+//				if (currentYCol == 0) {
+//					continue;
+//				}
+//
+//				for (int y = 0; y < WTSR->chunkSizePadding; y++) {
+//					// Next Y index (column) means the same X index (column), but a change in Y bit index
+//					const int xIndex{ (y * WTSR->chunkSizePadding) + (bitIndex * WTSR->chunkSizePadding * WTSR->chunkSizePadding) + x };
+//
+//					// y'th bit of column Y
+//					const uint8_t nthBitY = (currentYCol >> y) & 1;
+//
+//					// Create temporary variable for column X
+//					uint64_t xBitTemp = binaryChunk.xBinaryColumn[xIndex];
+//
+//					// Apply the change to the temporary X bit
+//					xBitTemp = (xBitTemp >> z) | nthBitY;
+//
+//					// Assign to actual bit the change
+//					binaryChunk.xBinaryColumn[xIndex] = (xBitTemp << z) | binaryChunk.xBinaryColumn[xIndex];
+//
+//					// Next Y index (column) means the next Z index (column), but the same Y bit index
+//					const int zIndex{ (y * WTSR->chunkSizePadding) + (bitIndex * WTSR->chunkSizePadding * WTSR->chunkSizePadding) + z };
+//
+//					// Create temporary variable for column Z
+//					uint64_t zBitTemp = binaryChunk.zBinaryColumn[zIndex];
+//
+//					// Apply the change to the temporary Z bit
+//					zBitTemp = (zBitTemp >> x) | nthBitY;
+//
+//					// Assign to actual bit the change
+//					binaryChunk.zBinaryColumn[zIndex] = (zBitTemp << x) | binaryChunk.zBinaryColumn[zIndex];
+//				}
+//			}
+//
+//		}
+//	}
+//}
+
 void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
 	// Face culling for all the 3 axis (Y, X, Z)
 	for (int axis = 0; axis < 3; axis++) {
-		for (int x = 0; x < chunkSizePadding; x++) {
-			for (int z = 0; z < chunkSizePadding; z++) {
-				for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
-					const int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex };
+		for (int x = 0; x < WTSR->chunkSizePadding; x++) {
+			for (int z = 0; z < WTSR->chunkSizePadding; z++) {
+				for (int bitIndex = 0; bitIndex < WTSR->intsPerHeight; bitIndex++) {
+					const int columnIndex{ (x * WTSR->chunkSizePadding * WTSR->intsPerHeight) + (z * WTSR->intsPerHeight) + bitIndex };
 
 					uint64_t column = 0;
 					switch (axis) {
@@ -188,7 +383,7 @@ void ABinaryChunk::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>
 					}
 
 					// If is the Y axis and not the last bitIndex
-					if (axis == 0 && bitIndex < intsPerHeight - 1) {
+					if (axis == 0 && bitIndex < WTSR->intsPerHeight - 1) {
 						const bool isAboveSolid = binaryChunk.yBinaryColumn[columnIndex + 1] != 0;
 						const bool columnAllSolid = column == std::numeric_limits<uint64_t>::max();
 
@@ -319,12 +514,12 @@ void ABinaryChunk::createTerrainMeshesData() {
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint64_t>> columnFaceMasks{
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y ascending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y descending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X ascending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X descending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z ascending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z descending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Y ascending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Y descending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // X ascending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // X descending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Z ascending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Z descending
 	};
 
 	// Face cull the binary columns on the 3 axis, ascending and descending
@@ -332,12 +527,12 @@ void ABinaryChunk::createTerrainMeshesData() {
 
 	// Storing planes for all axis, ascending and descending
 	std::vector<std::vector<uint64_t>> binaryPlanes{ 
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y ascending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Y descending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X ascending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // X descending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z ascending
-		std::vector<uint64_t>(chunkSizePadding * chunkSizePadding * intsPerHeight), // Z descending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Y ascending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Y descending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // X ascending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // X descending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Z ascending
+		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Z descending
 	};
 
 	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending 
@@ -350,11 +545,11 @@ void ABinaryChunk::createTerrainMeshesData() {
 }
 
 void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis) {
-	for (int x = 0; x < chunkSizePadding; x++) {
-		for (int z = 0; z < chunkSizePadding; z++) {
-			for (int bitIndex = 0; bitIndex < intsPerHeight; bitIndex++) {
+	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
+		for (int z = 0; z < WTSR->chunkSizePadding; z++) {
+			for (int bitIndex = 0; bitIndex < WTSR->intsPerHeight; bitIndex++) {
 
-				const int columnIndex{ (x * chunkSizePadding * intsPerHeight) + (z * intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
+				const int columnIndex{ (x * WTSR->chunkSizePadding * WTSR->intsPerHeight) + (z * WTSR->intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
 			
 				uint64_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
 
@@ -374,7 +569,7 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 					case 0:
 					case 1:
 						// Get to the correct plane and then add x to get to the correct row in the plane
-						planeIndex = (y + bitIndex * chunkSizePadding) * chunkSizePadding + x;
+						planeIndex = (y + bitIndex * WTSR->chunkSizePadding) * WTSR->chunkSizePadding + x;
 						binaryPlane[planeIndex] |= (1ULL << z);
 						break;
 					case 2:
@@ -383,13 +578,13 @@ void ABinaryChunk::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn
 					case 5:
 						planeRowIndex = y; 
 						if (columnIndex > 0) {
-							currentPlaneIndex = (columnIndex / chunkSizePadding) * chunkSizePadding;
+							currentPlaneIndex = (columnIndex / WTSR->chunkSizePadding) * WTSR->chunkSizePadding;
 							planeIndex = currentPlaneIndex + planeRowIndex;
 						} else {
 							planeIndex = planeRowIndex;
 						}
 
-						binaryPlane[planeIndex] |= (1ULL << columnIndex % chunkSizePadding); 
+						binaryPlane[planeIndex] |= (1ULL << columnIndex % WTSR->chunkSizePadding); 
 						break;
 					}
 
@@ -410,7 +605,7 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 
 		// Removing padding by skipping the first and last row in the plane
 		if (row == 0) continue;
-		else if (row % chunkSizePadding == 0 || row % chunkSizePadding == chunkSizePadding - 1) continue;
+		else if (row % WTSR->chunkSizePadding == 0 || row % WTSR->chunkSizePadding == WTSR->chunkSizePadding - 1) continue;
 
 		while (planes[row] != 0) {
 			// Get the starting point of the vertex
@@ -431,10 +626,10 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			switch (axis) {
 			case 0:
 			case 1:
-				currentPlaneLimit = chunkSize; // plane Y max limit is 64
+				currentPlaneLimit = WTSR->chunkSize; // plane Y max limit is 64
 
 				// Check if the next row can be expanded while in the bounds of the current plane 
-				while ((row % chunkSizePadding) + width < currentPlaneLimit) {
+				while ((row % WTSR->chunkSizePadding) + width < currentPlaneLimit) {
 
 					// Get the correct row to expand into, depending on the axis 
 					const int planesIndex = row + width;
@@ -456,13 +651,13 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			case 3:
 			case 4:
 			case 5:
-				currentPlaneLimit = chunkHeight * chunkSize; // plane X and Z max limit is 64x248  (64 for each layer, and 248 layers)
+				currentPlaneLimit = WTSR->chunkHeight * WTSR->chunkSize; // plane X and Z max limit is 64x248  (64 for each layer, and 248 layers)
 
 				// Check if the next row can be expanded while in the bounds of the current plane 
-				while (row + (width * chunkSizePadding) < currentPlaneLimit) {
+				while (row + (width * WTSR->chunkSizePadding) < currentPlaneLimit) {
 
 					// Get the row above the current one
-					const int planesIndex = row + (width * chunkSizePadding);
+					const int planesIndex = row + (width * WTSR->chunkSizePadding);
 
 					// Get the bits spanning height for the next row
 					const uint64_t nextRowHeight = planes[planesIndex] & heightMask;
@@ -491,18 +686,18 @@ void ABinaryChunk::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const
 			case 1:
 			case 4:
 			case 5:
-				voxelX = static_cast<double>(row % chunkSizePadding);
+				voxelX = static_cast<double>(row % WTSR->chunkSizePadding);
 				voxelZ = static_cast<double>(y);
 				break;
 			case 2:
 			case 3:
-				voxelZ = static_cast<double>(row % chunkSizePadding);
+				voxelZ = static_cast<double>(row % WTSR->chunkSizePadding);
 				voxelX = static_cast<double>(y);
 				break;
 			}
 
 			// Height increases with each 64 rows for X and Z
-			const double voxelY = row > 0 ? std::floor(static_cast<double>(row / chunkSizePadding)) : 0.0;
+			const double voxelY = row > 0 ? std::floor(static_cast<double>(row / WTSR->chunkSizePadding)) : 0.0;
 			voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
 			
 			// Modify the original voxel position and create the remaining three quad position
@@ -524,10 +719,10 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 	) {
 
 	MeshData.Vertices.Append({
-		voxelPosition1 * 100,
-		voxelPosition2 * 100,
-		voxelPosition3 * 100,
-		voxelPosition4 * 100
+		voxelPosition1 * WTSR->UnrealScale,
+		voxelPosition2 * WTSR->UnrealScale,
+		voxelPosition3 * WTSR->UnrealScale,
+		voxelPosition4 * WTSR->UnrealScale
 	});
 
 	// Add triangles and increment vertex count

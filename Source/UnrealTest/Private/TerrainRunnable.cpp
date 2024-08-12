@@ -21,12 +21,13 @@ bool TerrainRunnable::Init() {
 uint32 TerrainRunnable::Run() {
 	while (isRunning) {
 		// Spawn new chunks
-		WorldTerrainSettingsRef->UpdateChunkCriticalSection.Lock();
+		WTSR->UpdateChunkSemaphore->Acquire();
 		UpdateChunks();
-		WorldTerrainSettingsRef->UpdateChunkCriticalSection.Unlock();
+		WTSR->UpdateChunkSemaphore->Release();
 
 		isTaskComplete = true;
 		isRunning = false;
+
 	}
 	return 0;
 }
@@ -44,7 +45,7 @@ FThreadSafeBool TerrainRunnable::IsTaskComplete() const {
 
 void TerrainRunnable::UpdateChunks() {
 	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
-	FIntPoint InitialChunkCoords = GetChunkCoordinates(WorldTerrainSettingsRef->getInitialPlayerPosition());
+	FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
 	// Add and remove chunks on the X axis 
 	if (PlayerChunkCoords.X != InitialChunkCoords.X) {
@@ -53,35 +54,35 @@ void TerrainRunnable::UpdateChunks() {
 		int newRowX{ 0 };
 		if (PlayerChunkCoords.X > InitialChunkCoords.X) {
 			// Get the first row by adding the draw distance to the player's X
-			lastRowX = PlayerChunkCoords.X - WorldTerrainSettingsRef->DrawDistance; // MAYBE -1 ; STILL TESTING
-			newRowX = PlayerChunkCoords.X + WorldTerrainSettingsRef->DrawDistance;
+			lastRowX = PlayerChunkCoords.X - WTSR->DrawDistance; // MAYBE -1 ; STILL TESTING
+			newRowX = PlayerChunkCoords.X + WTSR->DrawDistance;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial X
-			lastRowX = InitialChunkCoords.X + WorldTerrainSettingsRef->DrawDistance; // MAYBE -1 ; STILL TESTING
-			newRowX = InitialChunkCoords.X - WorldTerrainSettingsRef->DrawDistance; // MAYBE -1 ; STILL TESTING
+			lastRowX = InitialChunkCoords.X + WTSR->DrawDistance; // MAYBE -1 ; STILL TESTING
+			newRowX = InitialChunkCoords.X - WTSR->DrawDistance; // MAYBE -1 ; STILL TESTING
 		}
 
 		// Add new chunks and remove old chunks based on the player's new X position
-		const int firstIndexChunkZ = InitialChunkCoords.Y - WorldTerrainSettingsRef->DrawDistance;
-		const int lastIndexChunkZ = InitialChunkCoords.Y + WorldTerrainSettingsRef->DrawDistance;
+		const int firstIndexChunkZ = InitialChunkCoords.Y - WTSR->DrawDistance;
+		const int lastIndexChunkZ = InitialChunkCoords.Y + WTSR->DrawDistance;
 
 		// Loop and remove the entire row of chunks 
 		for (int z = firstIndexChunkZ; z < lastIndexChunkZ; z++) {
 			FIntPoint oldChunkCoords = FIntPoint(lastRowX, z);
 
-			ChunkLocationDataRef->addChunksToDestroyPosition(oldChunkCoords);
+			CLDR->addChunksToDestroyPosition(oldChunkCoords);
 
 			// Adding new row 
 			FIntPoint newChunkCoords = FIntPoint(newRowX, z);
-			FVector ChunkPosition = FVector(newRowX * WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale, z * WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale, 0);
+			FVector ChunkPosition = FVector(newRowX * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
-			ChunkLocationDataRef->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
+			CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
 		}
 	}
 
 	// Update the initial position for the next frame
 	PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
-	InitialChunkCoords = GetChunkCoordinates(WorldTerrainSettingsRef->getInitialPlayerPosition());
+	InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
 	// Add and remove chunks on the Y axis 
 	if (PlayerChunkCoords.Y != InitialChunkCoords.Y) {
@@ -90,36 +91,36 @@ void TerrainRunnable::UpdateChunks() {
 		int newRowZ{ 0 };
 		if (PlayerChunkCoords.Y > InitialChunkCoords.Y) {
 			// Get the first row by adding the draw distance to the player's Z
-			lastRowZ = InitialChunkCoords.Y - WorldTerrainSettingsRef->DrawDistance;
-			newRowZ = InitialChunkCoords.Y + WorldTerrainSettingsRef->DrawDistance;
+			lastRowZ = InitialChunkCoords.Y - WTSR->DrawDistance;
+			newRowZ = InitialChunkCoords.Y + WTSR->DrawDistance;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial Z
-			lastRowZ = PlayerChunkCoords.Y + WorldTerrainSettingsRef->DrawDistance;
-			newRowZ = PlayerChunkCoords.Y - WorldTerrainSettingsRef->DrawDistance;
+			lastRowZ = PlayerChunkCoords.Y + WTSR->DrawDistance;
+			newRowZ = PlayerChunkCoords.Y - WTSR->DrawDistance;
 		}
 
-		const int firstIndexChunkX = PlayerChunkCoords.X - WorldTerrainSettingsRef->DrawDistance + 1;
-		const int lastIndexChunkX = PlayerChunkCoords.X + WorldTerrainSettingsRef->DrawDistance + 1;
+		const int firstIndexChunkX = PlayerChunkCoords.X - WTSR->DrawDistance + 1;
+		const int lastIndexChunkX = PlayerChunkCoords.X + WTSR->DrawDistance + 1;
 
 		// Loop and remove the entire row of chunks 
 		for (int x = firstIndexChunkX; x < lastIndexChunkX; x++) {
 			FIntPoint oldChunkCoords = FIntPoint(x, lastRowZ);
-			ChunkLocationDataRef->addChunksToDestroyPosition(oldChunkCoords);
+			CLDR->addChunksToDestroyPosition(oldChunkCoords);
 
 			FIntPoint newChunkCoords = FIntPoint(x, newRowZ);
-			FVector ChunkPosition = FVector(x * WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale, newRowZ * WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale, 0);
+			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, newRowZ * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
-			ChunkLocationDataRef->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
+			CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
 		}
 	}
 
 	// Update the initial position for the next frame
-	WorldTerrainSettingsRef->updateInitialPlayerPosition(PlayerPosition);
+	WTSR->updateInitialPlayerPosition(PlayerPosition);
 }
 
 FIntPoint TerrainRunnable::GetChunkCoordinates(FVector Position) const {
-	const int32 ChunkX = FMath::FloorToInt(Position.X / (WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale));
-	const int32 ChunkY = FMath::FloorToInt(Position.Y / (WorldTerrainSettingsRef->chunkSize * WorldTerrainSettingsRef->UnrealScale));
+	const int32 ChunkX = FMath::FloorToInt(Position.X / (WTSR->chunkSize * WTSR->UnrealScale));
+	const int32 ChunkY = FMath::FloorToInt(Position.Y / (WTSR->chunkSize * WTSR->UnrealScale));
 	return FIntPoint(ChunkX, ChunkY);
 }
 
