@@ -52,6 +52,11 @@ private:
 	// Handle logic after the terrain is generated 
 	void onNewTerrainGenerated();
 
+	// Calculate average time spawn for BinaryChunk
+	int32 ChunksSpawnedCount = 0;
+	const int32 ChunksToAverage = 1000;
+	double TotalTimeForChunks = 0.0;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -59,4 +64,6 @@ protected:
 	FIntPoint GetChunkCoordinates(FVector Position) const;
 
 	virtual void Tick(float DeltaSeconds) override;
+
+	void calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime);
 };

@@ -32,6 +32,8 @@ public:
 	// Sets default values for this actor's properties
 	ABinaryChunk();
 
+	~ABinaryChunk();
+
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 
 private: 

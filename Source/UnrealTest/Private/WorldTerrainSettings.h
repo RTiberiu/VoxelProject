@@ -30,6 +30,8 @@ public:
 	const uint8_t chunkSizePadding{ 64 }; // 64
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 
+	void ValidateSpawnedChunksMap();
+
 	// Methods to interact with the world chunks
 	void AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor);
 	AActor* GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates);
@@ -39,9 +41,15 @@ public:
 	void EmptyChunkMap();
 
 	FairSemaphore* UpdateChunkSemaphore;
-	FairSemaphore* TickSemaphore;
+
+	bool isActorPresentInMap(AActor* actor); // TODO REMOVE AFTER TESTING - USING THIS BEFORE DESTROY() 
+
+	void printMapElements(FString message); // TODO SHOULD MADE PRIVATE AFTER TESTING
+
 private:
-	void printMapElements(FString message);
+	void CheckForDuplicateActorPointers();
+	void CheckNumberOfElements();
+	void CheckIfActorIsNullOrPendingKill();
 
 	// Player settings
 	FVector playerInitialPosition;

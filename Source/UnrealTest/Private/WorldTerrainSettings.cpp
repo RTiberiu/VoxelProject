@@ -6,7 +6,6 @@
 
 UWorldTerrainSettings::UWorldTerrainSettings() : 
 	UpdateChunkSemaphore(new FairSemaphore(1)),
-	TickSemaphore(new FairSemaphore(1)),
 	PlayerPositionSemaphore(new FairSemaphore(1)),
 	MapSemaphore(new FairSemaphore(1)),
 	DrawDistanceSemaphore(new FairSemaphore(1)) {
@@ -17,7 +16,6 @@ UWorldTerrainSettings::UWorldTerrainSettings() :
 UWorldTerrainSettings::~UWorldTerrainSettings() {
 	// Clean up semaphores
 	delete UpdateChunkSemaphore;
-	delete TickSemaphore;
 	delete PlayerPositionSemaphore;
 	delete MapSemaphore;
 	delete DrawDistanceSemaphore;
@@ -25,38 +23,15 @@ UWorldTerrainSettings::~UWorldTerrainSettings() {
 
 void UWorldTerrainSettings::AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor) {
 	MapSemaphore->Acquire();
-
-	// Print the given parameters first
-	if (ChunkActor) {
-		UE_LOG(LogTemp, Log, TEXT("Adding Position: (X:%d, Z:%d), Adding Actor Address: %p, Adding Actor Name: %s"),
-			ChunkCoordinates.X, ChunkCoordinates.Y, ChunkActor, *ChunkActor->GetName());
-	} else {
-		UE_LOG(LogTemp, Warning, TEXT("Adding Position: (X:%d, Z:%d), Adding Actor is nullptr"),
-			ChunkCoordinates.X, ChunkCoordinates.Y);
-	}
-
-	printMapElements("Adding to map. ");
-
 	SpawnedChunksMap.Add(ChunkCoordinates, ChunkActor);
 	MapSemaphore->Release();
 }
 
 AActor* UWorldTerrainSettings::GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates) {
 	MapSemaphore->Acquire();
-	AActor* RemovedChunk = nullptr;
-
-	UE_LOG(LogTemp, Log, TEXT("Removing position: (X:%d, Z:%d)"), ChunkCoordinates.X, ChunkCoordinates.Y);
-	printMapElements("Removing from map. ");
-
-	if (SpawnedChunksMap.Contains(ChunkCoordinates)) {
-		RemovedChunk =  SpawnedChunksMap.FindAndRemoveChecked(ChunkCoordinates);
-	} else {
-		// throw std::runtime_error("Chunk coordinates not found in SpawnedChunksMap");
-		UE_LOG(LogTemp, Error, TEXT("Chunk coordinates not found in SpawnedChunksMap: X=%d, Y=%d"), ChunkCoordinates.X, ChunkCoordinates.Y);
-	}
+	AActor* RemovedChunk =  SpawnedChunksMap.FindAndRemoveChecked(ChunkCoordinates);
 	MapSemaphore->Release();
 	return RemovedChunk;
-	// return SpawnedChunksMap.FindAndRemoveChecked(ChunkCoordinates);
 }
 
 int UWorldTerrainSettings::GetMapSize() {
@@ -85,9 +60,18 @@ void UWorldTerrainSettings::EmptyChunkMap() {
 	MapSemaphore->Release();
 }
 
+bool UWorldTerrainSettings::isActorPresentInMap(AActor* actor) {
+	for (const TPair<FIntPoint, AActor*>& Pair : SpawnedChunksMap) {
+		if (Pair.Value == actor) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void UWorldTerrainSettings::printMapElements(FString message) {
 	int testCounter{ 0 };
-	FString keysString = message + ": \n";
+	FString keysString = message + " Map count: " + FString::FromInt(SpawnedChunksMap.Num()) + ": \n";
 
 	for (const TPair<FIntPoint, AActor*>& Pair : SpawnedChunksMap) {
 
@@ -107,3 +91,48 @@ void UWorldTerrainSettings::printMapElements(FString message) {
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *keysString);
 }
 
+void UWorldTerrainSettings::ValidateSpawnedChunksMap() {
+	CheckForDuplicateActorPointers();
+
+	CheckIfActorIsNullOrPendingKill();
+
+	CheckNumberOfElements();
+}
+
+// Testing method that checks for duplicated Chunk (AActor) pointers  in SpawnChunkMap
+void UWorldTerrainSettings::CheckForDuplicateActorPointers() {
+	// Create a set to track encountered actors
+	TSet<AActor*> SeenActors;
+
+	// Iterate over the map values
+	for (const TPair<FIntPoint, AActor*>& Pair : SpawnedChunksMap) {
+		AActor* Actor = Pair.Value;
+
+		// Check if the actor is already in the set
+		if (SeenActors.Contains(Actor)) {
+			// Duplicate found
+			UE_LOG(LogTemp, Error, TEXT("Duplicate actor detected: %s"), *Actor->GetName());
+		}
+
+		// Add the actor to the set
+		SeenActors.Add(Actor);
+	}
+}
+
+void UWorldTerrainSettings::CheckIfActorIsNullOrPendingKill() {
+	for (TPair<FIntPoint, AActor*>& Elem : SpawnedChunksMap) {
+		if (!IsValid(Elem.Value) || Elem.Value->IsPendingKillPending()) {
+			UE_LOG(LogTemp, Error, TEXT("CheckIfActorIsNullOrPendingKill(): Invalid chunk at coordinates: (%d, %d)"), Elem.Key.X, Elem.Key.Y);
+		}
+	}
+}
+
+void UWorldTerrainSettings::CheckNumberOfElements() {
+	if (SpawnedChunksMap.Num() < 100) {
+		printMapElements("CheckNumberOfElements(): ");
+		UE_LOG(LogTemp, Error, TEXT("Map has less than 100 items!: Map size: %d"), SpawnedChunksMap.Num());
+	} else if (SpawnedChunksMap.Num() > 101) {
+		printMapElements("CheckNumberOfElements(): ");
+		UE_LOG(LogTemp, Error, TEXT("Map has more than 100 items!: Map size: %d"), SpawnedChunksMap.Num());
+	}
+}

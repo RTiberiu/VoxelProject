@@ -28,6 +28,9 @@ ABinaryChunk::ABinaryChunk() {
 	SetRootComponent(Mesh);
 }
 
+ABinaryChunk::~ABinaryChunk() {
+}
+
 void ABinaryChunk::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }

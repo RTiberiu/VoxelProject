@@ -18,6 +18,8 @@ public:
 	// Sets default values for this actor's properties
 	UVoxelGameInstance();
 
+	void ShutDown();
+
 private:
 	UWorldTerrainSettings* worldTerrainSettings;
 	UChunkLocationData* chunkLocationData;

@@ -10,11 +10,30 @@ UVoxelGameInstance::UVoxelGameInstance() {
    
 }
 
+void UVoxelGameInstance::ShutDown() {
+    Super::Shutdown();
+
+    // Removing added objects from root
+    if (worldTerrainSettings) {
+        worldTerrainSettings->RemoveFromRoot();
+        worldTerrainSettings = nullptr;
+    }
+
+    if (chunkLocationData) {
+        chunkLocationData->RemoveFromRoot();
+        chunkLocationData = nullptr;
+    }
+}
+
 void UVoxelGameInstance::Init() {
 	Super::Init();
 
     chunkLocationData = NewObject<UChunkLocationData>();
     worldTerrainSettings = NewObject<UWorldTerrainSettings>();
+
+    // Ensuring there is not premature garbage collection on the object
+    worldTerrainSettings->AddToRoot();
+    chunkLocationData->AddToRoot();
 
     // Spawn chunkWorld as an actor in the world
     FActorSpawnParameters SpawnParams;
@@ -39,6 +58,7 @@ void UVoxelGameInstance::Init() {
 
         UE_LOG(LogTemp, Warning, TEXT("Spawned Chunk World!"));
     }
+   
 }
 
 
