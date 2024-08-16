@@ -26,6 +26,8 @@ public:
     void addChunksToSpawnPosition(const FChunkLocationData& position);
     void addChunksToDestroyPosition(const FIntPoint& position);
 
+    void emptyPositionQueues();
+
 private:
     // Queue for storing chunks position that need to be spawned
     TQueue<FChunkLocationData> chunksToSpawnPositions;

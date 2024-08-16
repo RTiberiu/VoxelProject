@@ -12,14 +12,12 @@
 // Sets default values
 AChunkWorld::AChunkWorld() : terrainRunnable(nullptr), terrainRunnableThread(nullptr), isTaskRunning(false) {
 	// Set this actor to call Tick() every frame.  Yosu can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true; // true; testing spawning a single chunk for now. put to true for infinite world
+	PrimaryActorTick.bCanEverTick = true;
 
 	isInitialWorldGenerated = false;
 
 	// Initializing Chunk with the BinaryChunk class
 	Chunk = ABinaryChunk::StaticClass();
-
-	// TerrainRunnable::setDrawDistance(5);
 }
 
 void AChunkWorld::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -28,6 +26,10 @@ void AChunkWorld::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainS
 
 void AChunkWorld::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
 	ChunkLocationDataRef = InChunkLocationData;
+}
+
+void AChunkWorld::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings) {
+	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
 }
 
 void AChunkWorld::printExecutionTime(Time& start, Time& end, const char* functionName) {
@@ -39,11 +41,9 @@ void AChunkWorld::spawnInitialWorld() {
 	int spawnedChunks{ 0 };
 	Time start = std::chrono::high_resolution_clock::now();
 
-	for (int x = -WTSR->DrawDistance; x < WTSR->DrawDistance; x++) { // for (int x = -WTSR->DrawDistance; x < WTSR->DrawDistance; x++) {
-		for (int z = -WTSR->DrawDistance; z < WTSR->DrawDistance; z++) { // for (int z = -WTSR->DrawDistance; z < WTSR->DrawDistance; z++) {
+	for (int x = -WTSR->DrawDistance; x < WTSR->DrawDistance; x++) {
+		for (int z = -WTSR->DrawDistance; z < WTSR->DrawDistance; z++) {
 			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
-
-			// ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActor<ABinaryChunk>(Chunk, ChunkPosition, FRotator::ZeroRotator);
 
 			// Spawn the chunk actor deferred
 			ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, ChunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
@@ -51,6 +51,7 @@ void AChunkWorld::spawnInitialWorld() {
 			if (SpawnedChunkActor) {
 					// Add WorldTerrainSettingsRef to BinaryChunk
 					SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
+					SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
 
 					// Finish spawning the chunk actor
 					UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, ChunkPosition));
@@ -70,17 +71,27 @@ void AChunkWorld::spawnInitialWorld() {
 	UE_LOG(LogTemp, Warning, TEXT("Chunks spawned: %d"), spawnedChunks);
 	UE_LOG(LogTemp, Warning, TEXT("SpawnedChunkMap size = %d"), WTSR->GetMapSize());
 	UE_LOG(LogTemp, Warning, TEXT("DrawDistance = %d"), WTSR->DrawDistance);
-
-	// Print SpawnedChunksMap keys before destroying
-	// WTSR->printMapElements("SpawnedChunksMap Keys AFTER spawnInitialWorld");
 }
-
-
 
 // Perform any actions after generating the new chunks
 void AChunkWorld::onNewTerrainGenerated() {
 }
 
+void AChunkWorld::destroyCurrentWorldChunks() {
+	bool isWorldEmpty = false;
+
+	while (!isWorldEmpty) {
+		AActor* chunkToRemove = WTSR->GetNextChunkFromMap();
+		if (chunkToRemove) {
+			chunkToRemove->Destroy();
+		} else {
+			// Empty indices for chunks to spawn and destroy
+			CLDR->emptyPositionQueues();
+
+			isWorldEmpty = true;
+		}
+	}
+}
 
 // Called when the game starts or when spawned
 void AChunkWorld::BeginPlay() {
@@ -119,6 +130,19 @@ FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
 // Called every frame
 void AChunkWorld::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
+
+	// If Perlin noise settings changed, respawn the world
+	if (PNSR->changedSettings) {
+		isInitialWorldGenerated = false;
+
+		destroyCurrentWorldChunks();
+
+		spawnInitialWorld();
+
+		isInitialWorldGenerated = true;
+
+		PNSR->changedSettings = false;
+	}
 
 	// Continue running only if the BeginPlay() is done initializing the world
 	if (!isInitialWorldGenerated) {
@@ -175,6 +199,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		if (SpawnedChunkActor) {
 				// Add WTSR to BinaryChunk
 				SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
+				SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
+
 
 				// Finish spawning the chunk actor
 				UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, chunkToSpawnPosition.ChunkPosition));
@@ -185,9 +211,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
 		}
 
-		Time endChunkTest = std::chrono::high_resolution_clock::now(); // TODO TESTING SINGLE CHUNK SPAWN TIME
-		// printExecutionTime(startChunkTest, endChunkTest, "Spawned a single chunk.");
-
+		// Calculating the average time to spawn a chunk
+		Time endChunkTest = std::chrono::high_resolution_clock::now();
 		calculateAverageChunkSpawnTime(startChunkTest, endChunkTest);
 	}
 

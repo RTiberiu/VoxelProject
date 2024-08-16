@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "PerlinNoiseSettings.h"
 #include "WorldTerrainSettings.h"
 #include "ChunkLocationData.h"
 #include "ChunkWorld.h"
@@ -24,6 +25,8 @@ private:
 	UWorldTerrainSettings* worldTerrainSettings;
 	UChunkLocationData* chunkLocationData;
 	AChunkWorld* chunkWorld;
+	APerlinNoiseSettings* perlinNoiseSettings;
+
 
 protected:
 	// Called when the game starts or when spawned

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "PerlinNoiseSettings.h"
 #include <vector>
 #include <chrono>
 #include "ChunkMeshData.h"
@@ -12,6 +13,7 @@
 class FastNoiseLite;
 class UWorldTerrainSettings;
 class UProceduralMeshComponent;
+class APerlinNoiseSettings;
 
 UCLASS()
 class ABinaryChunk : public AActor {
@@ -35,8 +37,13 @@ public:
 	~ABinaryChunk();
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
+	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
+
 
 private: 
+	APerlinNoiseSettings* PerlinNoiseSettingsRef;
+	APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
+
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
 

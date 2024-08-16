@@ -29,7 +29,29 @@ void UWorldTerrainSettings::AddChunkToMap(const FIntPoint& ChunkCoordinates, AAc
 
 AActor* UWorldTerrainSettings::GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates) {
 	MapSemaphore->Acquire();
-	AActor* RemovedChunk =  SpawnedChunksMap.FindAndRemoveChecked(ChunkCoordinates);
+	AActor* RemovedChunk = nullptr;
+	if (SpawnedChunksMap.Contains(ChunkCoordinates)) {
+		RemovedChunk = SpawnedChunksMap.FindAndRemoveChecked(ChunkCoordinates);
+	}
+	MapSemaphore->Release();
+	return RemovedChunk;
+}
+
+AActor* UWorldTerrainSettings::GetNextChunkFromMap() {
+	MapSemaphore->Acquire();
+	AActor* RemovedChunk = nullptr;
+	FIntPoint keyToRemove;
+
+	if (SpawnedChunksMap.Num() > 0) {
+		// Get the first item in the map
+		for (TPair<FIntPoint, AActor*>& Elem : SpawnedChunksMap) {
+			RemovedChunk = Elem.Value;
+			keyToRemove = Elem.Key;
+			break; 
+		}
+		// Remove the retrived chunk from the map 
+		SpawnedChunksMap.Remove(keyToRemove);
+	}
 	MapSemaphore->Release();
 	return RemovedChunk;
 }

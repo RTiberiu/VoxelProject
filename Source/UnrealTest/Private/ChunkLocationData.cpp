@@ -27,3 +27,8 @@ void UChunkLocationData::addChunksToDestroyPosition(const FIntPoint& position) {
     chunksToDestroyPositions.Enqueue(position);
 }
 
+void UChunkLocationData::emptyPositionQueues() {
+    chunksToSpawnPositions.Empty();
+    chunksToDestroyPositions.Empty();
+}
+

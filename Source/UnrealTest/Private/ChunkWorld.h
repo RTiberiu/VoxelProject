@@ -13,6 +13,7 @@
 class ABinaryChunk;
 class WorldTerrainSettings; // forward declaration to the world settings
 class UChunkLocationData;
+class APerlinNoiseSettings;
 
 UCLASS()
 class AChunkWorld : public AActor {
@@ -24,8 +25,12 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
+	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
 
 private:
+	APerlinNoiseSettings* PerlinNoiseSettingsRef;
+	APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
+
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
 
@@ -53,9 +58,13 @@ private:
 	void onNewTerrainGenerated();
 
 	// Calculate average time spawn for BinaryChunk
+	void calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime);
 	int32 ChunksSpawnedCount = 0;
 	const int32 ChunksToAverage = 1000;
 	double TotalTimeForChunks = 0.0;
+
+	// Destroy entire world when perlin noise settings change
+	void destroyCurrentWorldChunks();
 
 protected:
 	// Called when the game starts or when spawned
@@ -65,5 +74,4 @@ protected:
 
 	virtual void Tick(float DeltaSeconds) override;
 
-	void calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime);
 };

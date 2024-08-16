@@ -35,6 +35,7 @@ public:
 	// Methods to interact with the world chunks
 	void AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor);
 	AActor* GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates);
+	AActor* GetNextChunkFromMap();
 	int GetMapSize();
 	void updateInitialPlayerPosition(FVector newPosition);
 	FVector getInitialPlayerPosition();

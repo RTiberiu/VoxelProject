@@ -35,6 +35,10 @@ void ABinaryChunk::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrain
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }
 
+void ABinaryChunk::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings) {
+	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
+}
+
 // Debugging function that prints a 64-bit integer in groups
 void ABinaryChunk::printBinary(uint64_t value, int groupSize, const std::string& otherData) {
 	// Ensure groupSize is a positive integer
@@ -90,7 +94,11 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 	const FVector chunkWorldLocation = GetActorLocation();
 
 	// old values: 0.02f, 0.025f, 0.03f
-	constexpr std::array<float, 3> octaveFrequencies{ 0.003f, 0.005f, 0.008f };
+	/*constexpr std::array<float, 3> octaveFrequencies{ 0.003f, 0.005f, 0.008f };
+	constexpr std::array<int, 3> amplitudes{ 30, 80, 15 };
+	constexpr std::array<float, 3> lacunarity{1.37, 2.0, 2.0};
+	constexpr std::array<float, 3> gain{5.0, 0.8, 0.2};
+	constexpr std::array<float, 3> weightedStrength{ 0.0, 0.0, 0.2 };*/
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
@@ -104,16 +112,22 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 			// Looping over the different octaves to get the final height
 			int amplitude{ 0 };
 			int height{ 0 };
-			for (const float octave : octaveFrequencies) {
+
+			for (int octave = 0; octave < PNSR->OctaveFrequencies.Num(); octave++) {
+			// for (const float octave : octaveFrequencies) {
 				// Set frequency and get value between 0 and 2
-				noise->SetFrequency(octave);
+				noise->SetFrequency(PNSR->OctaveFrequencies[octave]);
+				noise->SetFractalLacunarity(PNSR->Lacunarity[octave]);
+				noise->SetFractalGain(PNSR->Gain[octave]);
+				noise->SetFractalWeightedStrength(PNSR->WeightedStrength[octave]);
+
 				// Getting perlin noise position, adjusted to the Unreal Engine grid system 
 				const float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
 				const float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
 				const float noiseValue = noise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
 				// Adding multiple splines to the perlinValue
-				if (noiseValue <= 1) {
+				/*if (noiseValue <= 1) {
 					amplitude = 15;
 				} else if (noiseValue <= 1.4) {
 					amplitude = 20;
@@ -121,10 +135,12 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					amplitude = 40;
 				} else if (noiseValue <= 2) {
 					amplitude = 30;
-				}
+				}*/
+
+				height += static_cast<int>(std::floor(noiseValue * PNSR->Amplitudes[octave]));
 
 				// Multiply noise by amplitude and reduce to integer
-				height += static_cast<int>(std::floor(noiseValue * amplitude));
+				// height += static_cast<int>(std::floor(noiseValue * amplitude));
 			}
 
 			// Ensuring height remains between chunk borders

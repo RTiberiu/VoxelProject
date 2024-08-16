@@ -22,6 +22,11 @@ void UVoxelGameInstance::Shutdown() {
         chunkLocationData->RemoveFromRoot();
         chunkLocationData = nullptr;
     }
+
+    if (perlinNoiseSettings) {
+        perlinNoiseSettings->RemoveFromRoot();
+        perlinNoiseSettings = nullptr;
+    }
 }
 
 void UVoxelGameInstance::Init() {
@@ -33,6 +38,17 @@ void UVoxelGameInstance::Init() {
     // Ensuring there is not premature garbage collection on the object
     worldTerrainSettings->AddToRoot();
     chunkLocationData->AddToRoot();
+
+    // Spawn PerlinNoiseSettings for allowing value changes in the editor
+    perlinNoiseSettings = GetWorld()->SpawnActor<APerlinNoiseSettings>(
+            APerlinNoiseSettings::StaticClass(),
+            FVector::ZeroVector,                  
+            FRotator::ZeroRotator               
+    );
+    
+    if (perlinNoiseSettings) {
+        perlinNoiseSettings->AddToRoot();
+    }
 
     // Spawn chunkWorld as an actor in the world
     FActorSpawnParameters SpawnParams;
@@ -51,6 +67,7 @@ void UVoxelGameInstance::Init() {
         // Set the chunk world references to terrain settings and chunk location data
         chunkWorld->SetChunkLocationData(chunkLocationData);
         chunkWorld->SetWorldTerrainSettings(worldTerrainSettings);
+        chunkWorld->SetPerlinNoiseSettings(perlinNoiseSettings);
 
         // Finish spawning the chunk world
         UGameplayStatics::FinishSpawningActor(chunkWorld, FTransform(FRotator::ZeroRotator, FVector::ZeroVector));
