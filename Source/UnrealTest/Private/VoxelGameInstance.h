@@ -18,7 +18,7 @@ public:
 	// Sets default values for this actor's properties
 	UVoxelGameInstance();
 
-	void ShutDown();
+	void Shutdown();
 
 private:
 	UWorldTerrainSettings* worldTerrainSettings;

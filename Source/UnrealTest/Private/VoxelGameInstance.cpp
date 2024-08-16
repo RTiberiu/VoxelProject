@@ -7,10 +7,9 @@
 
 // Sets default values
 UVoxelGameInstance::UVoxelGameInstance() {
-   
 }
 
-void UVoxelGameInstance::ShutDown() {
+void UVoxelGameInstance::Shutdown() {
     Super::Shutdown();
 
     // Removing added objects from root
@@ -58,7 +57,6 @@ void UVoxelGameInstance::Init() {
 
         UE_LOG(LogTemp, Warning, TEXT("Spawned Chunk World!"));
     }
-   
 }
 
 
