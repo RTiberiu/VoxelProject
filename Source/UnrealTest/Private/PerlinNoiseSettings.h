@@ -15,7 +15,10 @@ public:
 	APerlinNoiseSettings();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
-    TArray<float> OctaveFrequencies;
+    TArray<int> Octaves;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+    TArray<float> Frequencies;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
     TArray<int32> Amplitudes;
@@ -31,6 +34,13 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
     bool changedSettings;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+    float noiseFrequency3D;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+    float squashingFactor;
+    
 
 protected:
 	// Called when the game starts or when spawned

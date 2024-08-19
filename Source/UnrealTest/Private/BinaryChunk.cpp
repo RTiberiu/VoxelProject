@@ -71,20 +71,25 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize, const std::string&
 
 }
 
-void ABinaryChunk::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation) {
+void ABinaryChunk::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation, int& height) {
+	// Return early if total height is bigger than the threshold
+	if (height > 50) {
+		return;
+	}
+
 	// Getting perlin noise position, adjusted to the Unreal Engine grid system 
 	const float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
 	const float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
 	const float noisePositionY = static_cast<float>(((y + bitIndex * WTSR->chunkSizePadding) * WTSR->UnrealScale + chunkWorldLocation.Z) / WTSR->UnrealScale);
 	
-	const float squashingFactor = (y + bitIndex * WTSR->chunkSizePadding) * 0.004;
+	const float squashingFactor = (y + bitIndex * WTSR->chunkSizePadding) * PNSR->squashingFactor;
 
-	constexpr float noiseFrequency3D = 0.04;
-	noise->SetFrequency(noiseFrequency3D);
+	noise->SetFrequency(PNSR->noiseFrequency3D);
 
 	const float noiseValue3D = noise->GetNoise(noisePositionX, noisePositionZ, noisePositionY) + 1;
 
-	if (noiseValue3D > 1 && (y + bitIndex * WTSR->chunkSizePadding) > 150) {
+	// TODO Add 3d noise depending on the height of the actual 2D noise
+	if (y + bitIndex * WTSR->chunkSizePadding < 50 && height < 50) { // y + bitIndex * WTSR->chunkSizePadding > 100)
 		column |= 1ULL << y;
 	}
 }
@@ -113,13 +118,13 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 			int amplitude{ 0 };
 			int height{ 0 };
 
-			for (int octave = 0; octave < PNSR->OctaveFrequencies.Num(); octave++) {
-			// for (const float octave : octaveFrequencies) {
+			for (int octaveIndex = 0; octaveIndex < PNSR->Frequencies.Num(); octaveIndex++) {
 				// Set frequency and get value between 0 and 2
-				noise->SetFrequency(PNSR->OctaveFrequencies[octave]);
-				noise->SetFractalLacunarity(PNSR->Lacunarity[octave]);
-				noise->SetFractalGain(PNSR->Gain[octave]);
-				noise->SetFractalWeightedStrength(PNSR->WeightedStrength[octave]);
+				noise->SetFractalOctaves(PNSR->Octaves[octaveIndex]);
+				noise->SetFrequency(PNSR->Frequencies[octaveIndex]);
+				noise->SetFractalLacunarity(PNSR->Lacunarity[octaveIndex]);
+				noise->SetFractalGain(PNSR->Gain[octaveIndex]);
+				noise->SetFractalWeightedStrength(PNSR->WeightedStrength[octaveIndex]);
 
 				// Getting perlin noise position, adjusted to the Unreal Engine grid system 
 				const float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
@@ -137,7 +142,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					amplitude = 30;
 				}*/
 
-				height += static_cast<int>(std::floor(noiseValue * PNSR->Amplitudes[octave]));
+				height += static_cast<int>(std::floor(noiseValue * PNSR->Amplitudes[octaveIndex]));
 
 				// Multiply noise by amplitude and reduce to integer
 				// height += static_cast<int>(std::floor(noiseValue * amplitude));
@@ -170,9 +175,8 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 				}
 
 				for (int y = 0; y < WTSR->chunkSizePadding; y++) {
-
 					// Apply 3D noise to the Y column
-					// apply3DNoiseToHeightColumn(binaryChunk.yBinaryColumn[yIndex], x, z, y, bitIndex, chunkWorldLocation);
+					// apply3DNoiseToHeightColumn(binaryChunk.yBinaryColumn[yIndex], x, z, y, bitIndex, chunkWorldLocation, height);
 
 					const uint64_t currentYCol = binaryChunk.yBinaryColumn[yIndex];
 
@@ -774,21 +778,24 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 		});
 	}
 
-	// Randomize the RGB values
-	uint8 Red = FMath::RandRange(0, 255);
-	uint8 Green = FMath::RandRange(0, 255);
-	uint8 Blue = FMath::RandRange(0, 255);
-
-	FColor Color = FColor(Red, Green, Blue, 255);
+	// Randomly choose a color from the array
+	int32 RandomIndex = FMath::RandRange(0, WTSR->ColorArray.Num() - 1);
+	FColor RandomColor = WTSR->ColorArray[RandomIndex];
 
 	// Add colors
 	MeshData.Colors.Append({
-		Color, Color, Color, Color
+		RandomColor, RandomColor, RandomColor, RandomColor
 	});
 }
 
 void ABinaryChunk::spawnTerrainChunkMeshes() {
 	Mesh->CreateMeshSection(0, MeshData.Vertices, MeshData.Triangles, MeshData.Normals, MeshData.UV0, MeshData.Colors, TArray<FProcMeshTangent>(), false);
+
+	// Load and apply basic material to the mesh
+	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
+	if (Material) {
+		Mesh->SetMaterial(0, Material);
+	}
 }
 
 void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functionName) {

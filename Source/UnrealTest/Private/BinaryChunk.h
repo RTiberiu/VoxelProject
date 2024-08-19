@@ -96,7 +96,7 @@ private:
 
 	void printBinary(uint64_t value, int groupSize, const std::string& otherData ="Column value: ");
 
-	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation);
+	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation, int& height);
 
 protected:
 	// Called when the game starts or when spawned

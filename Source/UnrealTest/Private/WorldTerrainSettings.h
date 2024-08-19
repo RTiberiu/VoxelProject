@@ -47,6 +47,15 @@ public:
 
 	void printMapElements(FString message); // TODO SHOULD MADE PRIVATE AFTER TESTING
 
+	TArray<FColor> ColorArray = {
+		//FColor(110, 9, 130), // Fantasy
+		//FColor(130, 9, 120),
+		//FColor(130, 9, 90),
+		FColor(9, 127, 39), // Green
+		FColor(9, 127, 69),
+		FColor(9, 127, 98)
+	};
+
 private:
 	void CheckForDuplicateActorPointers();
 	void CheckNumberOfElements();
