@@ -22,6 +22,11 @@ ABinaryChunk::ABinaryChunk() {
 	noise->SetNoiseType(FastNoiseLite::NoiseType_Perlin);
 	noise->SetFractalType(FastNoiseLite::FractalType_FBm);
 
+	// Declaring the domain warp noise and initializing basic settings
+	domainWarp = new FastNoiseLite();
+	domainWarp->SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+	domainWarp->SetFractalType(FastNoiseLite::FractalType_DomainWarpProgressive);
+
 	Mesh->SetCastShadow(false);
 
 	// Set mesh as root
@@ -126,16 +131,27 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 				noise->SetFractalGain(PNSR->Gain[octaveIndex]);
 				noise->SetFractalWeightedStrength(PNSR->WeightedStrength[octaveIndex]);
 
+				// Adding domain warp settings
+				domainWarp->SetDomainWarpAmp(PNSR->DomainWarpAmp[octaveIndex]);
+				domainWarp->SetFrequency(PNSR->DomainWarpFrequencies[octaveIndex]);
+				domainWarp->SetFractalOctaves(PNSR->DomainWarpOctaves[octaveIndex]);
+				domainWarp->SetFractalLacunarity(PNSR->DomainWarpLacunarity[octaveIndex]);
+				domainWarp->SetFractalGain(PNSR->DomainWarpGain[octaveIndex]);
+
 				// Getting perlin noise position, adjusted to the Unreal Engine grid system 
-				const float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
-				const float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
+				float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
+				float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
+
+				// Apply domain warp to current noise and get the resulted value
+				domainWarp->DomainWarp(noisePositionX, noisePositionZ);
+
 				const float noiseValue = noise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
 				// Adding multiple splines to the perlinValue
 				/*if (noiseValue <= 1) {
-					amplitude = 15;
+					amplitude = 50;
 				} else if (noiseValue <= 1.4) {
-					amplitude = 20;
+					amplitude = 90;
 				} else if (noiseValue <= 1.8) {
 					amplitude = 40;
 				} else if (noiseValue <= 2) {
@@ -740,7 +756,6 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 	const int& width, const int& height,
 	const int& axis
 	) {
-
 	MeshData.Vertices.Append({
 		voxelPosition1 * WTSR->UnrealScale,
 		voxelPosition2 * WTSR->UnrealScale,
@@ -792,10 +807,10 @@ void ABinaryChunk::spawnTerrainChunkMeshes() {
 	Mesh->CreateMeshSection(0, MeshData.Vertices, MeshData.Triangles, MeshData.Normals, MeshData.UV0, MeshData.Colors, TArray<FProcMeshTangent>(), false);
 
 	// Load and apply basic material to the mesh
-	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
+	/*UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
 	if (Material) {
 		Mesh->SetMaterial(0, Material);
-	}
+	}*/
 }
 
 void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functionName) {

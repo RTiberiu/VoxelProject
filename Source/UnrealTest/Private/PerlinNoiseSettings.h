@@ -41,6 +41,21 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
     float squashingFactor;
     
+    // Domain warp settings
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+    TArray<int> DomainWarpAmp;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+    TArray<float> DomainWarpFrequencies;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+    TArray<int> DomainWarpOctaves;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+    TArray<float> DomainWarpLacunarity;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+    TArray<float> DomainWarpGain;
 
 protected:
 	// Called when the game starts or when spawned

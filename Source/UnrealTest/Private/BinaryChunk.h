@@ -52,6 +52,7 @@ private:
 
 	TObjectPtr<UProceduralMeshComponent> Mesh;
 	TObjectPtr<FastNoiseLite> noise;
+	TObjectPtr<FastNoiseLite> domainWarp;
 
 	BinaryChunk3D binaryChunk = BinaryChunk3D{};
 

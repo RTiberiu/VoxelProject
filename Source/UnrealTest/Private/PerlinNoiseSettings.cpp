@@ -8,20 +8,33 @@ APerlinNoiseSettings::APerlinNoiseSettings() {
 	PrimaryActorTick.bCanEverTick = false;
 
 	// Flat-ish Valleys biome noise 
-	//Octaves = { 2, 3, 4};
-	//Frequencies = { 0.007f, 0.01f, 0.003f };
-	//Amplitudes = { 20, 15, 15 };
-	//Lacunarity = { 2.0f, 2.0f, 2.0f };
-	//Gain = { 0.5f, 0.5f, 0.5f };
-	//WeightedStrength = { -1.7f, 0.0f, -0.7f };
-
-	// Mountain biome noise
-	Octaves = { 3, 3, 5 };
-	Frequencies = { 0.003f, 0.006f, 0.015f };
-	Amplitudes = { 50, 90, 40 };
+	/*Octaves = { 2, 3, 4};
+	Frequencies = { 0.007f, 0.01f, 0.003f };
+	Amplitudes = { 20, 15, 15 };
 	Lacunarity = { 2.0f, 2.0f, 2.0f };
 	Gain = { 0.5f, 0.5f, 0.5f };
-	WeightedStrength = { 0.0f, 0.0f, -0.7f };
+	WeightedStrength = { -1.7f, 0.0f, -0.7f };*/
+
+	DomainWarpAmp = { 80, 60, 100 };
+	DomainWarpFrequencies = { 0.03f, 0.06f, 0.06f };
+	DomainWarpOctaves = { 3, 3, 3 };
+	DomainWarpLacunarity = { 1.2f, 1.0f, 0.8f };
+	DomainWarpGain = { 1.0f, 1.0f, 1.0f };
+
+	// Mountain biome noise - DONE
+	/*Octaves = { 3, 3, 5 };
+	Frequencies = { 0.004f, 0.006f, 0.015f };
+	Amplitudes = { 80, 70, 15 };
+	Lacunarity = { 2.02f, 2.0f, 2.0f };
+	Gain = { 0.4f, 0.5f, 0.5f };
+	WeightedStrength = { -1.2f, 0.0f, -0.7f };
+
+	DomainWarpAmp = {80, 60, 100};
+	DomainWarpFrequencies = { 0.03f, 0.06f, 0.06f};
+	DomainWarpOctaves = {3, 3, 3};
+	DomainWarpLacunarity = { 1.2f, 1.0f, 0.8f };
+	DomainWarpGain = { 1.0f, 1.0f, 1.0f };*/
+
 
 	noiseFrequency3D = 0.012;
 	squashingFactor = 0.004;
