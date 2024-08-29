@@ -7,6 +7,20 @@ APerlinNoiseSettings::APerlinNoiseSettings() {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	// Flat biome noise
+	Octaves = { 4, 4 };
+	Frequencies = { 0.003f, 0.01f };
+	Amplitudes = { 20, 10 };
+	Lacunarity = { 2.0f,2.0f };
+	Gain = { 0.5f, 0.5f };
+	WeightedStrength = { 0.0f, 0.0f };
+
+	DomainWarpAmp = { 60, 60 };
+	DomainWarpFrequencies = { 0.05f, 0.05f };
+	DomainWarpOctaves = { 3, 3};
+	DomainWarpLacunarity = { 1.0f, 1.0f };
+	DomainWarpGain = { 1.0f, 1.0f };
+
 	// Flat-ish Valleys biome noise - DONE
 	/*Octaves = { 2, 3, 4 };
 	Frequencies = { 0.007f, 0.01f, 0.003f };
