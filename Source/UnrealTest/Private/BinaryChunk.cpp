@@ -103,17 +103,30 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 	// Get current chunk world position
 	const FVector chunkWorldLocation = GetActorLocation();
 
-	// old values: 0.02f, 0.025f, 0.03f
-	/*constexpr std::array<float, 3> octaveFrequencies{ 0.003f, 0.005f, 0.008f };
-	constexpr std::array<int, 3> amplitudes{ 30, 80, 15 };
-	constexpr std::array<float, 3> lacunarity{1.37, 2.0, 2.0};
-	constexpr std::array<float, 3> gain{5.0, 0.8, 0.2};
-	constexpr std::array<float, 3> weightedStrength{ 0.0, 0.0, 0.2 };*/
+	// Get current biome depending on world location
+	int biomeIndex = 0;
+	const int chunkWorldLocationX = static_cast<int>(chunkWorldLocation.X);
+	const int chunkWorldLocationY = static_cast<int>(chunkWorldLocation.Y);
+
+	biomeIndex += chunkWorldLocationX > 0 ? chunkWorldLocationX / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
+	biomeIndex += chunkWorldLocationY > 0 ? chunkWorldLocationY / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
+	biomeIndex = biomeIndex % PNSR->biomes.Num();
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 	binaryChunk.xBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 	binaryChunk.zBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
+
+	// Check if chunk is in the blend area
+	bool shouldChunkBeBlended = false;
+	bool blendedThresholdX = chunkWorldLocationX % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+	bool blendedThresholdY = chunkWorldLocationY % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+
+	if (blendedThresholdX || blendedThresholdY) {
+		shouldChunkBeBlended = true;
+	}
+
+	// TODO Continue from here and start blending with the other biomes
 
 	// Loop over the chunk dimensions (X, Y, Z)
 	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
@@ -123,20 +136,20 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 			int amplitude{ 0 };
 			int height{ 0 };
 
-			for (int octaveIndex = 0; octaveIndex < PNSR->Frequencies.Num(); octaveIndex++) {
+			for (int octaveIndex = 0; octaveIndex < PNSR->biomes[biomeIndex].Frequencies.Num(); octaveIndex++) {
 				// Set frequency and get value between 0 and 2
-				noise->SetFractalOctaves(PNSR->Octaves[octaveIndex]);
-				noise->SetFrequency(PNSR->Frequencies[octaveIndex]);
-				noise->SetFractalLacunarity(PNSR->Lacunarity[octaveIndex]);
-				noise->SetFractalGain(PNSR->Gain[octaveIndex]);
-				noise->SetFractalWeightedStrength(PNSR->WeightedStrength[octaveIndex]);
+				noise->SetFractalOctaves(PNSR->biomes[biomeIndex].Octaves[octaveIndex]);
+				noise->SetFrequency(PNSR->biomes[biomeIndex].Frequencies[octaveIndex]);
+				noise->SetFractalLacunarity(PNSR->biomes[biomeIndex].Lacunarity[octaveIndex]);
+				noise->SetFractalGain(PNSR->biomes[biomeIndex].Gain[octaveIndex]);
+				noise->SetFractalWeightedStrength(PNSR->biomes[biomeIndex].WeightedStrength[octaveIndex]);
 
 				// Adding domain warp settings
-				domainWarp->SetDomainWarpAmp(PNSR->DomainWarpAmp[octaveIndex]);
-				domainWarp->SetFrequency(PNSR->DomainWarpFrequencies[octaveIndex]);
-				domainWarp->SetFractalOctaves(PNSR->DomainWarpOctaves[octaveIndex]);
-				domainWarp->SetFractalLacunarity(PNSR->DomainWarpLacunarity[octaveIndex]);
-				domainWarp->SetFractalGain(PNSR->DomainWarpGain[octaveIndex]);
+				domainWarp->SetDomainWarpAmp(PNSR->biomes[biomeIndex].DomainWarpAmp[octaveIndex]);
+				domainWarp->SetFrequency(PNSR->biomes[biomeIndex].DomainWarpFrequencies[octaveIndex]);
+				domainWarp->SetFractalOctaves(PNSR->biomes[biomeIndex].DomainWarpOctaves[octaveIndex]);
+				domainWarp->SetFractalLacunarity(PNSR->biomes[biomeIndex].DomainWarpLacunarity[octaveIndex]);
+				domainWarp->SetFractalGain(PNSR->biomes[biomeIndex].DomainWarpGain[octaveIndex]);
 
 				// Getting perlin noise position, adjusted to the Unreal Engine grid system 
 				float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
@@ -158,7 +171,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					amplitude = 30;
 				}*/
 
-				height += static_cast<int>(std::floor(noiseValue * PNSR->Amplitudes[octaveIndex]));
+				height += static_cast<int>(std::floor(noiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
 
 				// Multiply noise by amplitude and reduce to integer
 				// height += static_cast<int>(std::floor(noiseValue * amplitude));

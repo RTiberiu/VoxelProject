@@ -24,11 +24,16 @@ public:
 	const uint8_t UnrealScale{ 20 }; // this changes the voxel size (100 is 1m)
 	const uint8_t DrawDistance{ 5 }; // 5 
 
+
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
 	const uint8_t chunkSize{ 62 }; // 62
 	const uint8_t chunkSizePadding{ 64 }; // 64
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
+
+	// World chunks settings
+	const uint16_t biomeWidth{ chunkSize * 10 };
+	const uint64_t blendBiomeThreshold{ 100 };
 
 	void ValidateSpawnedChunksMap();
 
