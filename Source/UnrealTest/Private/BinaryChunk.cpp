@@ -27,6 +27,13 @@ ABinaryChunk::ABinaryChunk() {
 	domainWarp->SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
 	domainWarp->SetFractalType(FastNoiseLite::FractalType_DomainWarpProgressive);
 
+	// Declaring and initializing the noise for the adjacent biome
+	adjacentBiomeNoise = new FastNoiseLite();
+	adjacentBiomeNoise->SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+	adjacentBiomeNoise->SetFractalType(FastNoiseLite::FractalType_FBm);
+	adjacentBiomeDomainWarp = new FastNoiseLite();
+	adjacentBiomeDomainWarp->SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+
 	Mesh->SetCastShadow(false);
 
 	// Set mesh as root
@@ -99,34 +106,76 @@ void ABinaryChunk::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, 
 	}
 }
 
+int ABinaryChunk::getBiomeIndexForCurrentLocation(const FVector& worldLocation) {
+	int biomeIndex = 0; 
+	const int chunkWorldLocationX = static_cast<int>(worldLocation.X);
+	const int chunkWorldLocationY = static_cast<int>(worldLocation.Y);
+
+	biomeIndex += chunkWorldLocationX > 0 ? static_cast<int>(worldLocation.X) / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
+	biomeIndex += chunkWorldLocationY > 0 ? static_cast<int>(worldLocation.Y) / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
+	biomeIndex = biomeIndex % PNSR->biomes.Num();
+
+	return biomeIndex;
+}
+
+bool ABinaryChunk::shouldChunkBeBlended(const FVector& worldLocation) {
+	// Check if chunk is in the blend area
+	bool shouldChunkBeBlended = false;
+	bool blendedThresholdX = static_cast<int>(worldLocation.X) % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+	bool blendedThresholdY = static_cast<int>(worldLocation.Y) % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+
+	// Set if the current biomes should be blended with an adjacent one
+	if (blendedThresholdX || blendedThresholdY) {
+		shouldChunkBeBlended = true;
+	}
+
+	return shouldChunkBeBlended;
+}
+
+void ABinaryChunk::setNoiseSettingsForBiome(const int& biomeIndex, const int& octaveIndex, const TObjectPtr<FastNoiseLite> noiseObj, TObjectPtr<FastNoiseLite> domainWarpObj) {
+	// Set frequency and get value between 0 and 2
+	noiseObj->SetFractalOctaves(PNSR->biomes[biomeIndex].Octaves[octaveIndex]);
+	noiseObj->SetFrequency(PNSR->biomes[biomeIndex].Frequencies[octaveIndex]);
+	noiseObj->SetFractalLacunarity(PNSR->biomes[biomeIndex].Lacunarity[octaveIndex]);
+	noiseObj->SetFractalGain(PNSR->biomes[biomeIndex].Gain[octaveIndex]);
+	noiseObj->SetFractalWeightedStrength(PNSR->biomes[biomeIndex].WeightedStrength[octaveIndex]);
+
+	// Adding domain warp settings
+	domainWarpObj->SetDomainWarpAmp(PNSR->biomes[biomeIndex].DomainWarpAmp[octaveIndex]);
+	domainWarpObj->SetFrequency(PNSR->biomes[biomeIndex].DomainWarpFrequencies[octaveIndex]);
+	domainWarpObj->SetFractalOctaves(PNSR->biomes[biomeIndex].DomainWarpOctaves[octaveIndex]);
+	domainWarpObj->SetFractalLacunarity(PNSR->biomes[biomeIndex].DomainWarpLacunarity[octaveIndex]);
+	domainWarpObj->SetFractalGain(PNSR->biomes[biomeIndex].DomainWarpGain[octaveIndex]);
+}
+
+float ABinaryChunk::getBiomeInterpolationWeight(const FVector& worldLocation) {
+	// Get the position within the biome
+	const float positionInBiomeX = static_cast<float>(static_cast<int>(worldLocation.X) % WTSR->biomeWidth);
+	const float positionInBiomeY = static_cast<float>(static_cast<int>(worldLocation.Y) % WTSR->biomeWidth);
+
+	// Determine if within blending zone 
+	const float blendStart = WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+
+	// Calculate weight based on how close the current position is to the end of the biome
+	float weightX = 0.0f;
+	if (positionInBiomeX > blendStart) {
+		weightX = (positionInBiomeX - blendStart) / WTSR->blendBiomeThreshold;
+	}
+
+	return weightX;  
+}
+
 void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old createBinarySolidColumnsYXZ() is below and working
 	// Get current chunk world position
 	const FVector chunkWorldLocation = GetActorLocation();
 
 	// Get current biome depending on world location
-	int biomeIndex = 0;
-	const int chunkWorldLocationX = static_cast<int>(chunkWorldLocation.X);
-	const int chunkWorldLocationY = static_cast<int>(chunkWorldLocation.Y);
-
-	biomeIndex += chunkWorldLocationX > 0 ? chunkWorldLocationX / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
-	biomeIndex += chunkWorldLocationY > 0 ? chunkWorldLocationY / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
-	biomeIndex = biomeIndex % PNSR->biomes.Num();
+	const int biomeIndex = getBiomeIndexForCurrentLocation(chunkWorldLocation);
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 	binaryChunk.xBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 	binaryChunk.zBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
-
-	// Check if chunk is in the blend area
-	bool shouldChunkBeBlended = false;
-	bool blendedThresholdX = chunkWorldLocationX % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
-	bool blendedThresholdY = chunkWorldLocationY % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
-
-	if (blendedThresholdX || blendedThresholdY) {
-		shouldChunkBeBlended = true;
-	}
-
-	// TODO Continue from here and start blending with the other biomes
 
 	// Loop over the chunk dimensions (X, Y, Z)
 	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
@@ -137,19 +186,8 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 			int height{ 0 };
 
 			for (int octaveIndex = 0; octaveIndex < PNSR->biomes[biomeIndex].Frequencies.Num(); octaveIndex++) {
-				// Set frequency and get value between 0 and 2
-				noise->SetFractalOctaves(PNSR->biomes[biomeIndex].Octaves[octaveIndex]);
-				noise->SetFrequency(PNSR->biomes[biomeIndex].Frequencies[octaveIndex]);
-				noise->SetFractalLacunarity(PNSR->biomes[biomeIndex].Lacunarity[octaveIndex]);
-				noise->SetFractalGain(PNSR->biomes[biomeIndex].Gain[octaveIndex]);
-				noise->SetFractalWeightedStrength(PNSR->biomes[biomeIndex].WeightedStrength[octaveIndex]);
 
-				// Adding domain warp settings
-				domainWarp->SetDomainWarpAmp(PNSR->biomes[biomeIndex].DomainWarpAmp[octaveIndex]);
-				domainWarp->SetFrequency(PNSR->biomes[biomeIndex].DomainWarpFrequencies[octaveIndex]);
-				domainWarp->SetFractalOctaves(PNSR->biomes[biomeIndex].DomainWarpOctaves[octaveIndex]);
-				domainWarp->SetFractalLacunarity(PNSR->biomes[biomeIndex].DomainWarpLacunarity[octaveIndex]);
-				domainWarp->SetFractalGain(PNSR->biomes[biomeIndex].DomainWarpGain[octaveIndex]);
+				setNoiseSettingsForBiome(biomeIndex, octaveIndex, noise, domainWarp);
 
 				// Getting perlin noise position, adjusted to the Unreal Engine grid system 
 				float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
@@ -171,7 +209,26 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					amplitude = 30;
 				}*/
 
-				height += static_cast<int>(std::floor(noiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
+				// Blend with the adjacent biome
+				if (shouldChunkBeBlended(chunkWorldLocation)) {
+					const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
+
+					// Set adjacent biome noise settings
+					setNoiseSettingsForBiome(biomeIndex, octaveIndex, adjacentBiomeNoise, adjacentBiomeDomainWarp);
+
+					// Apply domain warp to adjcent biome and get noise value
+					adjacentBiomeDomainWarp->DomainWarp(noisePositionX, noisePositionZ);
+					const float adjacentNoiseValue = adjacentBiomeNoise->GetNoise(noisePositionX, noisePositionZ) + 1;
+
+					// Interpolate height between current biome and adjacent one
+						// TODO get interpolated value that goes from 0 to 1, depending on how close it gets to the edge
+					height += std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeight(chunkWorldLocation)); // TODO This function is not properly working yet
+
+				} else {
+					// Apply height just for the current biome 
+					height += static_cast<int>(std::floor(noiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
+				}
+
 
 				// Multiply noise by amplitude and reduce to integer
 				// height += static_cast<int>(std::floor(noiseValue * amplitude));

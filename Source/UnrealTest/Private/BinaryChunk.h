@@ -54,6 +54,9 @@ private:
 	TObjectPtr<FastNoiseLite> noise;
 	TObjectPtr<FastNoiseLite> domainWarp;
 
+	TObjectPtr<FastNoiseLite> adjacentBiomeNoise;
+	TObjectPtr<FastNoiseLite> adjacentBiomeDomainWarp;
+
 	BinaryChunk3D binaryChunk = BinaryChunk3D{};
 
 	std::vector<uint64_t> columnsFaceMask;
@@ -98,6 +101,14 @@ private:
 	void printBinary(uint64_t value, int groupSize, const std::string& otherData ="Column value: ");
 
 	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation, int& height);
+
+	int getBiomeIndexForCurrentLocation(const FVector& worldLocation);
+
+	bool shouldChunkBeBlended(const FVector& worldLocation);
+
+	void setNoiseSettingsForBiome(const int& biomeIndex, const int& octaveIndex, const TObjectPtr<FastNoiseLite> noise, const TObjectPtr<FastNoiseLite> domainWarp);
+
+	float getBiomeInterpolationWeight(const FVector& worldLocation);
 
 protected:
 	// Called when the game starts or when spawned
