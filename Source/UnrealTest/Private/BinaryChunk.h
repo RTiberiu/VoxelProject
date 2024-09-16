@@ -104,11 +104,14 @@ private:
 
 	int getBiomeIndexForCurrentLocation(const FVector& worldLocation);
 
-	bool shouldChunkBeBlended(const FVector& worldLocation);
+	bool shouldChunkBeBlendedOnAxis(const FVector& worldLocation, const int& voxelLocation, const bool& axis);
+
 
 	void setNoiseSettingsForBiome(const int& biomeIndex, const int& octaveIndex, const TObjectPtr<FastNoiseLite> noise, const TObjectPtr<FastNoiseLite> domainWarp);
 
-	float getBiomeInterpolationWeight(const FVector& worldLocation);
+	float getBiomeInterpolationWeightOnAxis(const FVector& worldLocation, const int& voxelLocation, const bool& axis);
+
+	int getColorIndexFromVoxelHeight(const FVector& voxelPosition);
 
 protected:
 	// Called when the game starts or when spawned

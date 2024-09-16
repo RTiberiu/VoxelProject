@@ -118,15 +118,19 @@ int ABinaryChunk::getBiomeIndexForCurrentLocation(const FVector& worldLocation) 
 	return biomeIndex;
 }
 
-bool ABinaryChunk::shouldChunkBeBlended(const FVector& worldLocation) {
-	// Check if chunk is in the blend area
-	bool shouldChunkBeBlended = false;
-	bool blendedThresholdX = static_cast<int>(worldLocation.X) % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
-	bool blendedThresholdY = static_cast<int>(worldLocation.Y) % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+// Axis should be true for X axis, and false for the Z axis (Unreal's Y axis) 
+bool ABinaryChunk::shouldChunkBeBlendedOnAxis(const FVector& worldLocation, const int& voxelLocation, const bool& axis) {
+	bool shouldChunkBeBlended;
 
-	// Set if the current biomes should be blended with an adjacent one
-	if (blendedThresholdX || blendedThresholdY) {
-		shouldChunkBeBlended = true;
+	// Check if chunk is in the blend area
+	if (axis) { // X axis
+		const int relativePositionInBiomeX = (abs(static_cast<int>(worldLocation.X)) + voxelLocation) % WTSR->biomeWidth;
+		bool isInBlendedThresholdX = relativePositionInBiomeX % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+		shouldChunkBeBlended = isInBlendedThresholdX ? true : false;
+	} else { // Y axis 
+		const int relativePositionInBiomeY = (abs(static_cast<int>(worldLocation.Y)) + voxelLocation) % WTSR->biomeWidth;
+		bool isInBlendedThresholdY = relativePositionInBiomeY > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+		shouldChunkBeBlended = isInBlendedThresholdY ? true : false;
 	}
 
 	return shouldChunkBeBlended;
@@ -148,21 +152,44 @@ void ABinaryChunk::setNoiseSettingsForBiome(const int& biomeIndex, const int& oc
 	domainWarpObj->SetFractalGain(PNSR->biomes[biomeIndex].DomainWarpGain[octaveIndex]);
 }
 
-float ABinaryChunk::getBiomeInterpolationWeight(const FVector& worldLocation) {
-	// Get the position within the biome
-	const float positionInBiomeX = static_cast<float>(static_cast<int>(worldLocation.X) % WTSR->biomeWidth);
-	const float positionInBiomeY = static_cast<float>(static_cast<int>(worldLocation.Y) % WTSR->biomeWidth);
+// Axis should be true for X axis, and false for the Z axis (Unreal's Y axis) 
+float ABinaryChunk::getBiomeInterpolationWeightOnAxis(const FVector& worldLocation, const int& voxelLocation, const bool& axis) {
+	float weight = 0.0f;
+
+	float positionInBiome;
+	if (axis) { // X axis
+		positionInBiome = static_cast<float>(abs((static_cast<int>(worldLocation.X)) + voxelLocation) % WTSR->biomeWidth);
+	} else { // Z axis
+		positionInBiome = static_cast<float>(abs((static_cast<int>(worldLocation.Y)) + voxelLocation) % WTSR->biomeWidth);
+	}
 
 	// Determine if within blending zone 
 	const float blendStart = WTSR->biomeWidth - WTSR->blendBiomeThreshold;
 
 	// Calculate weight based on how close the current position is to the end of the biome
-	float weightX = 0.0f;
-	if (positionInBiomeX > blendStart) {
-		weightX = (positionInBiomeX - blendStart) / WTSR->blendBiomeThreshold;
+	if (positionInBiome > blendStart) {
+		weight = (positionInBiome - blendStart) / WTSR->blendBiomeThreshold;
 	}
 
-	return weightX;  
+	return weight;
+}
+
+int ABinaryChunk::getColorIndexFromVoxelHeight(const FVector& voxelPosition) {
+	const int voxelHeight = static_cast<int>(voxelPosition.Z);
+	int colorIndex = 0;
+
+	constexpr int layerHeight = 20;
+	constexpr int layers = 9;
+
+	while (colorIndex < layers) {
+		const int maxLayerHeight = colorIndex * layerHeight + layerHeight;
+		if (voxelHeight < maxLayerHeight) {
+			break;
+		}
+		colorIndex++;
+	}
+
+	return colorIndex;
 }
 
 void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old createBinarySolidColumnsYXZ() is below and working
@@ -170,7 +197,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 	const FVector chunkWorldLocation = GetActorLocation();
 
 	// Get current biome depending on world location
-	const int biomeIndex = getBiomeIndexForCurrentLocation(chunkWorldLocation);
+	const int biomeIndex = PNSR->biomeIndex; //  getBiomeIndexForCurrentLocation(chunkWorldLocation);
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
@@ -209,8 +236,9 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					amplitude = 30;
 				}*/
 
-				// Blend with the adjacent biome
-				if (shouldChunkBeBlended(chunkWorldLocation)) {
+				// Blend with the adjacent biome on the X axis
+				bool blendBiomeOnAxisX = false; // shouldChunkBeBlendedOnAxis(chunkWorldLocation, x, true);
+				if (blendBiomeOnAxisX) {
 					const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
 
 					// Set adjacent biome noise settings
@@ -220,14 +248,50 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					adjacentBiomeDomainWarp->DomainWarp(noisePositionX, noisePositionZ);
 					const float adjacentNoiseValue = adjacentBiomeNoise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
-					// Interpolate height between current biome and adjacent one
-						// TODO get interpolated value that goes from 0 to 1, depending on how close it gets to the edge
-					height += std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeight(chunkWorldLocation)); // TODO This function is not properly working yet
+					height += std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, x, true));
+				}
 
-				} else {
-					// Apply height just for the current biome 
+				// Blend with the adjacent biome on the Z axis
+				bool blendBiomeOnAxisZ = false; //  shouldChunkBeBlendedOnAxis(chunkWorldLocation, z, false);
+				if (blendBiomeOnAxisZ) {
+					const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
+
+					// Set adjacent biome noise settings
+					setNoiseSettingsForBiome(biomeIndex, octaveIndex, adjacentBiomeNoise, adjacentBiomeDomainWarp);
+
+					// Apply domain warp to adjcent biome and get noise value
+					adjacentBiomeDomainWarp->DomainWarp(noisePositionX, noisePositionZ);
+					const float adjacentNoiseValue = adjacentBiomeNoise->GetNoise(noisePositionX, noisePositionZ) + 1;
+
+					height += std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, z, false));
+				}
+
+				// TODO might have to interpolate with both biomes on edges where both biomes overlap.
+				
+				// Apply height just for the current biome if no blending was needed
+				if (!blendBiomeOnAxisZ && !blendBiomeOnAxisX) {
 					height += static_cast<int>(std::floor(noiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
 				}
+
+				// Blend with the adjacent biome
+				//if (shouldChunkBeBlendedAxisX(chunkWorldLocation)) {
+				//	const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
+
+				//	// Set adjacent biome noise settings
+				//	setNoiseSettingsForBiome(biomeIndex, octaveIndex, adjacentBiomeNoise, adjacentBiomeDomainWarp);
+
+				//	// Apply domain warp to adjcent biome and get noise value
+				//	adjacentBiomeDomainWarp->DomainWarp(noisePositionX, noisePositionZ);
+				//	const float adjacentNoiseValue = adjacentBiomeNoise->GetNoise(noisePositionX, noisePositionZ) + 1;
+
+				//	// Interpolate height between current biome and adjacent one
+				//		// TODO get interpolated value that goes from 0 to 1, depending on how close it gets to the edge
+				//	height += std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeight(chunkWorldLocation)); // TODO This function is not properly working yet
+
+				//} else {
+				//	// Apply height just for the current biome 
+				//	height += static_cast<int>(std::floor(noiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
+				//}
 
 
 				// Multiply noise by amplitude and reduce to integer
@@ -864,8 +928,10 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 	}
 
 	// Randomly choose a color from the array
-	int32 RandomIndex = FMath::RandRange(0, WTSR->ColorArray.Num() - 1);
-	FColor RandomColor = WTSR->ColorArray[RandomIndex];
+	const int32 colorIndex = FMath::RandRange(0, WTSR->ColorArray[0].Num() - 1);
+	const int layerIndex = getColorIndexFromVoxelHeight(voxelPosition1);
+
+	FColor RandomColor = WTSR->ColorArray[layerIndex][colorIndex];
 
 	// Add colors
 	MeshData.Colors.Append({
@@ -877,10 +943,10 @@ void ABinaryChunk::spawnTerrainChunkMeshes() {
 	Mesh->CreateMeshSection(0, MeshData.Vertices, MeshData.Triangles, MeshData.Normals, MeshData.UV0, MeshData.Colors, TArray<FProcMeshTangent>(), false);
 
 	// Load and apply basic material to the mesh
-	/*UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
+	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
 	if (Material) {
 		Mesh->SetMaterial(0, Material);
-	}*/
+	}
 }
 
 void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functionName) {

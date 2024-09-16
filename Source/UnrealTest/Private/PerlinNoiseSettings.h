@@ -37,6 +37,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
     float squashingFactor;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
+	int biomeIndex;
+
     TArray<BiomeNoiseSettings> biomes;
 
 protected:

@@ -46,6 +46,8 @@ APerlinNoiseSettings::APerlinNoiseSettings() {
 	mountainBiome.DomainWarpLacunarity = { 1.2f, 1.0f, 0.8f };
 	mountainBiome.DomainWarpGain = { 1.0f, 1.0f, 1.0f };
 
+	biomeIndex = 2; 
+
 	biomes.Add(flatBiome);
 	biomes.Add(valleysBiome);
 	biomes.Add(mountainBiome);
