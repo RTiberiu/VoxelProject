@@ -153,14 +153,14 @@ void ABinaryChunk::setNoiseSettingsForBiome(const int& biomeIndex, const int& oc
 }
 
 // Axis should be true for X axis, and false for the Z axis (Unreal's Y axis) 
-float ABinaryChunk::getBiomeInterpolationWeightOnAxis(const FVector& worldLocation, const int& voxelLocation, const bool& axis) {
+float ABinaryChunk::getBiomeInterpolationWeightOnAxis(const FVector& chunkWorldLocation, const int& voxelLocation, const bool& axis) {
 	float weight = 0.0f;
 
 	float positionInBiome;
 	if (axis) { // X axis
-		positionInBiome = static_cast<float>(abs((static_cast<int>(worldLocation.X)) + voxelLocation) % WTSR->biomeWidth);
+		positionInBiome = static_cast<float>(abs((static_cast<int>(chunkWorldLocation.X) / WTSR->UnrealScale) + voxelLocation) % WTSR->biomeWidth);
 	} else { // Z axis
-		positionInBiome = static_cast<float>(abs((static_cast<int>(worldLocation.Y)) + voxelLocation) % WTSR->biomeWidth);
+		positionInBiome = static_cast<float>(abs((static_cast<int>(chunkWorldLocation.Y) / WTSR->UnrealScale) + voxelLocation) % WTSR->biomeWidth);
 	}
 
 	// Determine if within blending zone 

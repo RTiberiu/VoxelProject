@@ -109,7 +109,7 @@ private:
 
 	void setNoiseSettingsForBiome(const int& biomeIndex, const int& octaveIndex, const TObjectPtr<FastNoiseLite> noise, const TObjectPtr<FastNoiseLite> domainWarp);
 
-	float getBiomeInterpolationWeightOnAxis(const FVector& worldLocation, const int& voxelLocation, const bool& axis);
+	float getBiomeInterpolationWeightOnAxis(const FVector& chunkWorldLocation, const int& voxelLocation, const bool& axis);
 
 	int getColorIndexFromVoxelHeight(const FVector& voxelPosition);
 
