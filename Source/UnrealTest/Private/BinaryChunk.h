@@ -102,9 +102,9 @@ private:
 
 	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation, int& height);
 
-	int getBiomeIndexForCurrentLocation(const FVector& worldLocation);
+	int getBiomeIndexForCurrentLocation(const FVector& chunkWorldLocation);
 
-	bool shouldChunkBeBlendedOnAxis(const FVector& worldLocation, const int& voxelLocation, const bool& axis);
+	bool shouldChunkBeBlendedOnAxis(const FVector& chunkWorldLocation, const int& voxelLocation, const bool& axis);
 
 
 	void setNoiseSettingsForBiome(const int& biomeIndex, const int& octaveIndex, const TObjectPtr<FastNoiseLite> noise, const TObjectPtr<FastNoiseLite> domainWarp);

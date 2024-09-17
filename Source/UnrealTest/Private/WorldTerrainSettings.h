@@ -32,7 +32,7 @@ public:
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 
 	// World chunks settings
-	const int biomeWidth{ chunkSize * 10 };
+	const int biomeWidth{ chunkSize * 5 }; // 10
 	const uint64_t blendBiomeThreshold{ 100 };
 
 	void ValidateSpawnedChunksMap();

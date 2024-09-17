@@ -106,29 +106,29 @@ void ABinaryChunk::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, 
 	}
 }
 
-int ABinaryChunk::getBiomeIndexForCurrentLocation(const FVector& worldLocation) {
+int ABinaryChunk::getBiomeIndexForCurrentLocation(const FVector& chunkWorldLocation) {
 	int biomeIndex = 0; 
-	const int chunkWorldLocationX = static_cast<int>(worldLocation.X);
-	const int chunkWorldLocationY = static_cast<int>(worldLocation.Y);
+	const int chunkWorldLocationX = abs(static_cast<int>(chunkWorldLocation.X / WTSR->UnrealScale));
+	const int chunkWorldLocationY = abs(static_cast<int>(chunkWorldLocation.Y / WTSR->UnrealScale));
 
-	biomeIndex += chunkWorldLocationX > 0 ? static_cast<int>(worldLocation.X) / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
-	biomeIndex += chunkWorldLocationY > 0 ? static_cast<int>(worldLocation.Y) / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
+	biomeIndex += chunkWorldLocationX > 0 ? chunkWorldLocationX / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
+	biomeIndex += chunkWorldLocationY > 0 ? chunkWorldLocationY / WTSR->biomeWidth % PNSR->biomes.Num() : 0;
 	biomeIndex = biomeIndex % PNSR->biomes.Num();
 
 	return biomeIndex;
 }
 
 // Axis should be true for X axis, and false for the Z axis (Unreal's Y axis) 
-bool ABinaryChunk::shouldChunkBeBlendedOnAxis(const FVector& worldLocation, const int& voxelLocation, const bool& axis) {
+bool ABinaryChunk::shouldChunkBeBlendedOnAxis(const FVector& chunkWorldLocation, const int& voxelLocation, const bool& axis) {
 	bool shouldChunkBeBlended;
 
 	// Check if chunk is in the blend area
 	if (axis) { // X axis
-		const int relativePositionInBiomeX = (abs(static_cast<int>(worldLocation.X)) + voxelLocation) % WTSR->biomeWidth;
-		bool isInBlendedThresholdX = relativePositionInBiomeX % WTSR->biomeWidth > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+		const int relativePositionInBiomeX = (abs(static_cast<int>(chunkWorldLocation.X / WTSR->UnrealScale)) + voxelLocation) % WTSR->biomeWidth;
+		bool isInBlendedThresholdX = relativePositionInBiomeX > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
 		shouldChunkBeBlended = isInBlendedThresholdX ? true : false;
 	} else { // Y axis 
-		const int relativePositionInBiomeY = (abs(static_cast<int>(worldLocation.Y)) + voxelLocation) % WTSR->biomeWidth;
+		const int relativePositionInBiomeY = (abs(static_cast<int>(chunkWorldLocation.Y / WTSR->UnrealScale)) + voxelLocation) % WTSR->biomeWidth;
 		bool isInBlendedThresholdY = relativePositionInBiomeY > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
 		shouldChunkBeBlended = isInBlendedThresholdY ? true : false;
 	}
@@ -197,7 +197,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 	const FVector chunkWorldLocation = GetActorLocation();
 
 	// Get current biome depending on world location
-	const int biomeIndex = PNSR->biomeIndex; //  getBiomeIndexForCurrentLocation(chunkWorldLocation);
+	const int biomeIndex =  getBiomeIndexForCurrentLocation(chunkWorldLocation); // PNSR->biomeIndex;
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
@@ -237,8 +237,11 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 				}*/
 
 				// Blend with the adjacent biome on the X axis
-				bool blendBiomeOnAxisX = false; // shouldChunkBeBlendedOnAxis(chunkWorldLocation, x, true);
+				bool blendBiomeOnAxisX = shouldChunkBeBlendedOnAxis(chunkWorldLocation, x, true);
+
 				if (blendBiomeOnAxisX) {
+					// UE_LOG(LogTemp, Warning, TEXT("Blend with biome: %s -- Chunkworld location X: %f, Voxel location X: %d"), blendBiomeOnAxisX ? TEXT("true") : TEXT("false"), chunkWorldLocation.X, x);
+
 					const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
 
 					// Set adjacent biome noise settings
@@ -252,8 +255,10 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 				}
 
 				// Blend with the adjacent biome on the Z axis
-				bool blendBiomeOnAxisZ = false; //  shouldChunkBeBlendedOnAxis(chunkWorldLocation, z, false);
+				bool blendBiomeOnAxisZ = shouldChunkBeBlendedOnAxis(chunkWorldLocation, z, false);
 				if (blendBiomeOnAxisZ) {
+					// UE_LOG(LogTemp, Warning, TEXT("Blend with biome: %s -- Chunk world location Z: %f, Voxel location Z: %d"), blendBiomeOnAxisZ ? TEXT("true") : TEXT("false"), chunkWorldLocation.Z, z);
+
 					const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
 
 					// Set adjacent biome noise settings
