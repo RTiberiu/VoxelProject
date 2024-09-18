@@ -168,7 +168,8 @@ float ABinaryChunk::getBiomeInterpolationWeightOnAxis(const FVector& chunkWorldL
 
 	// Calculate weight based on how close the current position is to the end of the biome
 	if (positionInBiome > blendStart) {
-		weight = (positionInBiome - blendStart) / WTSR->blendBiomeThreshold;
+		weight = positionInBiome / WTSR->biomeWidth; // (positionInBiome - blendStart) / WTSR->blendBiomeThreshold;
+		// weight = std::clamp(weight, 0.0f, 1.0f);
 	}
 
 	return weight;
@@ -251,7 +252,9 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					adjacentBiomeDomainWarp->DomainWarp(noisePositionX, noisePositionZ);
 					const float adjacentNoiseValue = adjacentBiomeNoise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
-					height += std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, x, true));
+					const float interpolatedNoiseValue = std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, x, true));
+
+					height += static_cast<int>(std::floor(interpolatedNoiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
 				}
 
 				// Blend with the adjacent biome on the Z axis
@@ -268,7 +271,9 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					adjacentBiomeDomainWarp->DomainWarp(noisePositionX, noisePositionZ);
 					const float adjacentNoiseValue = adjacentBiomeNoise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
-					height += std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, z, false));
+					const float interpolatedNoiseValue = std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, z, false));
+
+					height += static_cast<int>(std::floor(interpolatedNoiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
 				}
 
 				// TODO might have to interpolate with both biomes on edges where both biomes overlap.
