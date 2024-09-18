@@ -8,17 +8,17 @@ APerlinNoiseSettings::APerlinNoiseSettings() {
 	PrimaryActorTick.bCanEverTick = false;
 
 	BiomeNoiseSettings flatBiome;
-	flatBiome.Octaves = { 4, 4 };
-	flatBiome.Frequencies = { 0.003f, 0.01f };
-	flatBiome.Amplitudes = { 20, 10 };
-	flatBiome.Lacunarity = { 2.0f, 2.0f };
-	flatBiome.Gain = { 0.5f, 0.5f };
-	flatBiome.WeightedStrength = { 0.0f, 0.0f };
-	flatBiome.DomainWarpAmp = { 60, 60 };
-	flatBiome.DomainWarpFrequencies = { 0.05f, 0.05f };
-	flatBiome.DomainWarpOctaves = { 3, 3 };
-	flatBiome.DomainWarpLacunarity = { 1.0f, 1.0f };
-	flatBiome.DomainWarpGain = { 1.0f, 1.0f };
+	flatBiome.Octaves = { 4, 4, 4 };
+	flatBiome.Frequencies = { 0.003f, 0.01f, 0.01f };
+	flatBiome.Amplitudes = { 20, 10, 10 };
+	flatBiome.Lacunarity = { 2.0f, 2.0f, 2.0f };
+	flatBiome.Gain = { 0.5f, 0.5f, 0.5f };
+	flatBiome.WeightedStrength = { 0.0f, 0.0f, 0.0f };
+	flatBiome.DomainWarpAmp = { 60, 60, 60 };
+	flatBiome.DomainWarpFrequencies = { 0.05f, 0.05f, 0.05f };
+	flatBiome.DomainWarpOctaves = { 3, 3, 3 };
+	flatBiome.DomainWarpLacunarity = { 1.0f, 1.0f, 1.0f};
+	flatBiome.DomainWarpGain = { 1.0f, 1.0f, 1.0f };
 		
 	BiomeNoiseSettings valleysBiome;
 	valleysBiome.Octaves = { 2, 3, 4 };

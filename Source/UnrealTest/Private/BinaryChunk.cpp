@@ -137,7 +137,7 @@ bool ABinaryChunk::shouldChunkBeBlendedOnAxis(const FVector& chunkWorldLocation,
 }
 
 void ABinaryChunk::setNoiseSettingsForBiome(const int& biomeIndex, const int& octaveIndex, const TObjectPtr<FastNoiseLite> noiseObj, TObjectPtr<FastNoiseLite> domainWarpObj) {
-	// Set frequency and get value between 0 and 2
+	// Set perlin noise settings
 	noiseObj->SetFractalOctaves(PNSR->biomes[biomeIndex].Octaves[octaveIndex]);
 	noiseObj->SetFrequency(PNSR->biomes[biomeIndex].Frequencies[octaveIndex]);
 	noiseObj->SetFractalLacunarity(PNSR->biomes[biomeIndex].Lacunarity[octaveIndex]);
@@ -168,8 +168,7 @@ float ABinaryChunk::getBiomeInterpolationWeightOnAxis(const FVector& chunkWorldL
 
 	// Calculate weight based on how close the current position is to the end of the biome
 	if (positionInBiome > blendStart) {
-		weight = positionInBiome / WTSR->biomeWidth; // (positionInBiome - blendStart) / WTSR->blendBiomeThreshold;
-		// weight = std::clamp(weight, 0.0f, 1.0f);
+		weight = (positionInBiome - WTSR->biomeWidth) / WTSR->blendBiomeThreshold;
 	}
 
 	return weight;
@@ -199,6 +198,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 
 	// Get current biome depending on world location
 	const int biomeIndex =  getBiomeIndexForCurrentLocation(chunkWorldLocation); // PNSR->biomeIndex;
+	const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
@@ -239,42 +239,54 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 
 				// Blend with the adjacent biome on the X axis
 				bool blendBiomeOnAxisX = shouldChunkBeBlendedOnAxis(chunkWorldLocation, x, true);
+				bool blendBiomeOnAxisZ = false; //  shouldChunkBeBlendedOnAxis(chunkWorldLocation, z, false);
 
 				if (blendBiomeOnAxisX) {
 					// UE_LOG(LogTemp, Warning, TEXT("Blend with biome: %s -- Chunkworld location X: %f, Voxel location X: %d"), blendBiomeOnAxisX ? TEXT("true") : TEXT("false"), chunkWorldLocation.X, x);
 
-					const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
-
 					// Set adjacent biome noise settings
-					setNoiseSettingsForBiome(biomeIndex, octaveIndex, adjacentBiomeNoise, adjacentBiomeDomainWarp);
+					setNoiseSettingsForBiome(adjacentBiomeIndex, octaveIndex, adjacentBiomeNoise, adjacentBiomeDomainWarp);
 
 					// Apply domain warp to adjcent biome and get noise value
 					adjacentBiomeDomainWarp->DomainWarp(noisePositionX, noisePositionZ);
+
 					const float adjacentNoiseValue = adjacentBiomeNoise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
-					const float interpolatedNoiseValue = std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, x, true));
+					const float adjacentBiomeVoxelHeight = adjacentNoiseValue * PNSR->biomes[adjacentBiomeIndex].Amplitudes[octaveIndex];
 
-					height += static_cast<int>(std::floor(interpolatedNoiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
+					const float currentBiomeVoxelHeight = noiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex];
+
+					const float interpolatedVoxelHeight = std::lerp(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, x, true));
+
+					height += static_cast<int>(std::floor(interpolatedVoxelHeight));
+
+					// height += static_cast<int>(std::floor(interpolatedNoiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
 				}
 
 				// Blend with the adjacent biome on the Z axis
-				bool blendBiomeOnAxisZ = shouldChunkBeBlendedOnAxis(chunkWorldLocation, z, false);
 				if (blendBiomeOnAxisZ) {
 					// UE_LOG(LogTemp, Warning, TEXT("Blend with biome: %s -- Chunk world location Z: %f, Voxel location Z: %d"), blendBiomeOnAxisZ ? TEXT("true") : TEXT("false"), chunkWorldLocation.Z, z);
 
-					const int adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
-
 					// Set adjacent biome noise settings
-					setNoiseSettingsForBiome(biomeIndex, octaveIndex, adjacentBiomeNoise, adjacentBiomeDomainWarp);
+					setNoiseSettingsForBiome(adjacentBiomeIndex, octaveIndex, adjacentBiomeNoise, adjacentBiomeDomainWarp);
 
 					// Apply domain warp to adjcent biome and get noise value
 					adjacentBiomeDomainWarp->DomainWarp(noisePositionX, noisePositionZ);
 					const float adjacentNoiseValue = adjacentBiomeNoise->GetNoise(noisePositionX, noisePositionZ) + 1;
 
-					const float interpolatedNoiseValue = std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, z, false));
+					/*const float interpolatedNoiseValue = std::lerp(noiseValue, adjacentNoiseValue, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, z, false));
 
-					height += static_cast<int>(std::floor(interpolatedNoiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));
+					height += static_cast<int>(std::floor(interpolatedNoiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex]));*/
+
+					const float adjacentBiomeVoxelHeight = adjacentNoiseValue * PNSR->biomes[adjacentBiomeIndex].Amplitudes[octaveIndex];
+
+					const float currentBiomeVoxelHeight = noiseValue * PNSR->biomes[biomeIndex].Amplitudes[octaveIndex];
+
+					const float interpolatedVoxelHeight = std::lerp(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, getBiomeInterpolationWeightOnAxis(chunkWorldLocation, z, true));
+
+					height += static_cast<int>(std::floor(interpolatedVoxelHeight));
 				}
+				
 
 				// TODO might have to interpolate with both biomes on edges where both biomes overlap.
 				
