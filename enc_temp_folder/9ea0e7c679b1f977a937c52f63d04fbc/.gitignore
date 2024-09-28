@@ -8,7 +8,7 @@
 /Config/
 /Intermediate/
 /Saved/
-# /Content/
+/Content/
 
 # User-specific files
 *.rsuser
