@@ -104,8 +104,7 @@ private:
 
 	int getBiomeIndexForCurrentLocation(const FVector& chunkWorldLocation);
 
-	bool shouldChunkBeBlendedOnAxis(const FVector& chunkWorldLocation, const int& voxelLocation, const bool& axis);
-
+	int getRelativePositionInBiomeForAxis(const FVector& chunkWorldLocation, const int& voxelLocation, const bool& axis);
 
 	void setNoiseSettingsForBiome(const int& biomeIndex, const int& octaveIndex, const TObjectPtr<FastNoiseLite> noise, const TObjectPtr<FastNoiseLite> domainWarp);
 
