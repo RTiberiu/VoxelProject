@@ -22,7 +22,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 20 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 2 }; // 5 
+	const uint8_t DrawDistance{ 8 }; // 5 
 
 
 	// Single chunk settings

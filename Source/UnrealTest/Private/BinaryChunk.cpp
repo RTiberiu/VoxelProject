@@ -277,7 +277,9 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					if (blendOnXStart) {
 
 						if (isBlendForEndOfBiome) { // Blending for end of biome padding 
-							interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, positionInBiomeAxisX, true);
+							// interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, positionInBiomeAxisX, true);
+
+							interpolatedVoxelHeight = std::lerp(adjacentBiomeVoxelHeight, currentBiomeVoxelHeight, 1);
 						} else { // Normal padding for start of biome
 							interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(adjacentBiomeVoxelHeight, currentBiomeVoxelHeight, positionInBiomeAxisX, true);
 						}
@@ -291,8 +293,14 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 
 				// Blend with the adjacent biome on the Z axis
 				const int positionInBiomeAxisZ = getRelativePositionInBiomeForAxis(chunkWorldLocation, z, false);
-				const bool blendOnZStart = false; // positionInBiomeAxisZ < WTSR->blendBiomeThreshold;
+				const bool blendOnZStart = positionInBiomeAxisZ < WTSR->blendBiomeThreshold;
 				const bool blendOnZEnd = false; // positionInBiomeAxisZ > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+
+				bool isBlendForEndOfBiomeZ = false;
+				// Increment biomes for the padding at the end of the biome
+				if (positionInBiomeAxisZ <= (WTSR->chunkSizePadding - WTSR->chunkSize) && z >= WTSR->chunkSize) {
+					isBlendForEndOfBiomeZ = true;
+				}
 
 				if (blendOnZStart || blendOnZEnd) {
 					wasHeightBlended = true;
@@ -300,9 +308,9 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 					// Get the index of the biome depending if blending at the start or end of biome
 					int adjacentBiomeIndex = 0;
 					if (blendOnZStart) {
-						adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
-					} else {
 						adjacentBiomeIndex = (biomeIndex - 1 + PNSR->biomes.Num()) % PNSR->biomes.Num();
+					} else {
+						adjacentBiomeIndex = (biomeIndex + 1) % PNSR->biomes.Num();
 					}
 
 					// Set adjacent biome noise settings
@@ -318,9 +326,13 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 
 					float interpolatedVoxelHeight = 0.0f;
 					if (blendOnZStart) {
-						interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, positionInBiomeAxisZ, true);
+						if (isBlendForEndOfBiomeZ) {
+							interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, positionInBiomeAxisZ, true);
+						} else {
+							interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(adjacentBiomeVoxelHeight, currentBiomeVoxelHeight, positionInBiomeAxisZ, true);
+						}
 					} else {
-						interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(adjacentBiomeVoxelHeight, currentBiomeVoxelHeight, positionInBiomeAxisZ, true);
+						interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, positionInBiomeAxisZ, true);
 					}
 
 					//const float interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, chunkWorldLocation, z, true, true);
