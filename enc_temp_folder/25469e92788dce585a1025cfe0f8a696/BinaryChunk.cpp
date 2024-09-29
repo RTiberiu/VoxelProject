@@ -162,7 +162,7 @@ float ABinaryChunk::getVoxelInterpolatedHeightOnAxis(const float& currentBiomeVo
 		weight = static_cast<float>(WTSR->biomeWidth - positionInBiome) / WTSR->blendBiomeThreshold;
 		interpolatedHeight = std::lerp(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, weight);
 	} else if (positionInBiome < blendStartBiomeStart) {
-		weight = static_cast<float>(WTSR->blendBiomeThreshold - positionInBiome) / WTSR->blendBiomeThreshold;
+		weight = (static_cast<float>(WTSR->blendBiomeThreshold - positionInBiome) / WTSR->blendBiomeThreshold);
 		interpolatedHeight = std::lerp(adjacentBiomeVoxelHeight, currentBiomeVoxelHeight, weight);
 	}
 
