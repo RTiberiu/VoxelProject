@@ -215,6 +215,13 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 				const int positionInBiomeAxisX = getRelativePositionInBiomeForAxis(chunkWorldLocation, x, true);
 				int incrementBiomeForPadding = 0;
 
+				int savingInterpolatedHeightX = 0;
+
+				// Blend with the adjacent biome on the Z axis
+				const int positionInBiomeAxisZ = getRelativePositionInBiomeForAxis(chunkWorldLocation, z, false);
+				const bool blendOnZStart = positionInBiomeAxisZ < WTSR->blendBiomeThreshold;
+				const bool blendOnZEnd = false; // positionInBiomeAxisZ > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+
 				bool isBlendForEndOfBiome = false;
 				// Increment biomes for the padding at the end of the biome
 				if (positionInBiomeAxisX <= (WTSR->chunkSizePadding - WTSR->chunkSize) && x >= WTSR->chunkSize) {
@@ -288,13 +295,19 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 						interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(adjacentBiomeVoxelHeight, currentBiomeVoxelHeight, positionInBiomeAxisX, true);
 					}
 
-					height += static_cast<int>(std::floor(interpolatedVoxelHeight));
+
+					
+					if (blendOnZStart) {
+						// Saving the weight and interpolating later if Z is also getting blended
+						savingInterpolatedHeightX = interpolatedVoxelHeight;
+					} else {
+						// Adding interpolated value just for X
+						height += static_cast<int>(std::floor(interpolatedVoxelHeight));
+					}
+
 				}
 
-				// Blend with the adjacent biome on the Z axis
-				const int positionInBiomeAxisZ = getRelativePositionInBiomeForAxis(chunkWorldLocation, z, false);
-				const bool blendOnZStart = positionInBiomeAxisZ < WTSR->blendBiomeThreshold;
-				const bool blendOnZEnd = false; // positionInBiomeAxisZ > WTSR->biomeWidth - WTSR->blendBiomeThreshold;
+				
 
 				bool isBlendForEndOfBiomeZ = false;
 				// Increment biomes for the padding at the end of the biome
@@ -337,7 +350,19 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 
 					//const float interpolatedVoxelHeight = getVoxelInterpolatedHeightOnAxis(currentBiomeVoxelHeight, adjacentBiomeVoxelHeight, chunkWorldLocation, z, true, true);
 
-					height += static_cast<int>(std::floor(interpolatedVoxelHeight));
+					// TODO  PLAN: I think I need to get the weight weight for each axis, and use it when blending on both axis
+					// TODO IMPL: Refactor the code for getVoxelInterpolatedHeightOnAxis() so that I have access to both weights
+					 
+					
+					// Interpolate with the height if blended on the X axis too
+					if (blendOnXStart) {
+						height += (static_cast<int>(std::floor(interpolatedVoxelHeight)) + savingInterpolatedHeightX) / 2; // TODO THIS IS NOT WORKING ATM. NEEDS TO BE INTERPOLATED 
+
+						// Z: 1 -> 0
+						// X: 0 -> 1
+					} else {
+						height += static_cast<int>(std::floor(interpolatedVoxelHeight));
+					}
 				}
 
 				// TODO might have to interpolate with both biomes on edges where both biomes overlap.
