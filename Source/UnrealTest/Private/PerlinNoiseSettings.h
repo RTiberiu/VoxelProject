@@ -6,18 +6,42 @@
 #include "GameFramework/Actor.h"
 #include "PerlinNoiseSettings.generated.h"
 
-struct BiomeNoiseSettings {
-	TArray<int> Octaves;
-	TArray<float> Frequencies;
-	TArray<int> Amplitudes;
-	TArray<float> Lacunarity;
-	TArray<float> Gain;
-	TArray<float> WeightedStrength;
-	TArray<int> DomainWarpAmp;
-	TArray<float> DomainWarpFrequencies;
-	TArray<int> DomainWarpOctaves;
-	TArray<float> DomainWarpLacunarity;
-	TArray<float> DomainWarpGain;
+USTRUCT(BlueprintType)
+struct FNoiseMapSettings {
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map")
+		int Octaves;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
+		float Frequencies;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map")
+		int Amplitudes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
+		float Lacunarity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map")
+		float Gain;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
+		float WeightedStrength;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
+		int DomainWarpAmp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
+		float DomainWarpFrequencies;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
+		int DomainWarpOctaves;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
+		float DomainWarpLacunarity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map")
+		float DomainWarpGain;
 };
 
 UCLASS()
@@ -40,7 +64,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
 	int biomeIndex;
 
-    TArray<BiomeNoiseSettings> biomes;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	TArray<FNoiseMapSettings> noiseMapSettings;
+    // TArray<NoiseMapSettings> noiseMapSettings;
 
 protected:
 	// Called when the game starts or when spawned

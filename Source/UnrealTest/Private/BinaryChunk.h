@@ -51,11 +51,17 @@ private:
 	using Time = std::chrono::high_resolution_clock::time_point;
 
 	TObjectPtr<UProceduralMeshComponent> Mesh;
-	TObjectPtr<FastNoiseLite> noise;
-	TObjectPtr<FastNoiseLite> domainWarp;
 
-	TObjectPtr<FastNoiseLite> adjacentBiomeNoise;
-	TObjectPtr<FastNoiseLite> adjacentBiomeDomainWarp;
+	// Noise objects used to generate the world
+	TObjectPtr<FastNoiseLite> continentalness;
+	TObjectPtr<FastNoiseLite> erosion;
+	TObjectPtr<FastNoiseLite> peaksAndValleys;
+
+	// Domain warp for the 3 main noise objects
+	TObjectPtr<FastNoiseLite> continentalnessDW;
+	TObjectPtr<FastNoiseLite> erosionDW;
+	TObjectPtr<FastNoiseLite> peaksAndValleysDW;
+
 
 	BinaryChunk3D binaryChunk = BinaryChunk3D{};
 
@@ -111,6 +117,14 @@ private:
 	float getVoxelInterpolatedHeightOnAxis(const float& currentBiomeVoxelHeight, const float& adjacentBiomeVoxelHeight, const int& positionInBiome, const bool& axis);
 
 	int getColorIndexFromVoxelHeight(const FVector& voxelPosition);
+
+	void initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise);
+
+	void applyPerlinNoiseSettings(TObjectPtr<FastNoiseLite>& noise, const int& settingsIndex);
+
+	void applyDomainWarpSettings(TObjectPtr<FastNoiseLite>& domainWarp, const int& settingsIndex);
+
+	void initializeDomainWarpNoise(TObjectPtr<FastNoiseLite>& domainWarp);
 
 protected:
 	// Called when the game starts or when spawned
