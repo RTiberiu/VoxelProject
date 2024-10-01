@@ -8,22 +8,22 @@ APerlinNoiseSettings::APerlinNoiseSettings() {
 	PrimaryActorTick.bCanEverTick = false;
 
 	FNoiseMapSettings continentalness;
-	continentalness.Octaves = 3;
-	continentalness.Frequencies = 0.005f;
+	continentalness.Octaves = 4;
+	continentalness.Frequencies = 0.002f;
 	continentalness.Amplitudes = 50;
-	continentalness.Lacunarity = 2.0f;
-	continentalness.Gain = 0.66f;
-	continentalness.WeightedStrength = -0.15f;
-	continentalness.DomainWarpAmp = 47;
-	continentalness.DomainWarpFrequencies = 0.037f;
+	continentalness.Lacunarity = 1.0f;
+	continentalness.Gain = 0.7f;
+	continentalness.WeightedStrength = -0.2f;
+	continentalness.DomainWarpAmp = 80;
+	continentalness.DomainWarpFrequencies = 0.005f;
 	continentalness.DomainWarpOctaves = 3;
-	continentalness.DomainWarpLacunarity = 2.25f;
-	continentalness.DomainWarpGain = 0.25f;
+	continentalness.DomainWarpLacunarity = 2.2f;
+	continentalness.DomainWarpGain = 0.3f;
 		
 	FNoiseMapSettings erosion;
 	erosion.Octaves = 2;
-	erosion.Frequencies = 0.007f;
-	erosion.Amplitudes = 20;
+	erosion.Frequencies = 0.005f;
+	erosion.Amplitudes = 0;
 	erosion.Lacunarity = 2.0f;
 	erosion.Gain = 0.5f;
 	erosion.WeightedStrength = -1.3f;
@@ -34,17 +34,17 @@ APerlinNoiseSettings::APerlinNoiseSettings() {
 	erosion.DomainWarpGain = 1.0f;
 
 	FNoiseMapSettings peaksAndValleys;
-	peaksAndValleys.Octaves = 3;
-	peaksAndValleys.Frequencies = 0.004f;
-	peaksAndValleys.Amplitudes = 80;
-	peaksAndValleys.Lacunarity = 2.02f;
-	peaksAndValleys.Gain = 0.4f;
-	peaksAndValleys.WeightedStrength = -1.2f;
-	peaksAndValleys.DomainWarpAmp = 80;
-	peaksAndValleys.DomainWarpFrequencies = 0.03f;
+	peaksAndValleys.Octaves = 4;
+	peaksAndValleys.Frequencies = 0.01f;
+	peaksAndValleys.Amplitudes = 0;
+	peaksAndValleys.Lacunarity = 1.0f;
+	peaksAndValleys.Gain = 1.2f;
+	peaksAndValleys.WeightedStrength = -1.5f;
+	peaksAndValleys.DomainWarpAmp = 10;
+	peaksAndValleys.DomainWarpFrequencies = 0.041f;
 	peaksAndValleys.DomainWarpOctaves = 3;
-	peaksAndValleys.DomainWarpLacunarity = 1.2f;
-	peaksAndValleys.DomainWarpGain = 1.0f;
+	peaksAndValleys.DomainWarpLacunarity = 0.66f;
+	peaksAndValleys.DomainWarpGain = 0.74f;
 
 	biomeIndex = 2; 
 

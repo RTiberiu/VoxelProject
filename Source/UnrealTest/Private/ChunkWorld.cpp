@@ -160,8 +160,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	const FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
-	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X;
-	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y;
+	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X; // TODO SET TO FALSE FOR TESTING ONLY
+	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y; // TODO SET TO FALSE FOR TESTING ONLY
 
 	if (!isTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
 		isTaskRunning = true;

@@ -35,7 +35,7 @@ ABinaryChunk::ABinaryChunk() {
 
 void ABinaryChunk::initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise) {
 	noise = new FastNoiseLite();
-	noise->SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+	noise->SetNoiseType(FastNoiseLite::NoiseType_Perlin); 
 	noise->SetFractalType(FastNoiseLite::FractalType_FBm);
 }
 
@@ -215,27 +215,50 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 			const float erosionVal = erosion->GetNoise(noisePositionX, noisePositionZ) + 1;
 			const float peaksAndValleysVal = peaksAndValleys->GetNoise(noisePositionX, noisePositionZ) + 1;
 
-			// Adding multiple splines to the perlinValue
-			/*if (noiseValue <= 1) {
-				amplitude = 50;
-			} else if (noiseValue <= 1.4) {
-				amplitude = 90;
-			} else if (noiseValue <= 1.8) {
-				amplitude = 40;
-			} else if (noiseValue <= 2) {
-				amplitude = 30;
-			}*/
+			// Adding multiple splines to the continentalness (inland)
+			float continentalnessHeight = 0.0f;
+			float erosionHeight = 0.0f;
 
-			const float continentalnessHeight = continentalnessVal * PNSR->noiseMapSettings[0].Amplitudes;
-			const float erosionHeight = erosionVal * PNSR->noiseMapSettings[1].Amplitudes;
+			if (continentalnessVal <= 1.5) {
+				float normalizedContNoise = (continentalnessVal - 0.5f) / 1.0f;
+				PNSR->noiseMapSettings[0].Amplitudes = std::lerp(30, 150, normalizedContNoise);
+
+				continentalnessHeight = continentalnessVal * PNSR->noiseMapSettings[0].Amplitudes;
+
+				// Adding erosion 
+				PNSR->noiseMapSettings[1].Amplitudes = 20;
+				float normalizedErosNoise = (erosionVal - 0.5f) / 1.0f;
+				erosionHeight = erosionVal * PNSR->noiseMapSettings[1].Amplitudes;
+
+				// Adding peaks and valleys
+				if (erosionVal <= 1) {
+					PNSR->noiseMapSettings[2].Amplitudes = 5;
+				} else if (erosionVal <= 1.5) {
+					PNSR->noiseMapSettings[2].Amplitudes = 10;
+				} else {
+					PNSR->noiseMapSettings[2].Amplitudes = 15;
+				}
+			}  else {
+				continentalnessHeight = 150;
+
+				// Adding erosion 
+				PNSR->noiseMapSettings[1].Amplitudes = 85;
+				erosionHeight = erosionVal * PNSR->noiseMapSettings[1].Amplitudes;
+
+				// Adding peaks and valleys
+				if (erosionVal <= 1) {
+					PNSR->noiseMapSettings[2].Amplitudes = 20;
+				} else if (erosionVal <= 1.5) {
+					PNSR->noiseMapSettings[2].Amplitudes = 25;
+				} else {
+					PNSR->noiseMapSettings[2].Amplitudes = 30;
+				}
+			}
+			
+			// Adding multiple splines to the erosion (height)
 			const float peaksAndValleysHeight = peaksAndValleysVal * PNSR->noiseMapSettings[2].Amplitudes;
 
-			// TODO Create spline points and add amplitudes for each of them. 
-			// TODO Create better noise maps
-
 			const int combinedNoiseHeight = static_cast<int>(std::floor(continentalnessHeight + erosionHeight + peaksAndValleysHeight));
-
-
 
 			// Ensuring height remains between chunk borders
 			int height = std::clamp(combinedNoiseHeight, 0, static_cast<int>(WTSR->chunkHeight));

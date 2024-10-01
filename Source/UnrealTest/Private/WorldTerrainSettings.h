@@ -22,7 +22,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 20 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 8 }; // 5 
+	const uint8_t DrawDistance{ 7 }; // 5 
 
 
 	// Single chunk settings
@@ -32,7 +32,7 @@ public:
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 
 	// World chunks settings
-	const int biomeWidth{ chunkSize * 10 }; // 10
+	const int biomeWidth{ chunkSize * 5 }; // 10
 	const uint64_t blendBiomeThreshold{ 150 };
 
 	void ValidateSpawnedChunksMap();
