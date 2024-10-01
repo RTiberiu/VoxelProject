@@ -221,7 +221,7 @@ void ABinaryChunk::createBinarySolidColumnsYXZ() { // WORK IN PROGRESS! The old 
 
 			if (continentalnessVal <= 1.5) {
 				float normalizedContNoise = (continentalnessVal - 0.5f) / 1.0f;
-				PNSR->noiseMapSettings[0].Amplitudes = std::lerp(30, 150, normalizedContNoise);
+				PNSR->noiseMapSettings[0].Amplitudes = std::lerp(10, 150, normalizedContNoise);
 
 				continentalnessHeight = continentalnessVal * PNSR->noiseMapSettings[0].Amplitudes;
 
