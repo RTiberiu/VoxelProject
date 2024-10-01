@@ -720,9 +720,9 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 
 	// Assign different random colors for each vertex; This lets the GPU interpolate the colors
 	FVector voxelPositions[] = { voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4 };
-	for (int i = 0; i < 4; ++i) {
+	for (int vertices = 0; vertices < 4; vertices++) {
 		int32 colorIndex = FMath::RandRange(0, WTSR->ColorArray[0].Num() - 1);
-		int layerIndex = getColorIndexFromVoxelHeight(voxelPositions[i]);
+		int layerIndex = getColorIndexFromVoxelHeight(voxelPositions[vertices]);
 		FColor RandomColor = WTSR->ColorArray[layerIndex][colorIndex];
 		MeshData.Colors.Add(RandomColor);
 	}
