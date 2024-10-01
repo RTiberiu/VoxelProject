@@ -3,46 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NoiseMapSettings.h"
 #include "GameFramework/Actor.h"
 #include "PerlinNoiseSettings.generated.h"
-
-USTRUCT(BlueprintType)
-struct FNoiseMapSettings {
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map")
-		int Octaves;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
-		float Frequencies;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map")
-		int Amplitudes;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
-		float Lacunarity;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map")
-		float Gain;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
-		float WeightedStrength;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
-		int DomainWarpAmp;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
-		float DomainWarpFrequencies;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
-		int DomainWarpOctaves;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map") 
-		float DomainWarpLacunarity;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map")
-		float DomainWarpGain;
-};
 
 UCLASS()
 class APerlinNoiseSettings : public AActor {
