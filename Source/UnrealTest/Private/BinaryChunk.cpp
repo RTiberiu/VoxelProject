@@ -718,16 +718,14 @@ void ABinaryChunk::createQuadAndAddToMeshData(
 		});
 	}
 
-	// Randomly choose a color from the array
-	const int32 colorIndex = FMath::RandRange(0, WTSR->ColorArray[0].Num() - 1);
-	const int layerIndex = getColorIndexFromVoxelHeight(voxelPosition1);
-
-	FColor RandomColor = WTSR->ColorArray[layerIndex][colorIndex];
-
-	// Add colors
-	MeshData.Colors.Append({
-		RandomColor, RandomColor, RandomColor, RandomColor
-	});
+	// Assign different random colors for each vertex; This lets the GPU interpolate the colors
+	FVector voxelPositions[] = { voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4 };
+	for (int i = 0; i < 4; ++i) {
+		int32 colorIndex = FMath::RandRange(0, WTSR->ColorArray[0].Num() - 1);
+		int layerIndex = getColorIndexFromVoxelHeight(voxelPositions[i]);
+		FColor RandomColor = WTSR->ColorArray[layerIndex][colorIndex];
+		MeshData.Colors.Add(RandomColor);
+	}
 }
 
 void ABinaryChunk::spawnTerrainChunkMeshes() {
