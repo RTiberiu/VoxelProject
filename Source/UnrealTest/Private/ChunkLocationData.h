@@ -3,6 +3,7 @@
 #include "FairSemaphore.h"
 
 #include "CoreMinimal.h"
+#include "ChunkMeshData.h"
 #include "Containers/Queue.h"
 #include "Misc/ScopeLock.h"
 #include "ChunkLocationData.generated.h"
@@ -23,8 +24,13 @@ public:
 
     bool getChunkToSpawnPosition(FChunkLocationData& OutLocation);
     bool getChunkToDestroyPosition(FIntPoint& OutPosition);
+    FChunkMeshData getMeshDataForLocationData(const FChunkLocationData& locationData);
+    FChunkLocationData getLocationDataForWaitingMesh();
+    bool isMeshWaitingToBeSpawned();
+
     void addChunksToSpawnPosition(const FChunkLocationData& position);
     void addChunksToDestroyPosition(const FIntPoint& position);
+    void addMeshDataForPosition(const FChunkLocationData& chunkLocationData, const FChunkMeshData& meshData);
 
     void emptyPositionQueues();
 
@@ -36,4 +42,8 @@ private:
     // Queue for storing chunks position that need to be destroyed
     TQueue<FIntPoint> chunksToDestroyPositions;
     FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
+
+    // Map for storing chunks mesh data
+    TMap<FChunkLocationData, FChunkMeshData> meshDataForChunkPosition;
+    FairSemaphore* MeshDataSemaphore;
 };

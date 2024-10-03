@@ -8,9 +8,11 @@
 #include <atomic>
 
 #include "FairSemaphore.h"
-
 #include "CoreMinimal.h"
 #include "WorldTerrainSettings.generated.h"
+
+class FastNoiseLite;
+class APerlinNoiseSettings;
 
 UCLASS()
 class UWorldTerrainSettings : public UObject {
@@ -22,7 +24,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 7 }; // 5 
+	const uint8_t DrawDistance{ 15 }; // 5 
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -46,6 +48,23 @@ public:
 	void EmptyChunkMap();
 
 	FairSemaphore* UpdateChunkSemaphore;
+
+    // Chunk noises
+    // Noise objects used to generate the world
+    TObjectPtr<FastNoiseLite> continentalness;
+    TObjectPtr<FastNoiseLite> erosion;
+    TObjectPtr<FastNoiseLite> peaksAndValleys;
+
+    // Domain warp for the 3 main noise objects
+    TObjectPtr<FastNoiseLite> continentalnessDW;
+    TObjectPtr<FastNoiseLite> erosionDW;
+    TObjectPtr<FastNoiseLite> peaksAndValleysDW;
+
+    void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
+
+    void ApplyDomainWarpToCoords(float noisePositionX, float noisePositionZ, TObjectPtr<FastNoiseLite> noise);
+
+    float GetNoiseAtCoords(float noisePositionX, float noisePositionZ, TObjectPtr<FastNoiseLite> noise);
 
 	bool isActorPresentInMap(AActor* actor); // TODO REMOVE AFTER TESTING - USING THIS BEFORE DESTROY() 
 
@@ -115,6 +134,9 @@ public:
 	};
 
 private:
+    APerlinNoiseSettings* PerlinNoiseSettingsRef;
+    APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
+
 	void CheckForDuplicateActorPointers();
 	void CheckNumberOfElements();
 	void CheckIfActorIsNullOrPendingKill();
@@ -129,4 +151,13 @@ private:
 
 	// Map to store spawned chunks with 2D coordinates as keys
 	TMap<FIntPoint, AActor*> SpawnedChunksMap;
+    
+
+    void initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise);
+
+    void applyPerlinNoiseSettings(TObjectPtr<FastNoiseLite>& noise, const int& settingsIndex);
+
+    void initializeDomainWarpNoise(TObjectPtr<FastNoiseLite>& domainWarp);
+
+    void applyDomainWarpSettings(TObjectPtr<FastNoiseLite>& domainWarp, const int& settingsIndex);
 };

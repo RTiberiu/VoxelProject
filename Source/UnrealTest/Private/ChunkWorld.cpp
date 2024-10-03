@@ -10,7 +10,7 @@
 #include <Kismet/GameplayStatics.h>
 
 // Sets default values
-AChunkWorld::AChunkWorld() : terrainRunnable(nullptr), terrainRunnableThread(nullptr), isTaskRunning(false) {
+AChunkWorld::AChunkWorld() : terrainRunnable(nullptr), terrainRunnableThread(nullptr), isTerrainTaskRunning(false), isMeshTaskRunning(false){
 	// Set this actor to call Tick() every frame.  Yosu can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -30,6 +30,8 @@ void AChunkWorld::SetChunkLocationData(UChunkLocationData* InChunkLocationData) 
 
 void AChunkWorld::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings) {
 	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
+
+	WTSR->SetPerlinNoiseSettings(InPerlinNoiseSettings);
 }
 
 void AChunkWorld::printExecutionTime(Time& start, Time& end, const char* functionName) {
@@ -44,6 +46,10 @@ void AChunkWorld::spawnInitialWorld() {
 	for (int x = -WTSR->DrawDistance; x < WTSR->DrawDistance; x++) {
 		for (int z = -WTSR->DrawDistance; z < WTSR->DrawDistance; z++) {
 			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
+
+
+			// TODO CREATE HERE FChunkLocationData and use the ChunkMeshDataRunnable thread to calculate the mesh data
+			
 
 			// Spawn the chunk actor deferred
 			ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, ChunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
@@ -163,27 +169,27 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X; // TODO SET TO FALSE FOR TESTING ONLY
 	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y; // TODO SET TO FALSE FOR TESTING ONLY
 
-	if (!isTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
-		isTaskRunning = true;
-		terrainRunnable = new TerrainRunnable(PlayerPosition, WTSR, CLDR);
-		terrainRunnableThread = FRunnableThread::Create(terrainRunnable, TEXT("terrainRunnableThread"), 0, TPri_Normal);
+	if (!isTerrainTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
+		isTerrainTaskRunning.AtomicSet(true);
+		terrainRunnable = new TerrainRunnable(PlayerPosition, WTSR, CLDR, PNSR);
+		terrainThread = FRunnableThread::Create(terrainRunnable, TEXT("terrainThread"), 0, TPri_Normal);
 	}
 
 	if (terrainRunnable && terrainRunnable->IsTaskComplete()) {
 		onNewTerrainGenerated();
 
 		// Clean up
-		if (terrainRunnableThread) {
-			terrainRunnableThread->Kill(true);
-			delete terrainRunnableThread;
-			terrainRunnableThread = nullptr;
+		if (terrainThread) {
+			terrainThread->Kill(true);
+			delete terrainThread;
+			terrainThread = nullptr;
 		}
 		if (terrainRunnable) {
 			delete terrainRunnable;
 			terrainRunnable = nullptr;
 		}
 
-		isTaskRunning = false;
+		isTerrainTaskRunning.AtomicSet(false);
 	}
 
 	// Spawn and destroy one chunk if there is one waiting
@@ -191,29 +197,53 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	const bool doesSpawnPositionExist = CLDR->getChunkToSpawnPosition(chunkToSpawnPosition);
 
 	if (doesSpawnPositionExist) {
-		Time startChunkTest = std::chrono::high_resolution_clock::now(); // TODO TESTING SINGLE CHUNK SPAWN TIME
+		// Calculate the chunk mesh data in a separate thread
+		if (!isMeshTaskRunning) {
+			isMeshTaskRunning.AtomicSet(true);
 
+			chunkMeshDataRunnable = new ChunkMeshDataRunnable(chunkToSpawnPosition, WTSR, CLDR);
+			chunkMeshDataThread = FRunnableThread::Create(chunkMeshDataRunnable, TEXT("chunkMeshDataThread"), 0, TPri_Normal);
+		}
+	}
+
+	if (chunkMeshDataRunnable && chunkMeshDataRunnable->IsTaskComplete()) {
+		onNewTerrainGenerated();
+
+		// Clean up
+		if (chunkMeshDataThread) {
+			chunkMeshDataThread->Kill(true);
+			delete chunkMeshDataThread;
+			chunkMeshDataThread = nullptr;
+		}
+		if (chunkMeshDataRunnable) {
+			delete chunkMeshDataRunnable;
+			chunkMeshDataRunnable = nullptr;
+		}
+
+		isMeshTaskRunning.AtomicSet(false);
+	}
+
+	// Spawn chunk if there is a calculated mesh data waiting
+	if (CLDR->isMeshWaitingToBeSpawned()) {
+		
+		FChunkLocationData waitingMeshLocationData = CLDR->getLocationDataForWaitingMesh();
 		// Spawn the chunk actor deferred
-		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, chunkToSpawnPosition.ChunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ChunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 		if (SpawnedChunkActor) {
 				// Add WTSR to BinaryChunk
 				SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
 				SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
-
+				SpawnedChunkActor->SetChunkLocationData(CLDR);
+				SpawnedChunkActor->SetChunkLocation(waitingMeshLocationData.ChunkWorldCoords);
 
 				// Finish spawning the chunk actor
-				UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, chunkToSpawnPosition.ChunkPosition));
+				UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ChunkPosition));
 
-				WTSR->AddChunkToMap(chunkToSpawnPosition.ChunkWorldCoords, SpawnedChunkActor);
-
+				WTSR->AddChunkToMap(waitingMeshLocationData.ChunkWorldCoords, SpawnedChunkActor);
 		} else {
 			UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
 		}
-
-		// Calculating the average time to spawn a chunk
-		Time endChunkTest = std::chrono::high_resolution_clock::now();
-		calculateAverageChunkSpawnTime(startChunkTest, endChunkTest);
 	}
 
 	FIntPoint chunkToDestroyPosition;

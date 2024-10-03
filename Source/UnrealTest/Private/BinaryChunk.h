@@ -12,23 +12,13 @@
 
 class FastNoiseLite;
 class UWorldTerrainSettings;
+class UChunkLocationData;
 class UProceduralMeshComponent;
 class APerlinNoiseSettings;
 
 UCLASS()
 class ABinaryChunk : public AActor {
 	GENERATED_BODY()
-
-	// Store solid blocks in a 3D chunk of chunkSize * chunkSize * intsPerHeight
-	struct BinaryChunk3D {
-		std::vector<uint64_t> yBinaryColumn;
-		std::vector<uint64_t> xBinaryColumn;
-		std::vector<uint64_t> zBinaryColumn;
-	};
-
-	enum class EDirection {
-		Up, Down, Right, Left, Forward, Backward
-	};
 
 public:
 	// Sets default values for this actor's properties
@@ -38,6 +28,8 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
+	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
+	void SetChunkLocation(FIntPoint& InChunkLocation);
 
 
 private: 
@@ -46,6 +38,11 @@ private:
 
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
+
+	UChunkLocationData* ChunkLocationDataRef;
+	UChunkLocationData*& CLDR = ChunkLocationDataRef;
+
+	FIntPoint chunkLocation;
 
 	// Create chrono type alias
 	using Time = std::chrono::high_resolution_clock::time_point;
@@ -62,42 +59,6 @@ private:
 	TObjectPtr<FastNoiseLite> erosionDW;
 	TObjectPtr<FastNoiseLite> peaksAndValleysDW;
 
-
-	BinaryChunk3D binaryChunk = BinaryChunk3D{};
-
-	std::vector<uint64_t> columnsFaceMask;
-
-	FChunkMeshData MeshData; // store vertices, normals, triangles, etc.
-	
-	int vertexCount{ 0 };
-
-	void createBinarySolidColumnsYXZ();
-
-	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
-
-	void createAllVoxelPositionsFromOriginal(
-		FVector& voxelPosition1, 
-		FVector& voxelPosition2, 
-		FVector& voxelPosition3, 
-		FVector& voxelPosition4, 
-		const int& width, 
-		const int& height,
-		const int& axis);
-
-	void createQuadAndAddToMeshData(
-		const FVector& voxelPosition1,
-		const FVector& voxelPosition2,
-		const FVector& voxelPosition3,
-		const FVector& voxelPosition4,
-		const int& height, const int& width,
-		const int& axis);
-
-	void greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis);
-
-	void createTerrainMeshesData();
-
-	void buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis);
-
 	void spawnTerrainChunkMeshes();
 
 	void testingMeshingCreation();
@@ -108,23 +69,7 @@ private:
 
 	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation, int& height);
 
-	int getBiomeIndexForCurrentLocation(const FVector& chunkWorldLocation);
-
-	int getRelativePositionInBiomeForAxis(const FVector& chunkWorldLocation, const int& voxelLocation, const bool& axis);
-
-	void setNoiseSettingsForBiome(const int& biomeIndex, const int& octaveIndex, const TObjectPtr<FastNoiseLite> noise, const TObjectPtr<FastNoiseLite> domainWarp);
-
-	float getVoxelInterpolatedHeightOnAxis(const float& currentBiomeVoxelHeight, const float& adjacentBiomeVoxelHeight, const int& positionInBiome, const bool& axis);
-
-	int getColorIndexFromVoxelHeight(const FVector& voxelPosition);
-
-	void initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise);
-
-	void applyPerlinNoiseSettings(TObjectPtr<FastNoiseLite>& noise, const int& settingsIndex);
-
-	void applyDomainWarpSettings(TObjectPtr<FastNoiseLite>& domainWarp, const int& settingsIndex);
-
-	void initializeDomainWarpNoise(TObjectPtr<FastNoiseLite>& domainWarp);
+	
 
 protected:
 	// Called when the game starts or when spawned

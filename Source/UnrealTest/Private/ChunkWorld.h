@@ -4,9 +4,12 @@
 
 // #include "BinaryChunk.h"
 #include "TerrainRunnable.h"
+#include "ChunkMeshDataRunnable.h"
+#include "ChunkLocationData.h"
 #include <chrono>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+
 #include "ChunkWorld.generated.h"
 
 
@@ -35,7 +38,7 @@ private:
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
 
 	UChunkLocationData* ChunkLocationDataRef;
-	UChunkLocationData*& CLDR = ChunkLocationDataRef; // creating an alias for the world terrain settings ref
+	UChunkLocationData*& CLDR = ChunkLocationDataRef; // creating an alias for the chunk location data ref
 
 	TSubclassOf<AActor> Chunk;
 
@@ -51,8 +54,13 @@ private:
 
 	// Runnable to handle spawning the chunks
 	TerrainRunnable* terrainRunnable;
-	FRunnableThread* terrainRunnableThread;
-	FThreadSafeBool isTaskRunning;
+	FRunnableThread* terrainThread;
+	FThreadSafeBool isTerrainTaskRunning;
+
+	ChunkMeshDataRunnable* chunkMeshDataRunnable;
+	FRunnableThread* chunkMeshDataThread;
+	FThreadSafeBool isMeshTaskRunning;
+
 
 	// Handle logic after the terrain is generated 
 	void onNewTerrainGenerated();

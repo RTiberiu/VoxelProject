@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "WorldTerrainSettings.h"
+#include "PerlinNoiseSettings.h"
+#include "FastNoiseLite.h"
 #include "FairSemaphore.h"
 
 
@@ -40,7 +42,7 @@ AActor* UWorldTerrainSettings::GetAndRemoveChunkFromMap(const FIntPoint& ChunkCo
 AActor* UWorldTerrainSettings::GetNextChunkFromMap() {
 	MapSemaphore->Acquire();
 	AActor* RemovedChunk = nullptr;
-	FIntPoint keyToRemove;
+	FIntPoint keyToRemove = FIntPoint::ZeroValue;
 
 	if (SpawnedChunksMap.Num() > 0) {
 		// Get the first item in the map
@@ -157,4 +159,68 @@ void UWorldTerrainSettings::CheckNumberOfElements() {
 		printMapElements("CheckNumberOfElements(): ");
 		UE_LOG(LogTemp, Error, TEXT("Map has more than 100 items!: Map size: %d"), SpawnedChunksMap.Num());
 	}
+}
+
+void UWorldTerrainSettings::initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise) {
+	noise = new FastNoiseLite();
+	noise->SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+	noise->SetFractalType(FastNoiseLite::FractalType_FBm);
+}
+
+void UWorldTerrainSettings::applyDomainWarpSettings(TObjectPtr<FastNoiseLite>& domainWarp, const int& settingsIndex) {
+	// Adding domain warp settings
+	domainWarp->SetDomainWarpAmp(PNSR->noiseMapSettings[settingsIndex].DomainWarpAmp);
+	domainWarp->SetFrequency(PNSR->noiseMapSettings[settingsIndex].DomainWarpFrequencies);
+	domainWarp->SetFractalOctaves(PNSR->noiseMapSettings[settingsIndex].DomainWarpOctaves);
+	domainWarp->SetFractalLacunarity(PNSR->noiseMapSettings[settingsIndex].DomainWarpLacunarity);
+	domainWarp->SetFractalGain(PNSR->noiseMapSettings[settingsIndex].DomainWarpGain);
+}
+
+// Use the settingsIndex to apply the correct noise settings from PerlinNoiseSettings.cpp
+void UWorldTerrainSettings::applyPerlinNoiseSettings(TObjectPtr<FastNoiseLite>& noise, const int& settingsIndex) {
+	// Set perlin noise settings
+	noise->SetFractalOctaves(PNSR->noiseMapSettings[settingsIndex].Octaves);
+	noise->SetFrequency(PNSR->noiseMapSettings[settingsIndex].Frequencies);
+	noise->SetFractalLacunarity(PNSR->noiseMapSettings[settingsIndex].Lacunarity);
+	noise->SetFractalGain(PNSR->noiseMapSettings[settingsIndex].Gain);
+	noise->SetFractalWeightedStrength(PNSR->noiseMapSettings[settingsIndex].WeightedStrength);
+}
+
+// Use the settingsIndex to apply the correct noise settings from PerlinNoiseSettings.cpp
+void UWorldTerrainSettings::initializeDomainWarpNoise(TObjectPtr<FastNoiseLite>& domainWarp) {
+	domainWarp = new FastNoiseLite();
+	domainWarp->SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+	domainWarp->SetFractalType(FastNoiseLite::FractalType_DomainWarpProgressive);
+}
+
+// Set the perlin noise data reference and iniaitlize the FastNoise objects with their settings
+void UWorldTerrainSettings::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings) {
+	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
+
+	// Declaring the 3 noise objects used to create the terrain
+	initializePerlinNoise(continentalness);
+	initializePerlinNoise(erosion);
+	initializePerlinNoise(peaksAndValleys);
+
+	// Declaring the 3 noise domain warp objects to modify the terrain
+	initializeDomainWarpNoise(continentalnessDW);
+	initializeDomainWarpNoise(erosionDW);
+	initializeDomainWarpNoise(peaksAndValleysDW);
+
+	// Apply settings
+	applyPerlinNoiseSettings(continentalness, 0);
+	applyPerlinNoiseSettings(erosion, 1);
+	applyPerlinNoiseSettings(peaksAndValleys, 2);
+
+	applyDomainWarpSettings(continentalnessDW, 0);
+	applyDomainWarpSettings(erosionDW, 1);
+	applyDomainWarpSettings(peaksAndValleysDW, 2);
+}
+
+void UWorldTerrainSettings::ApplyDomainWarpToCoords(float noisePositionX, float noisePositionZ, TObjectPtr<FastNoiseLite> noise) {
+	noise->DomainWarp(noisePositionX, noisePositionZ);
+}
+
+float UWorldTerrainSettings::GetNoiseAtCoords(float noisePositionX, float noisePositionZ, TObjectPtr<FastNoiseLite> noise) {
+	return noise->GetNoise(noisePositionX, noisePositionZ) + 1;;
 }
