@@ -12,7 +12,6 @@
 
 class FastNoiseLite;
 class UWorldTerrainSettings;
-class UChunkLocationData;
 class UProceduralMeshComponent;
 class APerlinNoiseSettings;
 
@@ -28,9 +27,7 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
-	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
-	void SetChunkLocation(FIntPoint& InChunkLocation);
-
+	void SetComputedMeshData(FChunkMeshData InMeshData);
 
 private: 
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;
@@ -39,9 +36,7 @@ private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
 
-	UChunkLocationData* ChunkLocationDataRef;
-	UChunkLocationData*& CLDR = ChunkLocationDataRef;
-
+	FChunkMeshData meshData;
 	FIntPoint chunkLocation;
 
 	// Create chrono type alias
@@ -61,15 +56,11 @@ private:
 
 	void spawnTerrainChunkMeshes();
 
-	void testingMeshingCreation();
-
 	void printExecutionTime(Time& start, Time& end, const char* functionName);
 
 	void printBinary(uint64_t value, int groupSize, const std::string& otherData ="Column value: ");
 
 	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation, int& height);
-
-	
 
 protected:
 	// Called when the game starts or when spawned

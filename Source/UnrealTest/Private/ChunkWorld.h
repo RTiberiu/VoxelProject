@@ -61,7 +61,6 @@ private:
 	FRunnableThread* chunkMeshDataThread;
 	FThreadSafeBool isMeshTaskRunning;
 
-
 	// Handle logic after the terrain is generated 
 	void onNewTerrainGenerated();
 
@@ -73,6 +72,8 @@ private:
 
 	// Destroy entire world when perlin noise settings change
 	void destroyCurrentWorldChunks();
+
+	TArray<FChunkLocationData> testingThreadLocations;
 
 protected:
 	// Called when the game starts or when spawned

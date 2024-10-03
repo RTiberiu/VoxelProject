@@ -6,6 +6,7 @@
 #include <vector>
 #include <chrono>
 
+#include "ChunkLocationData.h" // This is here JUST for FChunkLocationData struct. TODO Move the struct in a different file
 #include "ChunkMeshData.h"
 #include "CoreMinimal.h"
 
@@ -26,7 +27,7 @@ class ChunkMeshDataRunnable : public FRunnable {
 	};
 
 public:
-	ChunkMeshDataRunnable(FChunkLocationData& InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
+	ChunkMeshDataRunnable(FChunkLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
 	virtual ~ChunkMeshDataRunnable() override;
 
 	virtual bool Init() override;
@@ -63,7 +64,7 @@ private:
 
 	int vertexCount{ 0 };
 
-	void createBinarySolidColumnsYXZ(const FVector& chunkWorldLocation);
+	void createBinarySolidColumnsYXZ();
 
 	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
 

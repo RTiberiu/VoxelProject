@@ -24,13 +24,13 @@ public:
 
     bool getChunkToSpawnPosition(FChunkLocationData& OutLocation);
     bool getChunkToDestroyPosition(FIntPoint& OutPosition);
-    FChunkMeshData getMeshDataForLocationData(const FChunkLocationData& locationData);
-    FChunkLocationData getLocationDataForWaitingMesh();
+
+    bool getComputedMeshDataAndLocationData(FChunkLocationData& locationData, FChunkMeshData& meshData);
     bool isMeshWaitingToBeSpawned();
 
-    void addChunksToSpawnPosition(const FChunkLocationData& position);
+    void addChunksToSpawnPosition(const FChunkLocationData position);
     void addChunksToDestroyPosition(const FIntPoint& position);
-    void addMeshDataForPosition(const FChunkLocationData& chunkLocationData, const FChunkMeshData& meshData);
+    void addMeshDataForPosition(const FChunkLocationData chunkLocationData, const FChunkMeshData meshData);
 
     void emptyPositionQueues();
 
@@ -44,6 +44,8 @@ private:
     FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
 
     // Map for storing chunks mesh data
-    TMap<FChunkLocationData, FChunkMeshData> meshDataForChunkPosition;
+    TQueue<FChunkLocationData> locationDataForComputedMeshes;
+    TQueue<FChunkMeshData> computedMeshData;
+
     FairSemaphore* MeshDataSemaphore;
 };

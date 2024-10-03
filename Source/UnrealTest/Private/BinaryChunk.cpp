@@ -3,7 +3,6 @@
 #include "BinaryChunk.h"
 #include "WorldTerrainSettings.h"
 #include "ProceduralMeshComponent.h"
-#include "ChunkLocationData.h"
 
 #include <iostream>
 #include <array>
@@ -35,12 +34,8 @@ void ABinaryChunk::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSet
 	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
 }
 
-void ABinaryChunk::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
-	ChunkLocationDataRef = InChunkLocationData;
-}
-
-void ABinaryChunk::SetChunkLocation(FIntPoint& InChunkLocation) {
-	chunkLocation = InChunkLocation;
+void ABinaryChunk::SetComputedMeshData(FChunkMeshData InMeshData) {
+	meshData = InMeshData;
 }
 
 // Debugging function that prints a 64-bit integer in groups
@@ -98,10 +93,8 @@ void ABinaryChunk::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, 
 	}
 }
 
-void ABinaryChunk::spawnTerrainChunkMeshes() {
-	FChunkMeshData meshData = CLDR->getMeshDataForPosition(chunkLocation);
-	
-	Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), false);
+void ABinaryChunk::spawnTerrainChunkMeshes() {	
+	Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), true);
 
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
