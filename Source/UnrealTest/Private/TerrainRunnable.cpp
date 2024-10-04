@@ -27,7 +27,6 @@ uint32 TerrainRunnable::Run() {
 
 		isTaskComplete = true;
 		isRunning = false;
-
 	}
 	return 0;
 }
@@ -54,12 +53,12 @@ void TerrainRunnable::UpdateChunks() {
 		int newRowX{ 0 };
 		if (PlayerChunkCoords.X > InitialChunkCoords.X) {
 			// Get the first row by adding the draw distance to the player's X
-			lastRowX = PlayerChunkCoords.X - WTSR->DrawDistance; // MAYBE -1 ; STILL TESTING
+			lastRowX = PlayerChunkCoords.X - WTSR->DrawDistance;
 			newRowX = PlayerChunkCoords.X + WTSR->DrawDistance;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial X
-			lastRowX = InitialChunkCoords.X + WTSR->DrawDistance; // MAYBE -1 ; STILL TESTING
-			newRowX = InitialChunkCoords.X - WTSR->DrawDistance; // MAYBE -1 ; STILL TESTING
+			lastRowX = InitialChunkCoords.X + WTSR->DrawDistance;
+			newRowX = InitialChunkCoords.X - WTSR->DrawDistance;
 		}
 
 		// Add new chunks and remove old chunks based on the player's new X position
@@ -123,7 +122,6 @@ FIntPoint TerrainRunnable::GetChunkCoordinates(FVector Position) const {
 	const int32 ChunkY = FMath::FloorToInt(Position.Y / (WTSR->chunkSize * WTSR->UnrealScale));
 	return FIntPoint(ChunkX, ChunkY);
 }
-
 
 void TerrainRunnable::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
 	WorldTerrainSettingsRef = InWorldTerrainSettings;

@@ -31,6 +31,7 @@ void AChunkWorld::SetChunkLocationData(UChunkLocationData* InChunkLocationData) 
 void AChunkWorld::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings) {
 	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
 
+	// Create all the instances of perlin noise and set their settings
 	WTSR->SetPerlinNoiseSettings(InPerlinNoiseSettings);
 }
 
@@ -43,32 +44,13 @@ void AChunkWorld::spawnInitialWorld() {
 	int spawnedChunks{ 0 };
 	Time start = std::chrono::high_resolution_clock::now();
 
+	// Compute chunk coordinates and position and add them to a spawn "queue"
 	for (int x = -WTSR->DrawDistance; x < WTSR->DrawDistance; x++) {
 		for (int z = -WTSR->DrawDistance; z < WTSR->DrawDistance; z++) {
 			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 			FIntPoint ChunkWorldCoords = FIntPoint(x, z);
 
-			// TODO CREATE HERE FChunkLocationData and use the ChunkMeshDataRunnable thread to calculate the mesh data
-			
 			CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, ChunkWorldCoords));
-
-			// Spawn the chunk actor deferred
-			//ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, ChunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-
-			//if (SpawnedChunkActor) {
-			//		// Add WorldTerrainSettingsRef to BinaryChunk
-			//		SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
-			//		SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
-
-			//		// Finish spawning the chunk actor
-			//		UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, ChunkPosition));
-
-			//		WTSR->AddChunkToMap(FIntPoint(x, z), SpawnedChunkActor);
-
-			//		spawnedChunks++;
-			//} else {
-			//	UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
-			//}
 		}
 	}
 
@@ -100,6 +82,42 @@ void AChunkWorld::destroyCurrentWorldChunks() {
 	}
 }
 
+void AChunkWorld::UpdateChunkCollisions(const FVector& PlayerPosition) {
+	for (const TPair<FIntPoint, AActor*>& ChunkPair : WTSR->GetSpawnedChunksMap()) {
+		ABinaryChunk* ChunkActor = Cast<ABinaryChunk>(ChunkPair.Value);
+
+		if (ChunkActor) {
+			const FVector ChunkPosition = ChunkActor->GetActorLocation();
+
+			// Check if the chunk is within collision distance of the player
+			// bool collisionOnAxisX = std::abs(PlayerPosition.X - ChunkPosition.X) <= WTSR->CollisionDistance;
+			// bool collisionOnAxisZ = std::abs(PlayerPosition.Y - ChunkPosition.Y) <= WTSR->CollisionDistance;
+
+			// Define the boundaries for the collision check
+			float minX = PlayerPosition.X - WTSR->CollisionDistance;
+			float maxX = PlayerPosition.X + WTSR->CollisionDistance;
+			float minY = PlayerPosition.Y - WTSR->CollisionDistance;
+			float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
+
+			// Check if the player is within the collision boundaries
+			bool withinCollisionDistance = (ChunkPosition.X >= minX && ChunkPosition.X <= maxX) &&
+				(ChunkPosition.Y >= minY && ChunkPosition.Y <= maxY);
+
+			// Update collision state based on proximity
+			if (withinCollisionDistance) {
+				if (!ChunkActor->HasCollision()) {
+					// TODO UPDATE ONLY IF IT IS SPAWNED! MAYBE
+ 					ChunkActor->UpdateCollision(true);
+				}
+			} else {
+				if (ChunkActor->HasCollision()) {
+					ChunkActor->UpdateCollision(false);
+				}
+			}
+		}
+	}
+}
+
 // Called when the game starts or when spawned
 void AChunkWorld::BeginPlay() {
 	Super::BeginPlay();
@@ -108,20 +126,6 @@ void AChunkWorld::BeginPlay() {
 
 	// Set player's initial position
 	WTSR->updateInitialPlayerPosition(GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation());
-
-	// Set the player's maximum speed 
-	ADefaultPawn* PlayerPawn = Cast<ADefaultPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	if (PlayerPawn) {
-		UFloatingPawnMovement* MovementComponent = Cast<UFloatingPawnMovement>(PlayerPawn->GetMovementComponent());
-		if (MovementComponent) {
-			MovementComponent->MaxSpeed = 30000.0f;
-			UE_LOG(LogTemp, Warning, TEXT("Player speed set to %f"), MovementComponent->MaxSpeed);
-		} else {
-			UE_LOG(LogTemp, Error, TEXT("Player pawn does not have a movement component!"));
-		}
-	} else {
-		UE_LOG(LogTemp, Error, TEXT("Player pawn is not a DefaultPawn!"));
-	}
 
 	isInitialWorldGenerated = true;
 
@@ -161,8 +165,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		UE_LOG(LogTemp, Error, TEXT("WTSR is nullptr!"));
 		return;
 	}
-
-	const FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+	
+	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
 	const FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
@@ -176,15 +180,17 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		terrainThread = FRunnableThread::Create(terrainRunnable, TEXT("terrainThread"), 0, TPri_Normal);
 	}
 
+	// Clean up terrain thread if it's done computing
 	if (terrainRunnable && terrainRunnable->IsTaskComplete()) {
-		onNewTerrainGenerated();
+		// onNewTerrainGenerated();
 
-		// Clean up
 		if (terrainThread) {
-			terrainThread->Kill(true);
+			terrainRunnable->Stop();
+			terrainThread->WaitForCompletion();
 			delete terrainThread;
 			terrainThread = nullptr;
 		}
+
 		if (terrainRunnable) {
 			delete terrainRunnable;
 			terrainRunnable = nullptr;
@@ -193,31 +199,30 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		isTerrainTaskRunning.AtomicSet(false);
 	}
 
-	// Spawn and destroy one chunk if there is one waiting
+	// Create mesh for chunk position if there is a position waiting to be processed
 	if (!isMeshTaskRunning) {
-
 		FChunkLocationData chunkToSpawnPosition;
 		const bool doesSpawnPositionExist = CLDR->getChunkToSpawnPosition(chunkToSpawnPosition);
 
 		if (doesSpawnPositionExist) {
 			// Calculate the chunk mesh data in a separate thread
 			isMeshTaskRunning.AtomicSet(true);
-
-			UE_LOG(LogTemp, Warning, TEXT("Started Mesh Thread!"));
 			chunkMeshDataRunnable = new ChunkMeshDataRunnable(chunkToSpawnPosition, WTSR, CLDR);
 			chunkMeshDataThread = FRunnableThread::Create(chunkMeshDataRunnable, TEXT("chunkMeshDataThread"), 0, TPri_Normal);
 		}
 	}
 
+	// Cleanup mesh thread if it's done computing
 	if (chunkMeshDataRunnable && chunkMeshDataRunnable->IsTaskComplete()) {
 		// onNewTerrainGenerated();
 
-		// Clean up
 		if (chunkMeshDataThread) {
-			chunkMeshDataThread->Kill(true);
+			chunkMeshDataRunnable->Stop();
+			chunkMeshDataThread->WaitForCompletion();
 			delete chunkMeshDataThread;
 			chunkMeshDataThread = nullptr;
 		}
+
 		if (chunkMeshDataRunnable) {
 			delete chunkMeshDataRunnable;
 			chunkMeshDataRunnable = nullptr;
@@ -234,6 +239,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		FChunkMeshData waitingMeshData;
 		CLDR->getComputedMeshDataAndLocationData(waitingMeshLocationData, waitingMeshData);
 
+		Time start = std::chrono::high_resolution_clock::now();
+
 		// Spawn the chunk actor deferred
 		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ChunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
@@ -243,6 +250,24 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 				SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
 				SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
 
+				// Add collision to the chunk if it's close enough to the player (using the collision threshold)
+				// bool collisionOnAxisX = std::abs(PlayerPosition.X - waitingMeshLocationData.ChunkPosition.X) <=  WTSR->CollisionDistance;
+				// bool collisionOnAxisZ = std::abs(PlayerPosition.Y - waitingMeshLocationData.ChunkPosition.Y) <=  WTSR->CollisionDistance;
+
+				// Define the boundaries for the collision check
+				float minX = PlayerPosition.X - WTSR->CollisionDistance;
+				float maxX = PlayerPosition.X + WTSR->CollisionDistance;
+				float minY = PlayerPosition.Y - WTSR->CollisionDistance;
+				float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
+
+				// Check if the player is within the collision boundaries
+				bool withinCollisionDistance = (waitingMeshLocationData.ChunkPosition.X >= minX && waitingMeshLocationData.ChunkPosition.X <= maxX) &&
+					(waitingMeshLocationData.ChunkPosition.Y >= minY && waitingMeshLocationData.ChunkPosition.Y <= maxY);
+
+				if (withinCollisionDistance) {
+					SpawnedChunkActor->SetChunkCollision(true);
+				}
+
 				// Finish spawning the chunk actor
 				UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ChunkPosition));
 
@@ -250,17 +275,27 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		} else {
 			UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
 		}
+
+		Time end = std::chrono::high_resolution_clock::now();
+		calculateAverageChunkSpawnTime(start, end);
 	}
 
+	// Destroy a chunk and remove it from the map if there is a destroy position in queue
 	FIntPoint chunkToDestroyPosition;
 	bool doesDestroyPositionExist = CLDR->getChunkToDestroyPosition(chunkToDestroyPosition);
 
+	// I need to check if the destroy position exists in the map, otherwise I need to push it back 
 	if (doesDestroyPositionExist) {
 		AActor* chunkToRemove = WTSR->GetAndRemoveChunkFromMap(chunkToDestroyPosition);
 		if (chunkToRemove) {
 			chunkToRemove->Destroy();
+		} else {
+			// Add the chunk position back because the chunk is not yet spawned
+			CLDR->addChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back
 		}
 	}
+
+	UpdateChunkCollisions(PlayerPosition);
 }
 
 void AChunkWorld::calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime) {

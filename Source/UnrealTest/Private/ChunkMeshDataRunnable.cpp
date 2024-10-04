@@ -27,18 +27,16 @@ bool ChunkMeshDataRunnable::Init() {
 uint32 ChunkMeshDataRunnable::Run() {
 	while (isRunning) {
 
-		WTSR->UpdateChunkSemaphore->Acquire();
 		createBinarySolidColumnsYXZ();
 		createTerrainMeshesData();
 
+		WTSR->UpdateChunkSemaphore->Acquire(); // TODO This might need to be changed to a different semaphore
 		CLDR->addMeshDataForPosition(ChunkLocationData, TemporaryMeshData);
-		TemporaryMeshData = FChunkMeshData();
-
+		TemporaryMeshData = FChunkMeshData(); // TODO This might not need to be cleared
 		WTSR->UpdateChunkSemaphore->Release();
-		// TODO CHECK THE NOISE!
+		
 		isTaskComplete.AtomicSet(true);
 		isRunning.AtomicSet(false);
-
 	}
 	return 0;
 }
@@ -82,22 +80,13 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 			float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
 
 			// Apply domain warp to each noise map and get value
-			/*WTSR->ApplyDomainWarpToCoords(noisePositionX, noisePositionZ, WTSR->continentalnessDW);
+			WTSR->ApplyDomainWarpToCoords(noisePositionX, noisePositionZ, WTSR->continentalnessDW);
 			WTSR->ApplyDomainWarpToCoords(noisePositionX, noisePositionZ, WTSR->erosionDW);
-			WTSR->ApplyDomainWarpToCoords(noisePositionX, noisePositionZ, WTSR->peaksAndValleysDW);*/
-
-			WTSR->continentalnessDW->DomainWarp(noisePositionX, noisePositionZ);
-			WTSR->erosionDW->DomainWarp(noisePositionX, noisePositionZ);
-			WTSR->peaksAndValleysDW->DomainWarp(noisePositionX, noisePositionZ);
+			WTSR->ApplyDomainWarpToCoords(noisePositionX, noisePositionZ, WTSR->peaksAndValleysDW);
 			
-			
-			/*const float continentalnessVal = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->continentalness);
+			const float continentalnessVal = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->continentalness);
 			const float erosionVal = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->erosion);
-			const float peaksAndValleysVal = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->peaksAndValleys);*/
-
-			const float continentalnessVal = WTSR->continentalness->GetNoise(noisePositionX, noisePositionZ) + 1;
-			const float erosionVal = WTSR->erosion->GetNoise(noisePositionX, noisePositionZ) + 1;
-			const float peaksAndValleysVal = WTSR->peaksAndValleysDW->GetNoise(noisePositionX, noisePositionZ) + 1;
+			const float peaksAndValleysVal = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->peaksAndValleys);
 
 			// Adding multiple splines to the continentalness (inland)
 			float continentalnessHeight = 0.0f;

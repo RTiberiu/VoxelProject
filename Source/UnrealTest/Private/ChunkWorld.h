@@ -67,13 +67,16 @@ private:
 	// Calculate average time spawn for BinaryChunk
 	void calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime);
 	int32 ChunksSpawnedCount = 0;
-	const int32 ChunksToAverage = 1000;
+	const int32 ChunksToAverage = 500;
 	double TotalTimeForChunks = 0.0;
 
 	// Destroy entire world when perlin noise settings change
 	void destroyCurrentWorldChunks();
 
-	TArray<FChunkLocationData> testingThreadLocations;
+	// Update collisions to chunks, making sure they have collision if they're around the player
+	void UpdateChunkCollisions(const FVector& PlayerPosition);
+
+	TArray<FChunkLocationData> testingThreadLocations; // TODO Delete this when done testing
 
 protected:
 	// Called when the game starts or when spawned

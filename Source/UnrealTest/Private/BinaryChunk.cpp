@@ -19,6 +19,9 @@ ABinaryChunk::ABinaryChunk() {
 
 	Mesh->SetCastShadow(false);
 
+	// By default the chunk shouldn't have collision
+	hasCollision = false;
+
 	// Set mesh as root
 	SetRootComponent(Mesh);
 }
@@ -36,6 +39,50 @@ void ABinaryChunk::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSet
 
 void ABinaryChunk::SetComputedMeshData(FChunkMeshData InMeshData) {
 	meshData = InMeshData;
+}
+
+void ABinaryChunk::SetChunkCollision(bool InHasCollision) {
+	hasCollision = InHasCollision;
+}
+
+bool ABinaryChunk::HasCollision() {
+	return hasCollision;
+}
+
+void ABinaryChunk::UpdateCollision(bool InHasCollision) {
+	SetChunkCollision(InHasCollision);
+
+	if (InHasCollision) {
+		for (auto& Color : meshData.Colors) {
+			Color = FColor::White;
+		}
+		// If the chunk has collision, enable it
+		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Mesh->SetCollisionResponseToAllChannels(ECR_Block);
+		Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+		Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), hasCollision);
+
+
+		// Check and log collision settings
+		if (Mesh->IsCollisionEnabled()) {
+			UE_LOG(LogTemp, Log, TEXT("Collision is enabled for chunk at %s"), *GetActorLocation().ToString());
+		} else {
+			UE_LOG(LogTemp, Warning, TEXT("Collision is NOT enabled for chunk at %s"), *GetActorLocation().ToString());
+		}
+		// TODO REMOVE THIS AFTER TESTING. I am just adjusting color to see collision
+	} else {
+		// If the chunk does not have collision, disable it
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		// TODO REMOVE THIS AFTER TESTING. I am just adjusting color to see collision
+		for (auto& Color : meshData.Colors) {
+			Color = FColor::Red;
+		}
+		// TODO REMOVE THIS AFTER TESTING. I am just adjusting color to see collision
+		Mesh->UpdateMeshSection(0, meshData.Vertices, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>());
+	}
+
 }
 
 // Debugging function that prints a 64-bit integer in groups
@@ -94,10 +141,29 @@ void ABinaryChunk::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, 
 }
 
 void ABinaryChunk::spawnTerrainChunkMeshes() {	
-	Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), true);
+
+	Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), hasCollision);
+
+	// Set up simplified collision
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetCollisionResponseToAllChannels(ECR_Block);
+	Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 
 	// Load and apply basic material to the mesh
+	// UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
+
+	// Load and apply material based on collision status // TODO REPLACE WITH THE ONE ABOVE. THIS IS JUST TESTING
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
+	if (hasCollision) {
+		for (auto& Color : meshData.Colors) {
+			Color = FColor::White;
+		}
+	} else {
+		for (auto& Color : meshData.Colors) {
+			Color = FColor::Red;
+		}
+	}
+
 	if (Material) {
 		Mesh->SetMaterial(0, Material); 
 	}
@@ -133,6 +199,9 @@ void ABinaryChunk::BeginPlay() {
 	spawnTerrainChunkMeshes();
 
 	end = std::chrono::high_resolution_clock::now();
+
+	// Removing the mesh data after the chunk is spawned
+	// meshData = FChunkMeshData(); 
 
 	// printExecutionTime(start, end, "spawnTerrainChunkMeshes");
 

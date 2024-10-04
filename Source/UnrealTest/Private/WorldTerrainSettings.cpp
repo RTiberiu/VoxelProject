@@ -31,10 +31,12 @@ void UWorldTerrainSettings::AddChunkToMap(const FIntPoint& ChunkCoordinates, AAc
 
 AActor* UWorldTerrainSettings::GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates) {
 	MapSemaphore->Acquire();
+	// ValidateSpawnedChunksMap();
 	AActor* RemovedChunk = nullptr;
 	if (SpawnedChunksMap.Contains(ChunkCoordinates)) {
 		RemovedChunk = SpawnedChunksMap.FindAndRemoveChecked(ChunkCoordinates);
 	}
+	// ValidateSpawnedChunksMap();
 	MapSemaphore->Release();
 	return RemovedChunk;
 }
@@ -82,6 +84,11 @@ void UWorldTerrainSettings::EmptyChunkMap() {
 	MapSemaphore->Acquire();
 	SpawnedChunksMap.Empty();
 	MapSemaphore->Release();
+}
+
+// Get a read-only version of the map
+const TMap<FIntPoint, AActor*>& UWorldTerrainSettings::GetSpawnedChunksMap() const {
+	return SpawnedChunksMap;
 }
 
 bool UWorldTerrainSettings::isActorPresentInMap(AActor* actor) {
@@ -217,10 +224,10 @@ void UWorldTerrainSettings::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerli
 	applyDomainWarpSettings(peaksAndValleysDW, 2);
 }
 
-void UWorldTerrainSettings::ApplyDomainWarpToCoords(float noisePositionX, float noisePositionZ, TObjectPtr<FastNoiseLite> noise) {
+void UWorldTerrainSettings::ApplyDomainWarpToCoords(float& noisePositionX, float& noisePositionZ, TObjectPtr<FastNoiseLite> noise) {
 	noise->DomainWarp(noisePositionX, noisePositionZ);
 }
 
-float UWorldTerrainSettings::GetNoiseAtCoords(float noisePositionX, float noisePositionZ, TObjectPtr<FastNoiseLite> noise) {
+float UWorldTerrainSettings::GetNoiseAtCoords(float& noisePositionX, float& noisePositionZ, TObjectPtr<FastNoiseLite> noise) {
 	return noise->GetNoise(noisePositionX, noisePositionZ) + 1;;
 }

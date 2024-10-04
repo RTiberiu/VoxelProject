@@ -24,7 +24,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 15 }; // 5 
+	const uint8_t DrawDistance{ 10 }; // 5 
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -33,6 +33,8 @@ public:
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 
 	// World chunks settings
+    const int CollisionDistance{ chunkSize * UnrealScale * 2};
+
 	const int biomeWidth{ chunkSize * 5 }; // 10
 	const uint64_t blendBiomeThreshold{ 150 };
 
@@ -46,6 +48,7 @@ public:
 	void updateInitialPlayerPosition(FVector newPosition);
 	FVector getInitialPlayerPosition();
 	void EmptyChunkMap();
+    const TMap<FIntPoint, AActor*>& GetSpawnedChunksMap() const; 
 
 	FairSemaphore* UpdateChunkSemaphore;
 
@@ -62,9 +65,9 @@ public:
 
     void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
 
-    void ApplyDomainWarpToCoords(float noisePositionX, float noisePositionZ, TObjectPtr<FastNoiseLite> noise);
+    void ApplyDomainWarpToCoords(float& noisePositionX, float& noisePositionZ, TObjectPtr<FastNoiseLite> noise);
 
-    float GetNoiseAtCoords(float noisePositionX, float noisePositionZ, TObjectPtr<FastNoiseLite> noise);
+    float GetNoiseAtCoords(float& noisePositionX, float& noisePositionZ, TObjectPtr<FastNoiseLite> noise);
 
 	bool isActorPresentInMap(AActor* actor); // TODO REMOVE AFTER TESTING - USING THIS BEFORE DESTROY() 
 

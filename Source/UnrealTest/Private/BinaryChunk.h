@@ -28,6 +28,10 @@ public:
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
 	void SetComputedMeshData(FChunkMeshData InMeshData);
+	void SetChunkCollision(bool InHasCollision);
+
+	bool HasCollision();
+	void UpdateCollision(bool InHasCollision);
 
 private: 
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;
@@ -38,6 +42,8 @@ private:
 
 	FChunkMeshData meshData;
 	FIntPoint chunkLocation;
+
+	bool hasCollision;
 
 	// Create chrono type alias
 	using Time = std::chrono::high_resolution_clock::time_point;
