@@ -16,6 +16,8 @@ AChunkWorld::AChunkWorld() : terrainRunnable(nullptr), terrainThread(nullptr), i
 
 	isInitialWorldGenerated = false;
 
+	frameCounterCollision = 0;
+
 	// Initializing Chunk with the BinaryChunk class
 	Chunk = ABinaryChunk::StaticClass();
 }
@@ -82,16 +84,18 @@ void AChunkWorld::destroyCurrentWorldChunks() {
 	}
 }
 
+/*
+* Get read-only items of SpawnedChunksMap and iterate to see if chunks are outside or inside of 
+* the collision threshold. Chunks inside the threshold will have their meshes regenerated with 
+* collision and chunks outside of it will get their collision disabled through a mesh update.
+*/
 void AChunkWorld::UpdateChunkCollisions(const FVector& PlayerPosition) {
+	
 	for (const TPair<FIntPoint, AActor*>& ChunkPair : WTSR->GetSpawnedChunksMap()) {
 		ABinaryChunk* ChunkActor = Cast<ABinaryChunk>(ChunkPair.Value);
 
 		if (ChunkActor) {
 			const FVector ChunkPosition = ChunkActor->GetActorLocation();
-
-			// Check if the chunk is within collision distance of the player
-			// bool collisionOnAxisX = std::abs(PlayerPosition.X - ChunkPosition.X) <= WTSR->CollisionDistance;
-			// bool collisionOnAxisZ = std::abs(PlayerPosition.Y - ChunkPosition.Y) <= WTSR->CollisionDistance;
 
 			// Define the boundaries for the collision check
 			float minX = PlayerPosition.X - WTSR->CollisionDistance;
@@ -106,7 +110,6 @@ void AChunkWorld::UpdateChunkCollisions(const FVector& PlayerPosition) {
 			// Update collision state based on proximity
 			if (withinCollisionDistance) {
 				if (!ChunkActor->HasCollision()) {
-					// TODO UPDATE ONLY IF IT IS SPAWNED! MAYBE
  					ChunkActor->UpdateCollision(true);
 				}
 			} else {
@@ -250,10 +253,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 				SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
 				SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
 
-				// Add collision to the chunk if it's close enough to the player (using the collision threshold)
-				// bool collisionOnAxisX = std::abs(PlayerPosition.X - waitingMeshLocationData.ChunkPosition.X) <=  WTSR->CollisionDistance;
-				// bool collisionOnAxisZ = std::abs(PlayerPosition.Y - waitingMeshLocationData.ChunkPosition.Y) <=  WTSR->CollisionDistance;
-
 				// Define the boundaries for the collision check
 				float minX = PlayerPosition.X - WTSR->CollisionDistance;
 				float maxX = PlayerPosition.X + WTSR->CollisionDistance;
@@ -295,7 +294,12 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		}
 	}
 
-	UpdateChunkCollisions(PlayerPosition);
+	frameCounterCollision++;
+
+	if (frameCounterCollision >= framesUntilCollisionCheck) {
+		UpdateChunkCollisions(PlayerPosition);
+		frameCounterCollision = 0;
+	}
 }
 
 void AChunkWorld::calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime) {

@@ -76,6 +76,10 @@ private:
 	// Update collisions to chunks, making sure they have collision if they're around the player
 	void UpdateChunkCollisions(const FVector& PlayerPosition);
 
+	// Control how many frames chunks get their collision checked and updated
+	int frameCounterCollision;
+	int framesUntilCollisionCheck = 10;
+
 	TArray<FChunkLocationData> testingThreadLocations; // TODO Delete this when done testing
 
 protected:

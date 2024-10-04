@@ -40,7 +40,6 @@ public:
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 
-
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
