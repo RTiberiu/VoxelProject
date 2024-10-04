@@ -9,10 +9,10 @@
 class UWorldTerrainSettings; // forward declaration to the world settings
 class UChunkLocationData;
 
-class TerrainRunnable : public FRunnable {
+class ChunksLocationRunnable : public FRunnable {
 public:
-	TerrainRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
-	virtual ~TerrainRunnable() override;
+	ChunksLocationRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
+	virtual ~ChunksLocationRunnable() override;
 
 	virtual bool Init() override;
 	virtual uint32 Run() override;

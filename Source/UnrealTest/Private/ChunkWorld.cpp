@@ -10,7 +10,7 @@
 #include <Kismet/GameplayStatics.h>
 
 // Sets default values
-AChunkWorld::AChunkWorld() : terrainRunnable(nullptr), terrainThread(nullptr), isTerrainTaskRunning(false), isMeshTaskRunning(false){
+AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThread(nullptr), isLocationTaskRunning(false), isMeshTaskRunning(false){
 	// Set this actor to call Tick() every frame.  Yosu can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -177,29 +177,29 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X; // TODO SET TO FALSE FOR TESTING ONLY
 	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y; // TODO SET TO FALSE FOR TESTING ONLY
 
-	if (!isTerrainTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
-		isTerrainTaskRunning.AtomicSet(true);
-		terrainRunnable = new TerrainRunnable(PlayerPosition, WTSR, CLDR);
-		terrainThread = FRunnableThread::Create(terrainRunnable, TEXT("terrainThread"), 0, TPri_Normal);
+	if (!isLocationTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
+		isLocationTaskRunning.AtomicSet(true);
+		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR);
+		chunksLocationThread = FRunnableThread::Create(chunksLocationRunnable, TEXT("chunksLocationThread"), 0, TPri_Normal);
 	}
 
 	// Clean up terrain thread if it's done computing
-	if (terrainRunnable && terrainRunnable->IsTaskComplete()) {
+	if (chunksLocationRunnable && chunksLocationRunnable->IsTaskComplete()) {
 		// onNewTerrainGenerated();
 
-		if (terrainThread) {
-			terrainRunnable->Stop();
-			terrainThread->WaitForCompletion();
-			delete terrainThread;
-			terrainThread = nullptr;
+		if (chunksLocationThread) {
+			chunksLocationRunnable->Stop();
+			chunksLocationThread->WaitForCompletion();
+			delete chunksLocationThread;
+			chunksLocationThread = nullptr;
 		}
 
-		if (terrainRunnable) {
-			delete terrainRunnable;
-			terrainRunnable = nullptr;
+		if (chunksLocationRunnable) {
+			delete chunksLocationRunnable;
+			chunksLocationRunnable = nullptr;
 		}
 
-		isTerrainTaskRunning.AtomicSet(false);
+		isLocationTaskRunning.AtomicSet(false);
 	}
 
 	// Create mesh for chunk position if there is a position waiting to be processed
@@ -296,6 +296,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	frameCounterCollision++;
 
+	// TODO This part might be worth delegating to a separate thread (especially if the render distance is high)
 	if (frameCounterCollision >= framesUntilCollisionCheck) {
 		UpdateChunkCollisions(PlayerPosition);
 		frameCounterCollision = 0;

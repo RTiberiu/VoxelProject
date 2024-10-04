@@ -3,7 +3,7 @@
 #pragma once
 
 // #include "BinaryChunk.h"
-#include "TerrainRunnable.h"
+#include "ChunksLocationRunnable.h"
 #include "ChunkMeshDataRunnable.h"
 #include "ChunkLocationData.h"
 #include <chrono>
@@ -53,9 +53,9 @@ private:
 	void spawnInitialWorld();
 
 	// Runnable to handle spawning the chunks
-	TerrainRunnable* terrainRunnable;
-	FRunnableThread* terrainThread;
-	FThreadSafeBool isTerrainTaskRunning;
+	ChunksLocationRunnable* chunksLocationRunnable;
+	FRunnableThread* chunksLocationThread;
+	FThreadSafeBool isLocationTaskRunning;
 
 	ChunkMeshDataRunnable* chunkMeshDataRunnable;
 	FRunnableThread* chunkMeshDataThread;

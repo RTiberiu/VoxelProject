@@ -1,24 +1,24 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "TerrainRunnable.h"
+#include "ChunksLocationRunnable.h"
 #include "WorldTerrainSettings.h"
 #include "ChunkLocationData.h"
 
-TerrainRunnable::TerrainRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : PlayerPosition(PlayerPosition), isRunning(false), isTaskComplete(false) {
+ChunksLocationRunnable::ChunksLocationRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : PlayerPosition(PlayerPosition), isRunning(false), isTaskComplete(false) {
 	WorldTerrainSettingsRef = InWorldTerrainSettingsRef;
 	ChunkLocationDataRef = InChunkLocationDataRef;
 }
 
-TerrainRunnable::~TerrainRunnable() {
+ChunksLocationRunnable::~ChunksLocationRunnable() {
 }
 
-bool TerrainRunnable::Init() {
+bool ChunksLocationRunnable::Init() {
 	isRunning = true;
 	isTaskComplete = false;
 	return true;
 }
 
-uint32 TerrainRunnable::Run() {
+uint32 ChunksLocationRunnable::Run() {
 	while (isRunning) {
 		// Spawn new chunks
 		WTSR->UpdateChunkSemaphore->Acquire();
@@ -31,18 +31,18 @@ uint32 TerrainRunnable::Run() {
 	return 0;
 }
 
-void TerrainRunnable::Stop() {
+void ChunksLocationRunnable::Stop() {
 	isRunning = false;
 }
 
-void TerrainRunnable::Exit() {
+void ChunksLocationRunnable::Exit() {
 }
 
-FThreadSafeBool TerrainRunnable::IsTaskComplete() const {
+FThreadSafeBool ChunksLocationRunnable::IsTaskComplete() const {
 	return isTaskComplete;
 }
 
-void TerrainRunnable::UpdateChunks() {
+void ChunksLocationRunnable::UpdateChunks() {
 	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
@@ -117,17 +117,17 @@ void TerrainRunnable::UpdateChunks() {
 	WTSR->updateInitialPlayerPosition(PlayerPosition);
 }
 
-FIntPoint TerrainRunnable::GetChunkCoordinates(FVector Position) const {
+FIntPoint ChunksLocationRunnable::GetChunkCoordinates(FVector Position) const {
 	const int32 ChunkX = FMath::FloorToInt(Position.X / (WTSR->chunkSize * WTSR->UnrealScale));
 	const int32 ChunkY = FMath::FloorToInt(Position.Y / (WTSR->chunkSize * WTSR->UnrealScale));
 	return FIntPoint(ChunkX, ChunkY);
 }
 
-void TerrainRunnable::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
+void ChunksLocationRunnable::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }
 
-void TerrainRunnable::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
+void ChunksLocationRunnable::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
 	ChunkLocationDataRef = InChunkLocationData;
 }
 
