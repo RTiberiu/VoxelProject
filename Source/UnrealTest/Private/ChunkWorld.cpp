@@ -8,6 +8,7 @@
 #include "GameFramework/DefaultPawn.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include <Kismet/GameplayStatics.h>
+#include <set>
 
 // Sets default values
 AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThread(nullptr), isLocationTaskRunning(false), isMeshTaskRunning(false){
@@ -46,14 +47,34 @@ void AChunkWorld::spawnInitialWorld() {
 	int spawnedChunks{ 0 };
 	Time start = std::chrono::high_resolution_clock::now();
 
-	// Compute chunk coordinates and position and add them to a spawn "queue"
-	for (int x = -WTSR->DrawDistance; x < WTSR->DrawDistance; x++) {
-		for (int z = -WTSR->DrawDistance; z < WTSR->DrawDistance; z++) {
-			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
-			FIntPoint ChunkWorldCoords = FIntPoint(x, z);
+	// Add initial chunk position to spawn
+	FVector ChunkPosition = FVector(0, 0, 0);
+	FIntPoint ChunkWorldCoords = FIntPoint(0, 0);
+	CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, ChunkWorldCoords));
 
-			CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, ChunkWorldCoords));
+	// Add chunk positions to spawn by going in a spiral from origin position
+	std::set<std::pair<int, int>> avoidPosition = { {0,0} };
+	int currentSpiralRing = 1;
+	int maxSpiralRings = WTSR->DrawDistance;
+
+	while (currentSpiralRing <= maxSpiralRings) {
+		for (int x = -currentSpiralRing; x < currentSpiralRing; x++) {
+			for (int z = -currentSpiralRing; z < currentSpiralRing; z++) {
+
+				std::pair<int, int> currentPair = { x, z };
+
+				if (avoidPosition.find(currentPair) != avoidPosition.end()) {
+					continue;
+				}
+
+				ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
+				ChunkWorldCoords = FIntPoint(x, z);
+				CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, ChunkWorldCoords));
+
+				avoidPosition.insert(currentPair);
+			}
 		}
+		currentSpiralRing++;
 	}
 
 	Time end = std::chrono::high_resolution_clock::now();
