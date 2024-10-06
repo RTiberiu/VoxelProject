@@ -24,7 +24,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 15 }; // 5 
+	const uint8_t DrawDistance{ 25 }; // 5 
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -73,68 +73,68 @@ public:
 
 	void printMapElements(FString message); // TODO SHOULD MADE PRIVATE AFTER TESTING
 
-	TArray<TArray<FColor>> ColorArray = {
-        // Layer 1 (0-20 blocks)
-    {
-        FColor(64, 48, 33), FColor(72, 54, 38), FColor(60, 45, 28), FColor(68, 52, 36),
-        FColor(70, 50, 30), FColor(62, 46, 32), FColor(66, 49, 35), FColor(65, 47, 31),
-        FColor(73, 55, 39), FColor(67, 51, 33), FColor(63, 49, 30)
-    },
-        // Layer 2 (20-40 blocks)
+    TArray<TArray<FColor>> ColorArray = {
+        // Layer 1 (0-20 blocks) - Dark Brown
         {
-            FColor(85, 65, 42), FColor(90, 70, 45), FColor(80, 60, 40), FColor(88, 68, 44),
-            FColor(87, 66, 41), FColor(83, 62, 39), FColor(82, 63, 43), FColor(86, 69, 47),
-            FColor(84, 64, 41), FColor(89, 67, 42), FColor(81, 63, 38)
+            FColor(45, 41, 32), FColor(46, 42, 33), FColor(44, 40, 31), FColor(47, 43, 34),
+            FColor(48, 44, 35), FColor(46, 42, 32), FColor(45, 41, 30), FColor(43, 39, 29),
+            FColor(50, 46, 37), FColor(46, 44, 32), FColor(44, 39, 30)
         },
-        // Layer 3 (40-60 blocks)
+        // Layer 2 (20-40 blocks) - Lighter Brown
         {
-            FColor(125, 94, 64), FColor(130, 98, 68), FColor(120, 90, 62), FColor(128, 92, 65),
-            FColor(126, 95, 66), FColor(124, 91, 60), FColor(127, 96, 63), FColor(122, 93, 67),
-            FColor(131, 99, 69), FColor(123, 89, 61), FColor(129, 97, 64)
+            FColor(79, 69, 55), FColor(81, 71, 57), FColor(77, 67, 53), FColor(78, 68, 54),
+            FColor(80, 70, 56), FColor(76, 66, 52), FColor(82, 72, 58), FColor(75, 65, 51),
+            FColor(83, 73, 59), FColor(74, 64, 50), FColor(77, 67, 53)
         },
-        // Layer 4 (60-80 blocks)
+        // Layer 3 (40-60 blocks) - Light Brown
         {
-            FColor(165, 138, 89), FColor(170, 142, 93), FColor(160, 135, 88), FColor(167, 140, 90),
-            FColor(162, 137, 86), FColor(168, 143, 91), FColor(164, 139, 87), FColor(169, 144, 92),
-            FColor(163, 136, 85), FColor(171, 141, 94), FColor(166, 137, 89)
+            FColor(105, 87, 59), FColor(107, 88, 60), FColor(103, 85, 58), FColor(104, 86, 59),
+            FColor(106, 87, 60), FColor(102, 84, 57), FColor(108, 89, 61), FColor(101, 83, 56),
+            FColor(109, 90, 62), FColor(100, 82, 55), FColor(104, 86, 58)
         },
-        // Layer 5 (80-100 blocks)
+        // Layer 4 (60-80 blocks) - Dark Green
         {
-            FColor(106, 148, 67), FColor(110, 150, 70), FColor(104, 145, 65), FColor(107, 149, 68),
-            FColor(108, 152, 69), FColor(105, 147, 64), FColor(109, 151, 66), FColor(103, 146, 63),
-            FColor(111, 153, 71), FColor(102, 144, 62), FColor(106, 150, 72)
+            FColor(31, 38, 15), FColor(21, 28, 5), FColor(41, 48, 25), FColor(31, 35, 13),
+            FColor(31, 40, 18), FColor(36, 43, 20), FColor(26, 33, 10), FColor(31, 38, 17),
+            FColor(26, 38, 15), FColor(41, 48, 30), FColor(31, 38, 19)
         },
-        // Layer 6 (100-120 blocks)
+        // Layer 5 (80-100 blocks) - Lighter Green
         {
-            FColor(80, 120, 40), FColor(82, 122, 42), FColor(78, 118, 38), FColor(81, 121, 41),
-            FColor(83, 123, 43), FColor(79, 119, 37), FColor(84, 124, 44), FColor(77, 117, 36),
-            FColor(85, 125, 45), FColor(76, 116, 35), FColor(80, 120, 46)
+            FColor(78, 89, 39), FColor(68, 79, 29), FColor(88, 99, 49), FColor(78, 86, 36),
+            FColor(78, 91, 41), FColor(83, 94, 43), FColor(73, 84, 33), FColor(78, 89, 38),
+            FColor(73, 89, 39), FColor(88, 99, 54), FColor(78, 89, 42)
         },
-        // Layer 7 (120-140 blocks)
+        // Layer 6 (100-120 blocks) - Light Green
         {
-            FColor(140, 170, 220), FColor(145, 175, 225), FColor(135, 165, 215), FColor(142, 172, 218),
-            FColor(138, 168, 217), FColor(146, 174, 223), FColor(139, 169, 216), FColor(144, 173, 221),
-            FColor(137, 167, 214), FColor(148, 176, 226), FColor(141, 171, 219)
+             FColor(110, 121, 69), FColor(100, 111, 59), FColor(120, 131, 79), FColor(110, 116, 66),
+            FColor(110, 124, 71), FColor(115, 126, 73), FColor(105, 116, 63), FColor(110, 121, 68),
+            FColor(105, 121, 69), FColor(120, 131, 84), FColor(110, 121, 70)
         },
-        // Layer 8 (140-160 blocks)
+        // Layer 7 (120-140 blocks) - Dark Grey
         {
-            FColor(110, 160, 230), FColor(115, 165, 235), FColor(105, 155, 225), FColor(112, 162, 232),
-            FColor(111, 158, 228), FColor(116, 166, 237), FColor(107, 157, 224), FColor(114, 164, 231),
-            FColor(106, 156, 223), FColor(117, 167, 238), FColor(110, 159, 229)
+            FColor(63, 63, 63), FColor(53, 53, 53), FColor(73, 73, 73), FColor(63, 58, 58),
+            FColor(63, 68, 68), FColor(68, 68, 68), FColor(58, 58, 58), FColor(63, 63, 62),
+            FColor(58, 63, 63), FColor(73, 73, 68), FColor(63, 63, 63)
         },
-        // Layer 9 (160-180 blocks)
+        // Layer 8 (140-160 blocks) - Lighter Grey
         {
-            FColor(190, 225, 245), FColor(195, 230, 250), FColor(185, 220, 240), FColor(192, 228, 247),
-            FColor(189, 223, 242), FColor(196, 231, 249), FColor(187, 221, 239), FColor(194, 229, 248),
-            FColor(186, 219, 238), FColor(198, 233, 251), FColor(191, 224, 246)
+            FColor(89, 89, 89), FColor(79, 79, 79), FColor(99, 99, 99), FColor(89, 84, 84),
+            FColor(89, 94, 94), FColor(94, 94, 94), FColor(84, 84, 84), FColor(89, 89, 88),
+            FColor(84, 89, 89), FColor(99, 99, 94), FColor(89, 89, 90)
         },
-        // Layer 10 (180-200 blocks)
+        // Layer 9 (160-180 blocks) - Light Grey
         {
-            FColor(255, 250, 250), FColor(255, 252, 252), FColor(254, 249, 249), FColor(253, 251, 253),
-            FColor(255, 249, 250), FColor(254, 253, 255), FColor(255, 248, 248), FColor(252, 250, 252),
-            FColor(255, 251, 249), FColor(253, 252, 254), FColor(255, 250, 251)
+            FColor(140, 140, 140), FColor(130, 130, 130), FColor(150, 150, 150), FColor(140, 135, 135),
+            FColor(140, 145, 145), FColor(145, 145, 145), FColor(135, 135, 135), FColor(140, 140, 139),
+            FColor(135, 140, 140), FColor(150, 150, 145), FColor(140, 140, 140)
+        },
+        // Layer 10 (180-200 blocks) - White
+        {
+            FColor(230, 225, 210), FColor(232, 227, 212), FColor(228, 224, 208), FColor(229, 225, 209),
+            FColor(231, 226, 211), FColor(227, 223, 207), FColor(233, 228, 213), FColor(226, 222, 206),
+            FColor(234, 229, 214), FColor(225, 221, 205), FColor(229, 225, 210)
         }
-	};
+    };
 
 private:
     APerlinNoiseSettings* PerlinNoiseSettingsRef;

@@ -92,4 +92,5 @@ private:
 
 	int getColorIndexFromVoxelHeight(const FVector& voxelPosition);
 
+
 };

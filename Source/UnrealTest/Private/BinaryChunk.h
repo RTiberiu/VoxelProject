@@ -50,16 +50,6 @@ private:
 
 	TObjectPtr<UProceduralMeshComponent> Mesh;
 
-	// Noise objects used to generate the world
-	TObjectPtr<FastNoiseLite> continentalness;
-	TObjectPtr<FastNoiseLite> erosion;
-	TObjectPtr<FastNoiseLite> peaksAndValleys;
-
-	// Domain warp for the 3 main noise objects
-	TObjectPtr<FastNoiseLite> continentalnessDW;
-	TObjectPtr<FastNoiseLite> erosionDW;
-	TObjectPtr<FastNoiseLite> peaksAndValleysDW;
-
 	void spawnTerrainChunkMeshes();
 
 	void printExecutionTime(Time& start, Time& end, const char* functionName);

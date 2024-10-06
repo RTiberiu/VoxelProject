@@ -580,6 +580,8 @@ void ChunkMeshDataRunnable::createQuadAndAddToMeshData(const FVector& voxelPosit
 			});
 	}
 
+	// TODO Create a dynamic texture and assign a random color from the layer for each 1x1 of the quad. 
+
 	// Assign different random colors for each vertex; This lets the GPU interpolate the colors
 	FVector voxelPositions[] = { voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4 };
 	for (int vertices = 0; vertices < 4; vertices++) {
