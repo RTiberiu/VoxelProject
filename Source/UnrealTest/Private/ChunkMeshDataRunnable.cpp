@@ -34,7 +34,7 @@ uint32 ChunkMeshDataRunnable::Run() {
 		CLDR->addMeshDataForPosition(ChunkLocationData, TemporaryMeshData);
 		TemporaryMeshData = FChunkMeshData(); // TODO This might not need to be cleared
 		WTSR->UpdateChunkSemaphore->Release();
-		
+
 		isTaskComplete.AtomicSet(true);
 		isRunning.AtomicSet(false);
 	}
@@ -83,7 +83,7 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 			WTSR->ApplyDomainWarpToCoords(noisePositionX, noisePositionZ, WTSR->continentalnessDW);
 			WTSR->ApplyDomainWarpToCoords(noisePositionX, noisePositionZ, WTSR->erosionDW);
 			WTSR->ApplyDomainWarpToCoords(noisePositionX, noisePositionZ, WTSR->peaksAndValleysDW);
-			
+
 			const float continentalnessVal = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->continentalness);
 			const float erosionVal = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->erosion);
 			const float peaksAndValleysVal = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->peaksAndValleys);
@@ -583,21 +583,23 @@ void ChunkMeshDataRunnable::createQuadAndAddToMeshData(const FVector& voxelPosit
 	// TODO Create a dynamic texture and assign a random color from the layer for each 1x1 of the quad. 
 
 	// Assign different random colors for each vertex; This lets the GPU interpolate the colors
-	FVector voxelPositions[] = { voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4 };
-	for (int vertices = 0; vertices < 4; vertices++) {
-		int32 colorIndex = FMath::RandRange(0, WTSR->ColorArray[0].Num() - 1);
-		int layerIndex = getColorIndexFromVoxelHeight(voxelPositions[vertices]);
-		FColor RandomColor = WTSR->ColorArray[layerIndex][colorIndex];
-		TemporaryMeshData.Colors.Add(RandomColor);
-	}
+	int layerIndex = getColorIndexFromVoxelHeight(voxelPosition1);
+	FColor layerColor = WTSR->ColorArray[layerIndex];
+
+	TemporaryMeshData.Colors.Append({
+		layerColor,
+		layerColor,
+		layerColor,
+		layerColor
+		});
 }
 
 int ChunkMeshDataRunnable::getColorIndexFromVoxelHeight(const FVector& voxelPosition) {
 	const int voxelHeight = static_cast<int>(voxelPosition.Z);
 	int colorIndex = 0;
 
-	constexpr int layerHeight = 20;
-	constexpr int layers = 9;
+	constexpr int layerHeight = 10;
+	constexpr int layers = 19;
 
 	while (colorIndex < layers) {
 		const int maxLayerHeight = colorIndex * layerHeight + layerHeight;
@@ -609,3 +611,4 @@ int ChunkMeshDataRunnable::getColorIndexFromVoxelHeight(const FVector& voxelPosi
 
 	return colorIndex;
 }
+
