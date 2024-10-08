@@ -74,7 +74,9 @@ public:
 	void printMapElements(FString message); // TODO SHOULD MADE PRIVATE AFTER TESTING
 
 	TArray<FColor> ColorArray = {
-		FColor(45, 41, 32), FColor(48, 44, 35), FColor(79, 69, 55), FColor(105, 87, 59), FColor(143, 118, 80), FColor(41, 48, 25), FColor(36, 43, 20), FColor(41, 48, 30), FColor(78, 89, 39), FColor(88, 99, 49), FColor(88, 99, 54), FColor(110, 121, 69), FColor(120, 131, 84), FColor(63, 63, 63), FColor(73, 73, 73), FColor(89, 89, 89), FColor(99, 99, 94), FColor(140, 140, 140), FColor(230, 225, 210), FColor(255, 251, 233)
+		FColor(45, 41, 32), FColor(48, 44, 35), FColor(79, 69, 55), FColor(105, 87, 59), FColor(143, 118, 80), FColor(113, 125, 73), FColor(109, 120, 67), FColor(98, 110, 59), FColor(88, 99, 49), FColor(78, 89, 39), FColor(53, 60, 29), FColor(41, 48, 25), FColor(36, 43, 20), FColor(63, 63, 63), FColor(73, 73, 73), FColor(89, 89, 89), FColor(99, 99, 94), FColor(140, 140, 140), FColor(230, 225, 210), FColor(255, 251, 233)
+
+
 	};
 
 private:
