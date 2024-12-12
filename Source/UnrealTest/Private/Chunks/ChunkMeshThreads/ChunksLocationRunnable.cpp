@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ChunksLocationRunnable.h"
-#include "WorldTerrainSettings.h"
-#include "ChunkLocationData.h"
+#include "..\TerrainSettings\WorldTerrainSettings.h"
+#include "..\ChunkData\ChunkLocationData.h"
 
 ChunksLocationRunnable::ChunksLocationRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : PlayerPosition(PlayerPosition), isRunning(false), isTaskComplete(false) {
 	WorldTerrainSettingsRef = InWorldTerrainSettingsRef;

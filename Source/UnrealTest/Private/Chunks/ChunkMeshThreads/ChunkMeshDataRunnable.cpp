@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ChunkMeshDataRunnable.h"
-#include "WorldTerrainSettings.h"
+#include "..\TerrainSettings\WorldTerrainSettings.h"
 #include <iostream>
 #include <array>
 #include <bitset>
 #include <limits>
-#include "FastNoiseLite.h"
-#include "ChunkLocationData.h"
+#include "..\..\Noise\NoiseLibrary\FastNoiseLite.h"
+#include "..\ChunkData\ChunkLocationData.h"
 
 
 ChunkMeshDataRunnable::ChunkMeshDataRunnable(FChunkLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : ChunkLocationData(InChunkLocationData) {

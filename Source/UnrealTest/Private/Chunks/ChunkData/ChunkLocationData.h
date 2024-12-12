@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FairSemaphore.h"
+#include "..\..\Utils\Semaphore\FairSemaphore.h"
 
 #include "CoreMinimal.h"
 #include "ChunkMeshData.h"

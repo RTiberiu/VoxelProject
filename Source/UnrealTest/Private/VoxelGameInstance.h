@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "PerlinNoiseSettings.h"
-#include "WorldTerrainSettings.h"
-#include "ChunkLocationData.h"
-#include "ChunkWorld.h"
+#include "Noise\PerlinNoiseSettings.h"
+#include "Chunks\TerrainSettings\WorldTerrainSettings.h"
+#include "Chunks\ChunkData\ChunkLocationData.h"
+#include "Chunks\ChunkWorld\ChunkWorld.h"
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"

@@ -2,9 +2,9 @@
 
 
 #include "ChunkWorld.h"
-#include "WorldTerrainSettings.h"
-#include "ChunkLocationData.h"
-#include "BinaryChunk.h" 
+#include "..\TerrainSettings\WorldTerrainSettings.h"
+#include "..\ChunkData\ChunkLocationData.h"
+#include "..\SingleChunk\BinaryChunk.h" 
 #include "GameFramework/DefaultPawn.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include <Kismet/GameplayStatics.h>

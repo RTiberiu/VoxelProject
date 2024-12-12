@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include "PerlinNoiseSettings.h"
+#include "..\..\Noise\PerlinNoiseSettings.h"
 #include <vector>
 #include <chrono>
 
-#include "ChunkLocationData.h" // This is here JUST for FChunkLocationData struct. TODO Move the struct in a different file
-#include "ChunkMeshData.h"
+#include "..\ChunkData\ChunkLocationData.h" // This is here JUST for FChunkLocationData struct. TODO Move the struct in a different file
+#include "..\ChunkData\ChunkMeshData.h"
 #include "CoreMinimal.h"
 
 class FastNoiseLite;

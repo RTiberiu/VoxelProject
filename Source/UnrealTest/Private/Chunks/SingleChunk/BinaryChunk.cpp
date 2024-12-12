@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BinaryChunk.h"
-#include "WorldTerrainSettings.h"
+#include "..\TerrainSettings\WorldTerrainSettings.h"
 #include "ProceduralMeshComponent.h"
 
 #include <iostream>
 #include <array>
 #include <bitset>
 #include <limits>
-#include "FastNoiseLite.h"
+#include "..\..\Noise\NoiseLibrary\FastNoiseLite.h"
 
 // Sets default values
 ABinaryChunk::ABinaryChunk() {
@@ -147,27 +147,27 @@ void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functi
 void ABinaryChunk::BeginPlay() {
 	Super::BeginPlay();
 
-	Time start = std::chrono::high_resolution_clock::now();
+	//Time start = std::chrono::high_resolution_clock::now();
 
 	// createBinarySolidColumnsYXZ();
 
-	Time end = std::chrono::high_resolution_clock::now();
+	//Time end = std::chrono::high_resolution_clock::now();
 
 	// printExecutionTime(start, end, "createBinarySolidColumnsYXZ");
 
-	start = std::chrono::high_resolution_clock::now();
+	//start = std::chrono::high_resolution_clock::now();
 
 	// createTerrainMeshesData();
 
-	end = std::chrono::high_resolution_clock::now();
+	//end = std::chrono::high_resolution_clock::now();
 
 	// printExecutionTime(start, end, "createTerrainMeshesData");
 
-	start = std::chrono::high_resolution_clock::now();
+	//start = std::chrono::high_resolution_clock::now();
 
 	spawnTerrainChunkMeshes();
 
-	end = std::chrono::high_resolution_clock::now();
+	//end = std::chrono::high_resolution_clock::now();
 
 	// Removing the mesh data after the chunk is spawned
 	// meshData = FChunkMeshData(); 

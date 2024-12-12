@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "WorldTerrainSettings.h"
-#include "PerlinNoiseSettings.h"
-#include "FastNoiseLite.h"
-#include "FairSemaphore.h"
+#include "..\..\Noise\PerlinNoiseSettings.h"
+#include "..\..\Noise\NoiseLibrary\FastNoiseLite.h"
+#include "..\..\Utils\Semaphore\FairSemaphore.h"
 
 
 UWorldTerrainSettings::UWorldTerrainSettings() : 

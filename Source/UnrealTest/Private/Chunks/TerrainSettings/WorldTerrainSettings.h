@@ -7,7 +7,7 @@
 #include <mutex> 
 #include <atomic>
 
-#include "FairSemaphore.h"
+#include "..\..\Utils\Semaphore\FairSemaphore.h"
 #include "CoreMinimal.h"
 #include "WorldTerrainSettings.generated.h"
 
@@ -24,7 +24,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 25 }; // 5 
+	const uint8_t DrawDistance{ 15 }; // 5 
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -75,9 +75,9 @@ public:
 
 	TArray<FColor> ColorArray = {
 		FColor(45, 41, 32), FColor(48, 44, 35), FColor(79, 69, 55), FColor(105, 87, 59), FColor(143, 118, 80), FColor(113, 125, 73), FColor(109, 120, 67), FColor(98, 110, 59), FColor(88, 99, 49), FColor(78, 89, 39), FColor(53, 60, 29), FColor(41, 48, 25), FColor(36, 43, 20), FColor(63, 63, 63), FColor(73, 73, 73), FColor(89, 89, 89), FColor(99, 99, 94), FColor(140, 140, 140), FColor(230, 225, 210), FColor(255, 251, 233)
-
-
 	};
+
+	const uint8_t TreeVariations{ 1 };
 
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;

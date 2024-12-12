@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "PerlinNoiseSettings.h"
+#include "..\..\Noise\PerlinNoiseSettings.h"
 #include <vector>
 #include <chrono>
-#include "ChunkMeshData.h"
+#include "..\ChunkData\ChunkMeshData.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BinaryChunk.generated.h"

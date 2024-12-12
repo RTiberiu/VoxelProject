@@ -3,9 +3,10 @@
 #pragma once
 
 // #include "BinaryChunk.h"
-#include "ChunksLocationRunnable.h"
-#include "ChunkMeshDataRunnable.h"
-#include "ChunkLocationData.h"
+#include "..\ChunkMeshThreads\ChunksLocationRunnable.h"
+#include "..\ChunkMeshThreads\ChunkMeshDataRunnable.h"
+#include "..\ChunkData\ChunkLocationData.h"
+
 #include <chrono>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
