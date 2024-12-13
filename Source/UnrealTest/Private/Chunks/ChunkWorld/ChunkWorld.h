@@ -2,7 +2,8 @@
 
 #pragma once
 
-// #include "BinaryChunk.h"
+#include "..\Vegetation\Trees\Tree.h"
+#include "..\SingleChunk\BinaryChunk.h"
 #include "..\ChunkMeshThreads\ChunksLocationRunnable.h"
 #include "..\ChunkMeshThreads\ChunkMeshDataRunnable.h"
 #include "..\ChunkData\ChunkLocationData.h"

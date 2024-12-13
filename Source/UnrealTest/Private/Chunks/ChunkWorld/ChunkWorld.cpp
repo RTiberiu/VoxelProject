@@ -87,6 +87,7 @@ void AChunkWorld::spawnInitialWorld() {
 
 // Perform any actions after generating the new chunks
 void AChunkWorld::onNewTerrainGenerated() {
+	// Spawn the tree TODO Continue from here 
 }
 
 void AChunkWorld::destroyCurrentWorldChunks() {
@@ -206,7 +207,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	// Clean up terrain thread if it's done computing
 	if (chunksLocationRunnable && chunksLocationRunnable->IsTaskComplete()) {
-		// onNewTerrainGenerated();
+		onNewTerrainGenerated();
 
 		if (chunksLocationThread) {
 			chunksLocationRunnable->Stop();
@@ -238,7 +239,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	// Cleanup mesh thread if it's done computing
 	if (chunkMeshDataRunnable && chunkMeshDataRunnable->IsTaskComplete()) {
-		// onNewTerrainGenerated();
+		onNewTerrainGenerated();
 
 		if (chunkMeshDataThread) {
 			chunkMeshDataRunnable->Stop();
