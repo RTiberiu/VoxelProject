@@ -1,10 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ChunkMeshData.generated.h"
+#include "VoxelObjectMeshData.generated.h"
 
 USTRUCT()
-struct FChunkMeshData {
+struct FVoxelObjectMeshData {
 	GENERATED_BODY()
 
 public:

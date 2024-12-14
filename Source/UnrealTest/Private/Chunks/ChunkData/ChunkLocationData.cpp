@@ -13,7 +13,7 @@ UChunkLocationData::~UChunkLocationData() {
     delete MeshDataSemaphore;
 }
 
-bool UChunkLocationData::getChunkToSpawnPosition(FChunkLocationData& OutLocation) {
+bool UChunkLocationData::getChunkToSpawnPosition(FVoxelObjectLocationData& OutLocation) {
     return chunksToSpawnPositions.Dequeue(OutLocation);
 }
 
@@ -21,7 +21,7 @@ bool UChunkLocationData::getChunkToDestroyPosition(FIntPoint& OutPosition) {
     return chunksToDestroyPositions.Dequeue(OutPosition);
 }
 
-bool UChunkLocationData::getComputedMeshDataAndLocationData(FChunkLocationData& locationData, FChunkMeshData& meshData) {
+bool UChunkLocationData::getComputedMeshDataAndLocationData(FVoxelObjectLocationData& locationData, FVoxelObjectMeshData& meshData) {
     MeshDataSemaphore->Acquire();
     bool removedLocationData = locationDataForComputedMeshes.Dequeue(locationData);
     bool removedMeshData = computedMeshData.Dequeue(meshData);
@@ -37,7 +37,7 @@ bool UChunkLocationData::isMeshWaitingToBeSpawned() {
     return isMeshWaiting;
 }
 
-void UChunkLocationData::addChunksToSpawnPosition(const FChunkLocationData position) {
+void UChunkLocationData::addChunksToSpawnPosition(const FVoxelObjectLocationData position) {
     chunksToSpawnPositions.Enqueue(position);
 }
 
@@ -45,7 +45,7 @@ void UChunkLocationData::addChunksToDestroyPosition(const FIntPoint& position) {
     chunksToDestroyPositions.Enqueue(position);
 }
 
-void UChunkLocationData::addMeshDataForPosition(const FChunkLocationData chunkLocationData, const FChunkMeshData meshData) {
+void UChunkLocationData::addMeshDataForPosition(const FVoxelObjectLocationData chunkLocationData, const FVoxelObjectMeshData meshData) {
     MeshDataSemaphore->Acquire();
     locationDataForComputedMeshes.Enqueue(chunkLocationData);
     computedMeshData.Enqueue(meshData);

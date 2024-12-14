@@ -3,14 +3,14 @@
 #include "..\..\Utils\Semaphore\FairSemaphore.h"
 
 #include "CoreMinimal.h"
-#include "ChunkMeshData.h"
+#include "VoxelObjectMeshData.h"
 #include "Containers/Queue.h"
 #include "Misc/ScopeLock.h"
 #include "ChunkLocationData.generated.h"
 
-struct FChunkLocationData {
-    FVector ChunkPosition;
-    FIntPoint ChunkWorldCoords;
+struct FVoxelObjectLocationData {
+    FVector ObjectPosition;
+    FIntPoint ObjectWorldCoords;
 };
 
 UCLASS()
@@ -22,21 +22,21 @@ public:
 
     ~UChunkLocationData();
 
-    bool getChunkToSpawnPosition(FChunkLocationData& OutLocation);
+    bool getChunkToSpawnPosition(FVoxelObjectLocationData& OutLocation);
     bool getChunkToDestroyPosition(FIntPoint& OutPosition);
 
-    bool getComputedMeshDataAndLocationData(FChunkLocationData& locationData, FChunkMeshData& meshData);
+    bool getComputedMeshDataAndLocationData(FVoxelObjectLocationData& locationData, FVoxelObjectMeshData& meshData);
     bool isMeshWaitingToBeSpawned();
 
-    void addChunksToSpawnPosition(const FChunkLocationData position);
+    void addChunksToSpawnPosition(const FVoxelObjectLocationData position);
     void addChunksToDestroyPosition(const FIntPoint& position);
-    void addMeshDataForPosition(const FChunkLocationData chunkLocationData, const FChunkMeshData meshData);
+    void addMeshDataForPosition(const FVoxelObjectLocationData chunkLocationData, const FVoxelObjectMeshData meshData);
 
     void emptyPositionQueues();
 
 private:
     // Queue for storing chunks position that need to be spawned
-    TQueue<FChunkLocationData> chunksToSpawnPositions;
+    TQueue<FVoxelObjectLocationData> chunksToSpawnPositions;
     FairSemaphore* ChunksToSpawnSemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
 
     // Queue for storing chunks position that need to be destroyed
@@ -44,8 +44,8 @@ private:
     FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
 
     // Map for storing chunks mesh data
-    TQueue<FChunkLocationData> locationDataForComputedMeshes;
-    TQueue<FChunkMeshData> computedMeshData;
+    TQueue<FVoxelObjectLocationData> locationDataForComputedMeshes;
+    TQueue<FVoxelObjectMeshData> computedMeshData;
 
     FairSemaphore* MeshDataSemaphore;
 };

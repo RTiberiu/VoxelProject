@@ -73,11 +73,22 @@ public:
 
 	void printMapElements(FString message); // TODO SHOULD MADE PRIVATE AFTER TESTING
 
-	TArray<FColor> ColorArray = {
+	TArray<FColor> ChunkColorArray = {
 		FColor(45, 41, 32), FColor(48, 44, 35), FColor(79, 69, 55), FColor(105, 87, 59), FColor(143, 118, 80), FColor(113, 125, 73), FColor(109, 120, 67), FColor(98, 110, 59), FColor(88, 99, 49), FColor(78, 89, 39), FColor(53, 60, 29), FColor(41, 48, 25), FColor(36, 43, 20), FColor(63, 63, 63), FColor(73, 73, 73), FColor(89, 89, 89), FColor(99, 99, 94), FColor(140, 140, 140), FColor(230, 225, 210), FColor(255, 251, 233)
 	};
 
+	TArray<FColor> TreeColorArray = {
+		FColor(178,34,34)
+	};
+
+	// Trees settings
 	const uint8_t TreeVariations{ 1 };
+	uint8_t TreeCount{ 0 };
+	const uint8_t TreeCountMax{ 1 };
+	const uint16_t TreeHeight{ 120 }; // 4 bits
+	const uint8_t TreeSize{ 30 }; 
+	const uint8_t TreeSizePadding{ 32 }; 
+	const uint8_t TreeIntsPerHeight{ static_cast<uint8_t>(TreeHeight / TreeSize) };
 
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;

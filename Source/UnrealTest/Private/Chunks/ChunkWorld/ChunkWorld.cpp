@@ -21,6 +21,9 @@ AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThre
 
 	// Initializing Chunk with the BinaryChunk class
 	Chunk = ABinaryChunk::StaticClass();
+
+	// Initializing Tree with the Tree class
+	Tree = ATree::StaticClass();
 }
 
 void AChunkWorld::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -50,7 +53,7 @@ void AChunkWorld::spawnInitialWorld() {
 	// Add initial chunk position to spawn
 	FVector ChunkPosition = FVector(0, 0, 0);
 	FIntPoint ChunkWorldCoords = FIntPoint(0, 0);
-	CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, ChunkWorldCoords));
+	CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
 	// Add chunk positions to spawn by going in a spiral from origin position
 	std::set<std::pair<int, int>> avoidPosition = { {0,0} };
@@ -69,7 +72,7 @@ void AChunkWorld::spawnInitialWorld() {
 
 				ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 				ChunkWorldCoords = FIntPoint(x, z);
-				CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, ChunkWorldCoords));
+				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
 				avoidPosition.insert(currentPair);
 			}
@@ -143,6 +146,43 @@ void AChunkWorld::UpdateChunkCollisions(const FVector& PlayerPosition) {
 	}
 }
 
+void AChunkWorld::SpawnTrees(FVector chunkPosition, FVector PlayerPosition) {
+	// Spawn the chunk actor deferred
+
+	chunkPosition.Z = chunkPosition.Z + 5840; // This is just to raise the tree and make it visible. 
+	ATree* SpawnedTreeActor = GetWorld()->SpawnActorDeferred<ATree>(Tree, FTransform(FRotator::ZeroRotator, chunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+	if (SpawnedTreeActor) {
+		// Add references to BinaryChunk and pass the computed mesh data
+		SpawnedTreeActor->SetWorldTerrainSettings(WTSR);
+		SpawnedTreeActor->SetPerlinNoiseSettings(PNSR);
+		//SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
+
+		// Define the boundaries for the collision check
+		float minX = PlayerPosition.X - WTSR->CollisionDistance;
+		float maxX = PlayerPosition.X + WTSR->CollisionDistance;
+		float minY = PlayerPosition.Y - WTSR->CollisionDistance;
+		float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
+
+		// Check if the player is within the collision boundaries
+		bool withinCollisionDistance = (chunkPosition.X >= minX && chunkPosition.X <= maxX) &&
+			(chunkPosition.Y >= minY && chunkPosition.Y <= maxY);
+
+		if (withinCollisionDistance) {
+			SpawnedTreeActor->SetTreeCollision(true);
+		}
+
+		// Finish spawning the chunk actor
+		UGameplayStatics::FinishSpawningActor(SpawnedTreeActor, FTransform(FRotator::ZeroRotator, chunkPosition));
+
+
+		// WTSR->AddChunkToMap(waitingMeshLocationData.ChunkWorldCoords, SpawnedChunkActor);
+		UE_LOG(LogTemp, Warning, TEXT("Spawned Tree!"));
+	} else {
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Tree Actor!"));
+	}
+}
+
 // Called when the game starts or when spawned
 void AChunkWorld::BeginPlay() {
 	Super::BeginPlay();
@@ -196,8 +236,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	const FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
-	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X; // TODO SET TO FALSE FOR TESTING ONLY
-	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y; // TODO SET TO FALSE FOR TESTING ONLY
+	const bool isPlayerMovingOnAxisX = false; //  PlayerChunkCoords.X != InitialChunkCoords.X; // TODO SET TO FALSE FOR TESTING ONLY
+	const bool isPlayerMovingOnAxisZ = false; // PlayerChunkCoords.Y != InitialChunkCoords.Y; // TODO SET TO FALSE FOR TESTING ONLY
 
 	if (!isLocationTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
 		isLocationTaskRunning.AtomicSet(true);
@@ -226,7 +266,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	// Create mesh for chunk position if there is a position waiting to be processed
 	if (!isMeshTaskRunning) {
-		FChunkLocationData chunkToSpawnPosition;
+		FVoxelObjectLocationData chunkToSpawnPosition;
 		const bool doesSpawnPositionExist = CLDR->getChunkToSpawnPosition(chunkToSpawnPosition);
 
 		if (doesSpawnPositionExist) {
@@ -260,14 +300,20 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	if (CLDR->isMeshWaitingToBeSpawned()) {
 		
 		// Get the location data and the computed mesh data for the chunk
-		FChunkLocationData waitingMeshLocationData;
-		FChunkMeshData waitingMeshData;
+		FVoxelObjectLocationData waitingMeshLocationData;
+		FVoxelObjectMeshData waitingMeshData;
 		CLDR->getComputedMeshDataAndLocationData(waitingMeshLocationData, waitingMeshData);
 
 		Time start = std::chrono::high_resolution_clock::now();
 
 		// Spawn the chunk actor deferred
-		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ChunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+		if (WTSR->TreeCount < WTSR->TreeCountMax) {
+			SpawnTrees(waitingMeshLocationData.ObjectPosition, PlayerPosition);
+			WTSR->TreeCount++;
+		}
+
 
 		if (SpawnedChunkActor) {
 				// Add references to BinaryChunk and pass the computed mesh data
@@ -282,17 +328,17 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 				float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
 
 				// Check if the player is within the collision boundaries
-				bool withinCollisionDistance = (waitingMeshLocationData.ChunkPosition.X >= minX && waitingMeshLocationData.ChunkPosition.X <= maxX) &&
-					(waitingMeshLocationData.ChunkPosition.Y >= minY && waitingMeshLocationData.ChunkPosition.Y <= maxY);
+				bool withinCollisionDistance = (waitingMeshLocationData.ObjectPosition.X >= minX && waitingMeshLocationData.ObjectPosition.X <= maxX) &&
+					(waitingMeshLocationData.ObjectPosition.Y >= minY && waitingMeshLocationData.ObjectPosition.Y <= maxY);
 
 				if (withinCollisionDistance) {
 					SpawnedChunkActor->SetChunkCollision(true);
 				}
 
 				// Finish spawning the chunk actor
-				UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ChunkPosition));
+				UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition));
 
-				WTSR->AddChunkToMap(waitingMeshLocationData.ChunkWorldCoords, SpawnedChunkActor);
+				WTSR->AddChunkToMap(waitingMeshLocationData.ObjectWorldCoords, SpawnedChunkActor);
 		} else {
 			UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
 		}
@@ -323,6 +369,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		UpdateChunkCollisions(PlayerPosition);
 		frameCounterCollision = 0;
 	}
+
+
 }
 
 void AChunkWorld::calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime) {

@@ -37,7 +37,7 @@ void ABinaryChunk::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSet
 	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
 }
 
-void ABinaryChunk::SetComputedMeshData(FChunkMeshData InMeshData) {
+void ABinaryChunk::SetComputedMeshData(FVoxelObjectMeshData InMeshData) {
 	meshData = InMeshData;
 }
 

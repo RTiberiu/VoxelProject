@@ -5,7 +5,7 @@
 #include "..\..\Noise\PerlinNoiseSettings.h"
 #include <vector>
 #include <chrono>
-#include "..\ChunkData\ChunkMeshData.h"
+#include "..\ChunkData\VoxelObjectMeshData.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BinaryChunk.generated.h"
@@ -27,7 +27,7 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
-	void SetComputedMeshData(FChunkMeshData InMeshData);
+	void SetComputedMeshData(FVoxelObjectMeshData InMeshData);
 	void SetChunkCollision(bool InHasCollision);
 
 	bool HasCollision();
@@ -40,7 +40,7 @@ private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
 
-	FChunkMeshData meshData;
+	FVoxelObjectMeshData meshData;
 	FIntPoint chunkLocation;
 
 	bool hasCollision;

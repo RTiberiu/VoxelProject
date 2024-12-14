@@ -8,6 +8,9 @@
 #include "..\ChunkMeshThreads\ChunkMeshDataRunnable.h"
 #include "..\ChunkData\ChunkLocationData.h"
 
+// Tree implementation
+#include "..\Vegetation\Trees\Tree.h"
+
 #include <chrono>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -82,8 +85,11 @@ private:
 	int frameCounterCollision;
 	int framesUntilCollisionCheck = 10;
 
-	TArray<FChunkLocationData> testingThreadLocations; // TODO Delete this when done testing
+	TArray<FVoxelObjectLocationData> testingThreadLocations; // TODO Delete this when done testing
 
+	// Tree implementation
+	void SpawnTrees(FVector chunkPosition, FVector PlayerPosition);
+	TSubclassOf<AActor> Tree;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

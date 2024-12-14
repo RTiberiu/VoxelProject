@@ -75,7 +75,7 @@ void ChunksLocationRunnable::UpdateChunks() {
 			FIntPoint newChunkCoords = FIntPoint(newRowX, z);
 			FVector ChunkPosition = FVector(newRowX * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
-			CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
+			CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
 		}
 	}
 
@@ -109,7 +109,7 @@ void ChunksLocationRunnable::UpdateChunks() {
 			FIntPoint newChunkCoords = FIntPoint(x, newRowZ);
 			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, newRowZ * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
-			CLDR->addChunksToSpawnPosition(FChunkLocationData(ChunkPosition, newChunkCoords));
+			CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
 		}
 	}
 

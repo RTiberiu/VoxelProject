@@ -6,8 +6,8 @@
 #include <vector>
 #include <chrono>
 
-#include "..\ChunkData\ChunkLocationData.h" // This is here JUST for FChunkLocationData struct. TODO Move the struct in a different file
-#include "..\ChunkData\ChunkMeshData.h"
+#include "..\ChunkData\ChunkLocationData.h" // This is here JUST for FVoxelObjectLocationData struct. TODO Move the struct in a different file
+#include "..\ChunkData\VoxelObjectMeshData.h"
 #include "CoreMinimal.h"
 
 class FastNoiseLite;
@@ -27,7 +27,7 @@ class ChunkMeshDataRunnable : public FRunnable {
 	};
 
 public:
-	ChunkMeshDataRunnable(FChunkLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
+	ChunkMeshDataRunnable(FVoxelObjectLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
 	virtual ~ChunkMeshDataRunnable() override;
 
 	virtual bool Init() override;
@@ -47,7 +47,7 @@ private:
 	UChunkLocationData* ChunkLocationDataRef;
 	UChunkLocationData*& CLDR = ChunkLocationDataRef;
 
-	FChunkLocationData ChunkLocationData;
+	FVoxelObjectLocationData ChunkLocationData;
 
 	FThreadSafeBool isRunning;
 	FThreadSafeBool isTaskComplete;
@@ -59,7 +59,7 @@ private:
 
 	std::vector<uint64_t> columnsFaceMask;
 
-	FChunkMeshData TemporaryMeshData; // store vertices, normals, triangles, etc.
+	FVoxelObjectMeshData TemporaryMeshData; // store vertices, normals, triangles, etc.
 
 	int vertexCount{ 0 };
 

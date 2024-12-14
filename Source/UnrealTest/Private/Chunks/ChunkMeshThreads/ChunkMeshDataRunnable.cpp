@@ -7,10 +7,10 @@
 #include <bitset>
 #include <limits>
 #include "..\..\Noise\NoiseLibrary\FastNoiseLite.h"
-#include "..\ChunkData\ChunkLocationData.h"
+//#include "..\ChunkData\ObjectMeshData.h"
 
 
-ChunkMeshDataRunnable::ChunkMeshDataRunnable(FChunkLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : ChunkLocationData(InChunkLocationData) {
+ChunkMeshDataRunnable::ChunkMeshDataRunnable(FVoxelObjectLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : ChunkLocationData(InChunkLocationData) {
 	WorldTerrainSettingsRef = InWorldTerrainSettingsRef;
 	ChunkLocationDataRef = InChunkLocationDataRef;
 }
@@ -32,7 +32,7 @@ uint32 ChunkMeshDataRunnable::Run() {
 
 		WTSR->UpdateChunkSemaphore->Acquire(); // TODO This might need to be changed to a different semaphore
 		CLDR->addMeshDataForPosition(ChunkLocationData, TemporaryMeshData);
-		TemporaryMeshData = FChunkMeshData(); // TODO This might not need to be cleared
+		TemporaryMeshData = FVoxelObjectMeshData(); // TODO This might not need to be cleared
 		WTSR->UpdateChunkSemaphore->Release();
 
 		isTaskComplete.AtomicSet(true);
@@ -61,7 +61,7 @@ void ChunkMeshDataRunnable::SetWorldTerrainSettings(UWorldTerrainSettings* InWor
 }
 
 void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
-	const FVector chunkWorldLocation = ChunkLocationData.ChunkPosition;
+	const FVector chunkWorldLocation = ChunkLocationData.ObjectPosition;
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
@@ -584,7 +584,7 @@ void ChunkMeshDataRunnable::createQuadAndAddToMeshData(const FVector& voxelPosit
 
 	// Assign different random colors for each vertex; This lets the GPU interpolate the colors
 	int layerIndex = getColorIndexFromVoxelHeight(voxelPosition1);
-	FColor layerColor = WTSR->ColorArray[layerIndex];
+	FColor layerColor = WTSR->ChunkColorArray[layerIndex];
 
 	TemporaryMeshData.Colors.Append({
 		layerColor,
