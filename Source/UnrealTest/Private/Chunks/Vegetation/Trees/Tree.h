@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <chrono>
+#include <random>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Tree.generated.h"
@@ -71,6 +72,8 @@ private:
 
 	// TODO This might be combined or something. They are just the modified version from the ChunkMeshDataRunnable.cpp
 	void createBinarySolidColumnsYXZ();
+
+	void apply3DNoiseToHeightColumn(uint32_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& treeWorldLocation, int& height);
 
 	void createTerrainMeshesData();
 

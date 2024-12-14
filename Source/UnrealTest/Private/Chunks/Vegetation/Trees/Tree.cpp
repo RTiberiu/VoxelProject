@@ -49,11 +49,37 @@ void ATree::createBinarySolidColumnsYXZ() {
 	binaryTree.zBinaryColumn = std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight, 0);
 
 	// Loop over the tree dimensions (X, Y, Z)
+	const int halfSize{ WTSR->TreeSizePadding / 2 };
+	const int threshold{ 4 };
+
+	// TODO Move this random generator to a different class, as this should be initialized only once
+	// Create a random number generator
+	std::random_device rd;  
+	std::mt19937 gen(rd());
+
+	// Define the distribution
+	std::uniform_int_distribution<> treeTrunkDistribution(10, WTSR->TreeHeight);
+	std::uniform_int_distribution<> treeBranchDistribution(0, 4);
+	std::uniform_int_distribution<> treeBranchLengthDistribution(10, 40);
+
+	// Get the tree trunk voxels and add them to the binary columns
+	const int treeTrunkHeight = treeTrunkDistribution(gen);
+	const int treeBranches = treeBranchDistribution(gen);
+
 	for (int x = 0; x < WTSR->TreeSizePadding; x++) {
+
+		bool insideThresholdX = x < halfSize + threshold && x > halfSize - threshold;
+
+		if (!insideThresholdX) continue;
+
 		for (int z = 0; z < WTSR->TreeSizePadding; z++) {
 
+			bool insideThresholdZ = z < halfSize + threshold && z > halfSize - threshold;
+
+			if (!insideThresholdZ) continue;
+
 			// Ensuring height remains between chunk borders
-			int height = std::clamp(50, 0, static_cast<int>(WTSR->chunkHeight)); // TODO I need to figure out what the value should be here to create the tree
+			uint32_t height = std::clamp(treeTrunkHeight, 0, static_cast<int>(WTSR->TreeHeight));
 
 			// Add enough bits to y to cover the entire height (4 32bit integers when the max height is 128)
 			for (int bitIndex = 0; bitIndex < WTSR->TreeIntsPerHeight; bitIndex++) {
@@ -80,7 +106,7 @@ void ATree::createBinarySolidColumnsYXZ() {
 
 				for (int y = 0; y < WTSR->TreeSizePadding; y++) {
 					// Apply 3D noise to the Y column
-					// apply3DNoiseToHeightColumn(binaryTree.yBinaryColumn[yIndex], x, z, y, bitIndex, chunkWorldLocation, height);
+					// apply3DNoiseToHeightColumn(binaryTree.yBinaryColumn[yIndex], x, z, y, bitIndex, treeWorldLocation, height);
 
 					const uint32_t currentYCol = binaryTree.yBinaryColumn[yIndex];
 
@@ -114,6 +140,29 @@ void ATree::createBinarySolidColumnsYXZ() {
 			}
 
 		}
+	}
+}
+
+void ATree::apply3DNoiseToHeightColumn(uint32_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& treeWorldLocation, int& height) {
+	// Return early if total height is bigger than the threshold
+	if (height > 50) {
+		return;
+	}
+
+	// Getting perlin noise position, adjusted to the Unreal Engine grid system 
+	const float noisePositionX = static_cast<float>((x * WTSR->TreeScale + treeWorldLocation.X) / WTSR->TreeScale);
+	const float noisePositionZ = static_cast<float>((z * WTSR->TreeScale + treeWorldLocation.Y) / WTSR->TreeScale);
+	const float noisePositionY = static_cast<float>(((y + bitIndex * WTSR->TreeSizePadding) * WTSR->TreeScale + treeWorldLocation.Z) / WTSR->TreeScale);
+
+	const float squashingFactor = (y + bitIndex * WTSR->TreeSizePadding) * PNSR->squashingFactor;
+
+	// noise->SetFrequency(PNSR->noiseFrequency3D);
+
+	// const float noiseValue3D = noise->GetNoise(noisePositionX, noisePositionZ, noisePositionY) + 1;
+
+	// TODO Add 3d noise depending on the height of the actual 2D noise
+	if (y + bitIndex * WTSR->TreeSizePadding < 50 && height < 50) { // y + bitIndex * WTSR->TreeSizePadding > 100)
+		column |= 1U << y;
 	}
 }
 
@@ -459,10 +508,10 @@ void ATree::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector
 
 void ATree::createQuadAndAddToMeshData(const FVector& voxelPosition1, const FVector& voxelPosition2, const FVector& voxelPosition3, const FVector& voxelPosition4, const int& height, const int& width, const int& axis) {
 	TemporaryMeshData.Vertices.Append({
-		voxelPosition1 * WTSR->UnrealScale,
-		voxelPosition2 * WTSR->UnrealScale,
-		voxelPosition3 * WTSR->UnrealScale,
-		voxelPosition4 * WTSR->UnrealScale
+		voxelPosition1 * WTSR->TreeScale,
+		voxelPosition2 * WTSR->TreeScale,
+		voxelPosition3 * WTSR->TreeScale,
+		voxelPosition4 * WTSR->TreeScale
 		});
 
 	// Add triangles and increment vertex count

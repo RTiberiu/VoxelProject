@@ -24,7 +24,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 10 }; // 5 
+	const uint8_t DrawDistance{ 5 }; // 5 
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -84,6 +84,7 @@ public:
 	// Trees settings
 	const uint8_t TreeVariations{ 1 };
 	uint8_t TreeCount{ 0 };
+	const uint8_t TreeScale{ 20 }; // this changes the voxel size (100 is 1m)
 	const uint8_t TreeCountMax{ 1 };
 	const uint16_t TreeHeight{ 120 }; // 4 bits
 	const uint8_t TreeSize{ 30 }; 
