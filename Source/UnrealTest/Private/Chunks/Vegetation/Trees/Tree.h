@@ -27,9 +27,9 @@ class ATree : public AActor {
 	// Store solid blocks in a 3D chunk of chunkSize * chunkSize * intsPerHeight
 	// TODO This is also used in ChunkMeshDataRunnable, and I might just combine them instead of duplicating code
 	struct BinaryTree3D {
-		std::vector<uint32_t> yBinaryColumn;
-		std::vector<uint32_t> xBinaryColumn;
-		std::vector<uint32_t> zBinaryColumn;
+		std::vector<uint64_t> yBinaryColumn;
+		std::vector<uint64_t> xBinaryColumn;
+		std::vector<uint64_t> zBinaryColumn;
 	};
 
 public:
@@ -55,7 +55,7 @@ private:
 
 	BinaryTree3D binaryTree = BinaryTree3D{};
 
-	std::vector<uint32_t> columnsFaceMask;
+	std::vector<uint64_t> columnsFaceMask;
 
 	FVoxelObjectMeshData TemporaryMeshData; // store vertices, normals, triangles, etc.
 
@@ -71,17 +71,23 @@ private:
 	void printExecutionTime(Time& start, Time& end, const char* functionName);
 
 	// TODO This might be combined or something. They are just the modified version from the ChunkMeshDataRunnable.cpp
-	void createBinarySolidColumnsYXZ();
+	void createTrunkBinarySolidColumnsYXZ();
 
-	void apply3DNoiseToHeightColumn(uint32_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& treeWorldLocation, int& height);
+	void GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& endX, const int& endZ, const int& endY);
+
+	void AddTrunkPoints(TArray<FVector>& Points, float TreeLength, float LastLayerProbability, int MaxBaseThickness);
+
+	void printBinary(uint64_t value, int groupSize, const std::string& otherData);
+
+	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& treeWorldLocation, int& height);
 
 	void createTerrainMeshesData();
 
-	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint32_t>>& columnFaceMasks);
+	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
 
-	void buildBinaryPlanes(const std::vector<uint32_t>& faceMaskColumn, std::vector<uint32_t>& binaryPlane, const int& axis);
+	void buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis);
 
-	void greedyMeshingBinaryPlane(std::vector<uint32_t>& planes, const int& axis);
+	void greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis);
 
 	void createAllVoxelPositionsFromOriginal(
 		FVector& voxelPosition1,
@@ -103,6 +109,8 @@ private:
 	int getColorIndexFromVoxelHeight(const FVector& voxelPosition);
 
 	void spawnTreeMeshes();
+
+
 
 protected:
 	// Called when the game starts or when spawned

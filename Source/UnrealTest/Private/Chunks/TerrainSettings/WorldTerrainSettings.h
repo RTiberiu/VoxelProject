@@ -78,18 +78,20 @@ public:
 	};
 
 	TArray<FColor> TreeColorArray = {
-		FColor(178,34,34)
+		FColor(56, 43, 20)
 	};
 
 	// Trees settings
 	const uint8_t TreeVariations{ 1 };
 	uint8_t TreeCount{ 0 };
-	const uint8_t TreeScale{ 20 }; // this changes the voxel size (100 is 1m)
+	const uint8_t TreeScale{ 4 }; // this changes the voxel size (100 is 1m)
 	const uint8_t TreeCountMax{ 1 };
-	const uint16_t TreeHeight{ 120 }; // 4 bits
-	const uint8_t TreeSize{ 30 }; 
-	const uint8_t TreeSizePadding{ 32 }; 
+	const uint16_t TreeHeight{ 248 }; // 5 bits
+	const uint8_t TreeSize{ 62 }; 
+	const uint8_t TreeSizePadding{ 64 }; 
 	const uint8_t TreeIntsPerHeight{ static_cast<uint8_t>(TreeHeight / TreeSize) };
+	const uint16_t MaxTreeTrunkWidth{ 6 };
+	const uint16_t MinTreeTrunkWidth{ 3 };
 
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;
