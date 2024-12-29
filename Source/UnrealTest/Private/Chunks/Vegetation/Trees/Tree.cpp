@@ -63,13 +63,13 @@ void ATree::createTrunkBinarySolidColumnsYXZ() {
 	std::mt19937 gen(rd());
 
 	// Define the distribution
-	std::uniform_int_distribution<> treeTrunkHeightDistribution(WTSR->TreeHeight / 2, WTSR->TreeHeight);
-	std::uniform_int_distribution<> treeBranchDistribution(1, 4);
-	std::uniform_int_distribution<> treeBranchLengthDistribution(10, 20);
+	std::uniform_int_distribution<> treeTrunkHeightDistribution(WTSR->TreeHeight / 2, WTSR->TreeHeight * 0.8);
+	std::uniform_int_distribution<> treeBranchDistribution(2, 5);
+	std::uniform_int_distribution<> treeBranchLengthDistribution(20, 30);
 	std::uniform_int_distribution<> treeTrunkSizeDistribution(WTSR->MinTreeTrunkWidth, WTSR->MaxTreeTrunkWidth);
-	std::uniform_real_distribution<> branchStartPoint(0.5, 0.8);
+	std::uniform_real_distribution<> branchStartPoint(0.4, 0.8);
 
-	std::uniform_int_distribution<> branchPointLocation(WTSR->MaxTreeTrunkWidth, WTSR->TreeSize - WTSR->MaxTreeTrunkWidth);
+	std::uniform_int_distribution<> branchPointLocation(WTSR->MaxTreeTrunkWidth, WTSR->TreeSize - WTSR->MaxTreeTrunkWidth - 10);
 
 	// Get the tree trunk voxels and add them to the binary columns
 	const int treeTrunkHeight = treeTrunkHeightDistribution(gen);
@@ -86,8 +86,9 @@ void ATree::createTrunkBinarySolidColumnsYXZ() {
 		TrunkPoints.Add(trunkPoint);
 	}
 
-	
-	TArray<FVector> branchEndPoints;
+	// Add the main trunk as part of an branch end point (to spawn the crown there too)
+	branchEndPoints.Add(TrunkPoints[TrunkPoints.Num() - 1]);
+
 	// Add the branches points
 	for (int branch = 0; branch < treeBranches; branch++) {
 
@@ -130,11 +131,6 @@ void ATree::createTrunkBinarySolidColumnsYXZ() {
 	// Increasing the trunk width by adding more points
 	AddTrunkPoints(TrunkPoints, treeTrunkHeight, static_cast<float>(.9), treeTrunkWidth);
 
-	// Generate crown at the end of branch
-	for (const FVector& endBranchPoint : branchEndPoints) {
-		GenerateSpherePoints(TrunkPoints, endBranchPoint.X, endBranchPoint.Y, endBranchPoint.Z);
-	}
-
 	for (int point = 0; point < TrunkPoints.Num(); point++) {
 		int x = TrunkPoints[point].X;
 		int z = TrunkPoints[point].Y;
@@ -144,69 +140,102 @@ void ATree::createTrunkBinarySolidColumnsYXZ() {
 
 		// Get index of y 
 		const int yIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex };
-
-		//UE_LOG(LogTemp, Warning, TEXT("Current point : X=%f, Z=%f, Y=%f"), TrunkPoints[point].X, TrunkPoints[point].Y, TrunkPoints[point].Z);
-
-		//printBinary(binaryTree.yBinaryColumn[yIndex], 8, "yIndex " + std::to_string(yIndex) + " Y column BEFORE : ");
 		 
 		// Add blocks height data (Y) to the current X and Z
 		binaryTree.yBinaryColumn[yIndex] |= (1ULL << localTreeChunkHeight);
-
-		//printBinary(binaryTree.yBinaryColumn[yIndex], 8, "yIndex " + std::to_string(yIndex) + " Y column AFTER : ");
 
 		const uint64_t currentYCol = binaryTree.yBinaryColumn[yIndex];
 
 		// Next Y index (column) means the same X index (column), but a change in Y bit index
 		const int xIndex{ (height * WTSR->TreeSizePadding) + x }; // (bitIndex * WTSR->TreeSizePadding * WTSR->TreeSizePadding)
 
-		//printBinary(binaryTree.xBinaryColumn[xIndex], 8, "xIndex " + std::to_string(xIndex) + " X column BEFORE : ");
-
 		binaryTree.xBinaryColumn[xIndex] |= (1ULL << z);
-
-		//printBinary(binaryTree.xBinaryColumn[xIndex], 8, "xIndex " + std::to_string(xIndex) + " X column AFTER : ");
 
 		// Next Y index (column) means the next Z index (column), but the same Y bit index
 		const int zIndex{ (height * WTSR->TreeSizePadding) + z }; // + (bitIndex * WTSR->TreeSizePadding * WTSR->TreeSizePadding)
 
-		//printBinary(binaryTree.zBinaryColumn[zIndex], 8, "zIndex " + std::to_string(zIndex) + " Z column BEFORE : ");
+		// Assign to actual bit the change
+		binaryTree.zBinaryColumn[zIndex] |= (1ULL << x);
+	}
+}
+
+void ATree::createCrownBinarySolidColumnsYXZ() {
+	const FVector treeWorldLocation = TreeLocationData.ObjectPosition;
+
+	// Set the tree values to air for all 3 axis (Y, X, Z)
+	const int treeDimensions{ WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight };
+	binaryTree.yBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
+	binaryTree.xBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
+	binaryTree.zBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
+
+	TArray<FVector> CrownPoints;
+
+	// Generate crown at the end of branch
+	for (const FVector& endBranchPoint : branchEndPoints) {
+		GenerateSpherePoints(CrownPoints, endBranchPoint.X, endBranchPoint.Y, endBranchPoint.Z);
+	}
+
+	for (int point = 0; point < CrownPoints.Num(); point++) {
+		int x = CrownPoints[point].X;
+		int z = CrownPoints[point].Y;
+		int height = CrownPoints[point].Z;
+		int localTreeChunkHeight = (height % WTSR->TreeHeight);
+		int bitIndex = FMath::FloorToInt(height / (float)WTSR->TreeSizePadding);
+
+		// Get index of y 
+		const int yIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex };
+
+		// Add blocks height data (Y) to the current X and Z
+		binaryTree.yBinaryColumn[yIndex] |= (1ULL << localTreeChunkHeight);
+
+		const uint64_t currentYCol = binaryTree.yBinaryColumn[yIndex];
+
+		// Next Y index (column) means the same X index (column), but a change in Y bit index
+		const int xIndex{ (height * WTSR->TreeSizePadding) + x };
+
+		binaryTree.xBinaryColumn[xIndex] |= (1ULL << z);
+
+		// Next Y index (column) means the next Z index (column), but the same Y bit index
+		const int zIndex{ (height * WTSR->TreeSizePadding) + z };
 
 		// Assign to actual bit the change
 		binaryTree.zBinaryColumn[zIndex] |= (1ULL << x);
-
-		//printBinary(binaryTree.zBinaryColumn[zIndex], 8, "zIndex " + std::to_string(zIndex) + " Z column AFTER : ");
 	}
 }
 
 void ATree::GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& endX, const int& endZ, const int& endY) {
-	// Randomly determine the radius of the sphere
-	int SphereRadius = FMath::RandRange(15, 20); // Radius is limited to fit the box
+	// Calculate the maximum possible radius based on the boundaries
+	int MaxXRadius = FMath::Min(endX - 2, WTSR->TreeSize - endX - 2);  // Distance to nearest X boundary
+	int MaxZRadius = FMath::Min(endZ - 2, WTSR->TreeSize - endZ - 2);  // Distance to nearest Z boundary
+	int MaxYRadius = FMath::Min(endY - 2, WTSR->TreeHeight - endY - 2); // Distance to nearest Y boundary
 
-	// Specify the resolution for latitude and longitude
-	int LatitudeSteps = 300;  // Number of steps for latitude
-	int LongitudeSteps = 300; // Number of steps for longitude
+	// The radius is the smallest distance to any of the boundaries
+	int SphereRadius = FMath::Min(MaxXRadius, FMath::Min(MaxZRadius, MaxYRadius));
 
-	// CrownPoints.Empty(); // Ensure the array is empty before adding points
+	// Number of steps for latitude and longitude
+	int LatitudeSteps = 300; 
+	int LongitudeSteps = 300; 
 
 	// Generate points along the sphere surface
-	for (int LatIndex = 0; LatIndex <= LatitudeSteps; ++LatIndex) {
+	for (int LatIndex = 0; LatIndex <= LatitudeSteps; LatIndex++) {
 		// Latitude angle (Phi) from 0 to PI
 		float Phi = PI * LatIndex / LatitudeSteps;
 
-		for (int LongIndex = 0; LongIndex <= LongitudeSteps; ++LongIndex) {
+		for (int LongIndex = 0; LongIndex <= LongitudeSteps; LongIndex++) {
 			// Longitude angle (Theta) from 0 to 2PI
 			float Theta = 2.0f * PI * LongIndex / LongitudeSteps;
 
-			// Convert spherical coordinates to Cartesian coordinates
-			float X = SphereRadius * FMath::Sin(Phi) * FMath::Cos(Theta);
-			float Z = SphereRadius * FMath::Sin(Phi) * FMath::Sin(Theta);
-			float Y = SphereRadius * FMath::Cos(Phi);
+			// Convert spherical coordinates to Cartesian coordinates and apply a 3D noise 
+			float NoiseValue = FMath::PerlinNoise3D(FVector(Phi, Theta, SphereRadius)) * SphereRadius * 0.1f;
+			float X = (SphereRadius + NoiseValue) * FMath::Sin(Phi) * FMath::Cos(Theta);
+			float Z = (SphereRadius + NoiseValue) * FMath::Sin(Phi) * FMath::Sin(Theta);
+			float Y = (SphereRadius + NoiseValue) * FMath::Cos(Phi);
 
-			// Ensure all values are positive and fit within the box
-			int FinalX = FMath::Clamp(FMath::RoundToInt(X + SphereRadius) + endX, 0, WTSR->TreeSize);  // Offset by radius for positive values
-			int FinalZ = FMath::Clamp(FMath::RoundToInt(Z + SphereRadius) + endZ, 0, WTSR->TreeSize);
-			int FinalY = FMath::Clamp(FMath::RoundToInt(Y + SphereRadius) + endY, 0, WTSR->TreeHeight);
+			// Ensure all values are positive and fit within the tree chunk
+			int FinalX = FMath::Clamp(FMath::RoundToInt(X + endX), 0, WTSR->TreeSize); 
+			int FinalZ = FMath::Clamp(FMath::RoundToInt(Z + endZ), 0, WTSR->TreeSize);
+			int FinalY = FMath::Clamp(FMath::RoundToInt(Y + endY), 0, WTSR->TreeHeight);
 
-			// Add the point to the array
 			CrownPoints.Add(FVector(FinalX, FinalZ, FinalY));
 		}
 	}
@@ -224,7 +253,7 @@ void ATree::AddTrunkPoints(TArray<FVector>& Points, float TreeLength, float Last
 			// Add points to all the sides of the trunk
 			for (int IncrementalThickness = -ThicknessPoint; IncrementalThickness <= ThicknessPoint; ++IncrementalThickness) {
 				if (ThicknessPoint == Thickness - 1) {
-					// Apply random chance for the last layer
+					// Apply a random chance for the last layer
 					if (FMath::FRand() < LastLayerProbability) {
 						Points.Add(FVector(Points[point].X + ThicknessPoint, Points[point].Y + IncrementalThickness, Points[point].Z));
 					}
@@ -282,30 +311,7 @@ void ATree::printBinary(uint64_t value, int groupSize, const std::string& otherD
 
 }
 
-void ATree::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& treeWorldLocation, int& height) {
-	// Return early if total height is bigger than the threshold
-	if (height > 50) {
-		return;
-	}
-
-	// Getting perlin noise position, adjusted to the Unreal Engine grid system 
-	const float noisePositionX = static_cast<float>((x * WTSR->TreeScale + treeWorldLocation.X) / WTSR->TreeScale);
-	const float noisePositionZ = static_cast<float>((z * WTSR->TreeScale + treeWorldLocation.Y) / WTSR->TreeScale);
-	const float noisePositionY = static_cast<float>(((y + bitIndex * WTSR->TreeSizePadding) * WTSR->TreeScale + treeWorldLocation.Z) / WTSR->TreeScale);
-
-	const float squashingFactor = (y + bitIndex * WTSR->TreeSizePadding) * PNSR->squashingFactor;
-
-	// noise->SetFrequency(PNSR->noiseFrequency3D);
-
-	// const float noiseValue3D = noise->GetNoise(noisePositionX, noisePositionZ, noisePositionY) + 1;
-
-	// TODO Add 3d noise depending on the height of the actual 2D noise
-	if (y + bitIndex * WTSR->TreeSizePadding < 50 && height < 50) { // y + bitIndex * WTSR->TreeSizePadding > 100)
-		column |= 1ULL << y;
-	}
-}
-
-void ATree::createTerrainMeshesData() {
+void ATree::createTerrainMeshesData(bool forTreeTrunk) {
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint64_t>> columnFaceMasks{
@@ -335,7 +341,7 @@ void ATree::createTerrainMeshesData() {
 		buildBinaryPlanes(columnFaceMasks[axis], binaryPlanes[axis], axis);
 
 		// Greedy mesh each plane and create planes
-		greedyMeshingBinaryPlane(binaryPlanes[axis], axis);
+		greedyMeshingBinaryPlane(binaryPlanes[axis], axis, forTreeTrunk);
 	}
 }
 
@@ -372,10 +378,10 @@ void ATree::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& colu
 					}
 
 					// Sample ascending axis and set to true when air meets solid
-					columnFaceMasks[axis * 2 + 0][columnIndex] = column & ~(column >> 1); // INDEX VERIFIED!
+					columnFaceMasks[axis * 2 + 0][columnIndex] = column & ~(column >> 1); 
 
 					// Sample descending axis and set to true when air meets solid
-					columnFaceMasks[axis * 2 + 1][columnIndex] = column & ~(column << 1); // INDEX VERIFIED!
+					columnFaceMasks[axis * 2 + 1][columnIndex] = column & ~(column << 1); 
 
 					// Remove bottom face between height chunk if there are solid blocks underneath
 					if (axis == 0) {
@@ -383,7 +389,7 @@ void ATree::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& colu
 							const bool isFaceMaskSolid = columnFaceMasks[axis * 2 + 1][columnIndex] != 0;
 
 							// Check if the leftmost bit is 1
-							const uint64_t leftmostBitMask = 1ULL << 31;
+							const uint64_t leftmostBitMask = 1ULL << 63;
 							const bool isLeftmostBitSet = (binaryTree.yBinaryColumn[columnIndex - 1] & leftmostBitMask) != 0;
 
 							// Remove bottom face if there are solid blocks beneath chunk
@@ -415,7 +421,7 @@ void ATree::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::
 				// Remove padding only for X and Z axis 
 				if (axis != 0 && axis != 1) {
 					// Remove the leftmost bit and the rightmost bit and replace them with 0
-					column = (column & ~(1ULL << 31)) & ~1ULL;
+					column = (column & ~(1ULL << 63)) & ~1ULL;
 				}
 
 				while (column != 0) {
@@ -448,7 +454,7 @@ void ATree::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::
 					}
 
 					// Remove the padding from the plane
-					binaryPlane[planeIndex] = (binaryPlane[planeIndex] & ~(1ULL << 31)) & ~1ULL;
+					binaryPlane[planeIndex] = (binaryPlane[planeIndex] & ~(1ULL << 63)) & ~1ULL;
 
 					// Clear the position 
 					column &= column - 1;
@@ -459,7 +465,7 @@ void ATree::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::
 	}
 }
 
-void ATree::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis) {
+void ATree::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis, bool forTreeTrunk) {
 	for (int row = 0; row < planes.size(); row++) {
 
 		// Removing padding by skipping the first and last row in the plane
@@ -510,7 +516,7 @@ void ATree::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& a
 			case 3:
 			case 4:
 			case 5:
-				currentPlaneLimit = WTSR->TreeHeight * WTSR->TreeSize; // plane X and Z max limit is 64x248  (64 for each layer, and 248 layers)
+				currentPlaneLimit = WTSR->TreeHeight * WTSR->TreeSize; 
 
 				// Check if the next row can be expanded while in the bounds of the current plane 
 				while (row + (width * WTSR->TreeSizePadding) < currentPlaneLimit) {
@@ -560,18 +566,17 @@ void ATree::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& a
 			voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
 
 			// Modify the original voxel position and create the remaining three quad position
-			createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+			createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forTreeTrunk);
 
 			// Create the quads
-			createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+			createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forTreeTrunk);
 		}
 	}
 }
 
-void ATree::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& width, const int& height, const int& axis) {
+void ATree::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& width, const int& height, const int& axis, bool forTreeTrunk) {
 	// Get position modifiers depending on the current axis
 	// This values are used to create the 4 quad positions
-		// TODO Potentially integrate with the switch above
 	FVector widthPositionModifier = { 0, 0, 0 };
 	FVector heightPositionModifier = { 0, 0, 0 };
 
@@ -645,7 +650,29 @@ void ATree::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector
 	}
 }
 
-void ATree::createQuadAndAddToMeshData(const FVector& voxelPosition1, const FVector& voxelPosition2, const FVector& voxelPosition3, const FVector& voxelPosition4, const int& height, const int& width, const int& axis) {
+void ATree::createQuadAndAddToMeshData(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& height, const int& width, const int& axis, bool forTreeTrunk) {
+	FVector Normal;
+	if (axis == 0 || axis == 3 || axis == 5) {
+		// Calculate the normals for counter clockwise vectors arrangement
+		Normal = FVector::CrossProduct(voxelPosition4 - voxelPosition1, voxelPosition2 - voxelPosition1).GetSafeNormal();
+	} else {
+		// Calculate the normals for clockwise vectors arrangement
+		Normal = FVector::CrossProduct(voxelPosition2 - voxelPosition1, voxelPosition4 - voxelPosition1).GetSafeNormal();
+	}
+
+	FColor layerColor;
+	if (forTreeTrunk) {
+		voxelPosition1 = voxelPosition1 + 0.001f;
+		voxelPosition2 = voxelPosition2 + 0.001f;
+		voxelPosition3 = voxelPosition3 + 0.001f;
+		voxelPosition4 = voxelPosition4 + 0.001f;
+
+		layerColor = trunkColor;
+
+	} else {
+		layerColor = crownColor;
+	}
+	
 	TemporaryMeshData.Vertices.Append({
 		voxelPosition1 * WTSR->TreeScale,
 		voxelPosition2 * WTSR->TreeScale,
@@ -661,15 +688,6 @@ void ATree::createQuadAndAddToMeshData(const FVector& voxelPosition1, const FVec
 
 	vertexCount += 4;
 
-	FVector Normal;
-	if (axis == 0 || axis == 3 || axis == 5) {
-		// Calculate the normals for counter clockwise vectors arrangement
-		Normal = FVector::CrossProduct(voxelPosition4 - voxelPosition1, voxelPosition2 - voxelPosition1).GetSafeNormal();
-	} else {
-		// Calculate the normals for clockwise vectors arrangement
-		Normal = FVector::CrossProduct(voxelPosition2 - voxelPosition1, voxelPosition4 - voxelPosition1).GetSafeNormal();
-	}
-
 	TemporaryMeshData.Normals.Append({ Normal, Normal, Normal, Normal });
 
 	// Invert the width with the height for the X and Z axis
@@ -683,23 +701,12 @@ void ATree::createQuadAndAddToMeshData(const FVector& voxelPosition1, const FVec
 			});
 	}
 
-	// TODO Create a dynamic texture and assign a random color from the layer for each 1x1 of the quad. 
-
-	// Assign different random colors for each vertex; This lets the GPU interpolate the colors
-	int layerIndex = getColorIndexFromVoxelHeight(voxelPosition1);
-	FColor layerColor = WTSR->TreeColorArray[layerIndex];
-
 	TemporaryMeshData.Colors.Append({
 		layerColor,
 		layerColor,
 		layerColor,
 		layerColor
 		});
-}
-
-int ATree::getColorIndexFromVoxelHeight(const FVector& voxelPosition) {
-	// TODO Implement this so it chooses a different color
-	return 0;
 }
 
 void ATree::spawnTreeMeshes() {
@@ -721,18 +728,16 @@ void ATree::spawnTreeMeshes() {
 void ATree::BeginPlay() {
 	Super::BeginPlay();
 
+	// Select trunk and crown colors
+	trunkColor = WTSR->TreeTrunkColorArray[FMath::RandRange(0, WTSR->TreeTrunkColorArray.Num() - 1)];
+	crownColor = WTSR->TreeCrownColorArray[FMath::RandRange(0, WTSR->TreeCrownColorArray.Num() - 1)];
 
-	// Get the basic tree data (branches, trunk height, crown size)
-
-	// Calculate chunks needed to spawn the tree
-
-	// Loop over each chunk and add the voxel data
+	// Create the crown and trunk mesh data separately
 	createTrunkBinarySolidColumnsYXZ();
-	// createCrownkBinarySolidColumnsYXZ();
-	createTerrainMeshesData();
+	createTerrainMeshesData(true);
 
-	// TODO This should get from a different location, like the binary chunks is done
-	// meshData = TemporaryMeshData;
+	createCrownBinarySolidColumnsYXZ();
+	createTerrainMeshesData(false);
 
 	spawnTreeMeshes();
 	UE_LOG(LogTemp, Warning, TEXT("Spawned Tree"));

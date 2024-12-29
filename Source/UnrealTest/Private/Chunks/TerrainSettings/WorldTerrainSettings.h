@@ -77,8 +77,14 @@ public:
 		FColor(45, 41, 32), FColor(48, 44, 35), FColor(79, 69, 55), FColor(105, 87, 59), FColor(143, 118, 80), FColor(113, 125, 73), FColor(109, 120, 67), FColor(98, 110, 59), FColor(88, 99, 49), FColor(78, 89, 39), FColor(53, 60, 29), FColor(41, 48, 25), FColor(36, 43, 20), FColor(63, 63, 63), FColor(73, 73, 73), FColor(89, 89, 89), FColor(99, 99, 94), FColor(140, 140, 140), FColor(230, 225, 210), FColor(255, 251, 233)
 	};
 
-	TArray<FColor> TreeColorArray = {
-		FColor(56, 43, 20)
+	TArray<FColor> TreeTrunkColorArray = {
+		FColor(46, 35, 77), FColor(47, 36, 76), FColor(47, 38, 75), FColor(48, 39, 73), FColor(49, 40, 72), FColor(49, 41, 71), FColor(50, 42, 70), FColor(50, 43, 69)
+	};
+
+	TArray<FColor> TreeCrownColorArray = {
+		FColor(151, 89, 142), FColor(156, 94, 147), FColor(160, 100, 151), FColor(163, 108, 154), FColor(165, 115, 158),
+		FColor(185, 116, 150), FColor(187, 129, 158), FColor(190, 142, 166), FColor(193, 154, 173), FColor(197, 166, 181),
+		FColor(221, 156, 156), FColor(224, 163, 163), FColor(228, 170, 170), FColor(231, 177, 177), FColor(233, 185, 185)
 	};
 
 	// Trees settings
@@ -90,8 +96,8 @@ public:
 	const uint8_t TreeSize{ 62 }; 
 	const uint8_t TreeSizePadding{ 64 }; 
 	const uint8_t TreeIntsPerHeight{ static_cast<uint8_t>(TreeHeight / TreeSize) };
-	const uint16_t MaxTreeTrunkWidth{ 6 };
-	const uint16_t MinTreeTrunkWidth{ 3 };
+	const uint16_t MaxTreeTrunkWidth{ 8 };
+	const uint16_t MinTreeTrunkWidth{ 4 };
 
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;

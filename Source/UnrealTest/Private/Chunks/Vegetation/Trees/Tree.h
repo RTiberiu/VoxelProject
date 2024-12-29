@@ -59,9 +59,13 @@ private:
 
 	FVoxelObjectMeshData TemporaryMeshData; // store vertices, normals, triangles, etc.
 
+	TArray<FVector> branchEndPoints;
+
+	FColor trunkColor;
+	FColor crownColor;
+
 	int vertexCount{ 0 };
 
-	FVoxelObjectMeshData meshData;
 	FIntPoint treeLocation;
 	bool hasCollision;
 
@@ -73,21 +77,21 @@ private:
 	// TODO This might be combined or something. They are just the modified version from the ChunkMeshDataRunnable.cpp
 	void createTrunkBinarySolidColumnsYXZ();
 
-	void GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& endX, const int& endZ, const int& endY);
+	void createCrownBinarySolidColumnsYXZ();
+
+	void GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& branchX, const int& branchY, const int& branchZ);
 
 	void AddTrunkPoints(TArray<FVector>& Points, float TreeLength, float LastLayerProbability, int MaxBaseThickness);
 
 	void printBinary(uint64_t value, int groupSize, const std::string& otherData);
 
-	void apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& treeWorldLocation, int& height);
-
-	void createTerrainMeshesData();
+	void createTerrainMeshesData(bool forTreeTrunk);
 
 	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
 
 	void buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis);
 
-	void greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis);
+	void greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis, bool forTreeTrunk);
 
 	void createAllVoxelPositionsFromOriginal(
 		FVector& voxelPosition1,
@@ -96,17 +100,15 @@ private:
 		FVector& voxelPosition4,
 		const int& width,
 		const int& height,
-		const int& axis);
+		const int& axis, bool forTreeTrunk);
 
 	void createQuadAndAddToMeshData(
-		const FVector& voxelPosition1,
-		const FVector& voxelPosition2,
-		const FVector& voxelPosition3,
-		const FVector& voxelPosition4,
+		FVector& voxelPosition1,
+		FVector& voxelPosition2,
+		FVector& voxelPosition3,
+		FVector& voxelPosition4,
 		const int& height, const int& width,
-		const int& axis);
-
-	int getColorIndexFromVoxelHeight(const FVector& voxelPosition);
+		const int& axis, bool forTreeTrunk);
 
 	void spawnTreeMeshes();
 
