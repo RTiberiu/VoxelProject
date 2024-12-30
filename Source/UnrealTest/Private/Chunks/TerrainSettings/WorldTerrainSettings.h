@@ -88,7 +88,7 @@ public:
 	};
 
 	// Trees settings
-	const uint8_t TreeVariations{ 1 };
+	const uint8_t TreeVariations{ 10 };
 	uint8_t TreeCount{ 0 };
 	const uint8_t TreeScale{ 4 }; // this changes the voxel size (100 is 1m)
 	const uint8_t TreeCountMax{ 1 };
@@ -99,6 +99,23 @@ public:
 	const uint16_t MaxTreeTrunkWidth{ 8 };
 	const uint16_t MinTreeTrunkWidth{ 4 };
 
+	// Flowers settings
+	const uint8_t FlowerVariations{ 10 };
+
+
+	// Grass settings
+	const uint8_t GrassVariations{ 10 };
+
+
+	// Vegetation interacting methods 
+	void AddTreeMeshData(FVoxelObjectMeshData treeData);
+	void AddGrassMeshData(FVoxelObjectMeshData grassData);
+	void AddFlowerMeshData(FVoxelObjectMeshData flowerData);
+
+	FVoxelObjectMeshData GetRandomTreeMeshData();
+	FVoxelObjectMeshData GetRandomGrassMeshData();
+	FVoxelObjectMeshData GetRandomFlowerMeshData();
+
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;
 	APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
@@ -106,6 +123,11 @@ private:
 	void CheckForDuplicateActorPointers();
 	void CheckNumberOfElements();
 	void CheckIfActorIsNullOrPendingKill();
+
+	// Vegetation mesh data 
+	TArray<FVoxelObjectMeshData> TreesMeshData;
+	TArray<FVoxelObjectMeshData> GrassMeshData;
+	TArray<FVoxelObjectMeshData> FlowersMeshData;
 
 	// Player settings
 	FVector playerInitialPosition;
@@ -118,7 +140,6 @@ private:
 	// Map to store spawned chunks with 2D coordinates as keys
 	TMap<FIntPoint, AActor*> SpawnedChunksMap;
 
-
 	void initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise);
 
 	void applyPerlinNoiseSettings(TObjectPtr<FastNoiseLite>& noise, const int& settingsIndex);
@@ -126,5 +147,6 @@ private:
 	void initializeDomainWarpNoise(TObjectPtr<FastNoiseLite>& domainWarp);
 
 	void applyDomainWarpSettings(TObjectPtr<FastNoiseLite>& domainWarp, const int& settingsIndex);
+
 };
 

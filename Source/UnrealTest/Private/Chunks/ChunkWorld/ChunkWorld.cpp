@@ -88,6 +88,37 @@ void AChunkWorld::spawnInitialWorld() {
 	UE_LOG(LogTemp, Warning, TEXT("DrawDistance = %d"), WTSR->DrawDistance);
 }
 
+void AChunkWorld::generateTreeMeshVariations() {
+	Time start = std::chrono::high_resolution_clock::now();
+
+	for (int treeIndex = 0; treeIndex < WTSR->TreeVariations; treeIndex++) {
+			
+	}
+
+	Time end = std::chrono::high_resolution_clock::now();
+	printExecutionTime(start, end, std::format("Generated {} tree variations.", WTSR->TreeVariations).c_str());
+
+}
+
+void AChunkWorld::generateGrassMeshVariations() {
+	Time start = std::chrono::high_resolution_clock::now();
+
+
+
+	Time end = std::chrono::high_resolution_clock::now();
+	printExecutionTime(start, end, std::format("Generated {} grass variations.", WTSR->GrassVariations).c_str());
+}
+
+void AChunkWorld::generateFlowerMeshVariations() {
+	Time start = std::chrono::high_resolution_clock::now();
+
+
+
+
+	Time end = std::chrono::high_resolution_clock::now();
+	printExecutionTime(start, end, std::format("Generated {} flower variations.", WTSR->FlowerVariations).c_str());
+}
+
 // Perform any actions after generating the new chunks
 void AChunkWorld::onNewTerrainGenerated() {
 	// Spawn the tree TODO Continue from here 
@@ -188,6 +219,10 @@ void AChunkWorld::BeginPlay() {
 	Super::BeginPlay();
 
 	spawnInitialWorld();
+
+	generateTreeMeshVariations();
+	generateGrassMeshVariations();
+	generateFlowerMeshVariations();
 
 	// Set player's initial position
 	WTSR->updateInitialPlayerPosition(GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation());

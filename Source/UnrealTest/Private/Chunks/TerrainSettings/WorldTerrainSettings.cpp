@@ -130,6 +130,31 @@ void UWorldTerrainSettings::ValidateSpawnedChunksMap() {
 	CheckNumberOfElements();
 }
 
+void UWorldTerrainSettings::AddTreeMeshData(FVoxelObjectMeshData treeData) {
+	TreesMeshData.Add(treeData);
+}
+
+void UWorldTerrainSettings::AddGrassMeshData(FVoxelObjectMeshData grassData) {
+	GrassMeshData.Add(grassData);
+}
+
+void UWorldTerrainSettings::AddFlowerMeshData(FVoxelObjectMeshData flowerData) {
+	FlowersMeshData.Add(flowerData);
+}
+
+FVoxelObjectMeshData UWorldTerrainSettings::GetRandomTreeMeshData() {
+	return TreesMeshData[FMath::RandRange(0, TreesMeshData.Num() - 1)];
+}
+
+FVoxelObjectMeshData UWorldTerrainSettings::GetRandomGrassMeshData() {
+	return GrassMeshData[FMath::RandRange(0, GrassMeshData.Num() - 1)];
+
+}
+
+FVoxelObjectMeshData UWorldTerrainSettings::GetRandomFlowerMeshData() {
+	return FlowersMeshData[FMath::RandRange(0, FlowersMeshData.Num() - 1)];
+}
+
 // Testing method that checks for duplicated Chunk (AActor) pointers  in SpawnChunkMap
 void UWorldTerrainSettings::CheckForDuplicateActorPointers() {
 	// Create a set to track encountered actors

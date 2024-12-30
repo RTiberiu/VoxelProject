@@ -2,9 +2,9 @@
 
 #include "..\..\..\Noise\PerlinNoiseSettings.h"
 
-#include "..\..\ChunkData\ChunkLocationData.h" // This is here JUST for FChunkLocationData struct. TODO Move the struct in a different file
+//#include "..\..\ChunkData\ChunkLocationData.h" // This is here JUST for FChunkLocationData struct. TODO Move the struct in a different file
+#include "..\..\DataStructures\VoxelObjectLocationData.h"
 
-// TODO This will be added in another object that stores the final tree meshes with all the variations
 #include "..\..\ChunkData\VoxelObjectMeshData.h"
 
 #include <vector>

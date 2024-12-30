@@ -6,12 +6,9 @@
 #include "VoxelObjectMeshData.h"
 #include "Containers/Queue.h"
 #include "Misc/ScopeLock.h"
+#include "../DataStructures/VoxelObjectLocationData.h"
 #include "ChunkLocationData.generated.h"
 
-struct FVoxelObjectLocationData {
-    FVector ObjectPosition;
-    FIntPoint ObjectWorldCoords;
-};
 
 UCLASS()
 class  UChunkLocationData : public UObject {

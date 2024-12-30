@@ -57,6 +57,11 @@ private:
 
 	void spawnInitialWorld();
 
+	// Generating all the vegetation meshes variations and adding them to a cached list
+	void generateTreeMeshVariations();
+	void generateGrassMeshVariations();
+	void generateFlowerMeshVariations();
+
 	// Runnable to handle spawning the chunks
 	ChunksLocationRunnable* chunksLocationRunnable;
 	FRunnableThread* chunksLocationThread;
