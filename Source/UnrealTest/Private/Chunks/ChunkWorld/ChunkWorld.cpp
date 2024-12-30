@@ -63,7 +63,6 @@ void AChunkWorld::spawnInitialWorld() {
 	while (currentSpiralRing <= maxSpiralRings) {
 		for (int x = -currentSpiralRing; x < currentSpiralRing; x++) {
 			for (int z = -currentSpiralRing; z < currentSpiralRing; z++) {
-
 				std::pair<int, int> currentPair = { x, z };
 
 				if (avoidPosition.find(currentPair) != avoidPosition.end()) {
@@ -91,8 +90,12 @@ void AChunkWorld::spawnInitialWorld() {
 void AChunkWorld::generateTreeMeshVariations() {
 	Time start = std::chrono::high_resolution_clock::now();
 
+	UTreeMeshGenerator* TreeMeshGenerator = NewObject<UTreeMeshGenerator>();
+	TreeMeshGenerator->SetWorldTerrainSettings(WTSR);
+
 	for (int treeIndex = 0; treeIndex < WTSR->TreeVariations; treeIndex++) {
-			
+		FVoxelObjectMeshData treeMeshData = TreeMeshGenerator->GetMeshTreeMeshData();
+		WTSR->AddTreeMeshData(treeMeshData);
 	}
 
 	Time end = std::chrono::high_resolution_clock::now();
@@ -179,36 +182,36 @@ void AChunkWorld::UpdateChunkCollisions(const FVector& PlayerPosition) {
 
 void AChunkWorld::SpawnTrees(FVector chunkPosition, FVector PlayerPosition) {
 	// Spawn the chunk actor deferred
-
-	chunkPosition.Z = chunkPosition.Z + 5840; // This is just to raise the tree and make it visible. 
 	ATree* SpawnedTreeActor = GetWorld()->SpawnActorDeferred<ATree>(Tree, FTransform(FRotator::ZeroRotator, chunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 	if (SpawnedTreeActor) {
 		// Add references to BinaryChunk and pass the computed mesh data
 		SpawnedTreeActor->SetWorldTerrainSettings(WTSR);
 		SpawnedTreeActor->SetPerlinNoiseSettings(PNSR);
-		//SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
+		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
 
 		// Define the boundaries for the collision check
-		float minX = PlayerPosition.X - WTSR->CollisionDistance;
-		float maxX = PlayerPosition.X + WTSR->CollisionDistance;
-		float minY = PlayerPosition.Y - WTSR->CollisionDistance;
-		float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
+		float minX = PlayerPosition.X - WTSR->VegetationCollisionDistance;
+		float maxX = PlayerPosition.X + WTSR->VegetationCollisionDistance;
+		float minY = PlayerPosition.Y - WTSR->VegetationCollisionDistance;
+		float maxY = PlayerPosition.Y + WTSR->VegetationCollisionDistance;
 
 		// Check if the player is within the collision boundaries
 		bool withinCollisionDistance = (chunkPosition.X >= minX && chunkPosition.X <= maxX) &&
 			(chunkPosition.Y >= minY && chunkPosition.Y <= maxY);
 
 		if (withinCollisionDistance) {
-			SpawnedTreeActor->SetTreeCollision(true);
+			 SpawnedTreeActor->SetTreeCollision(true);
 		}
 
 		// Finish spawning the chunk actor
 		UGameplayStatics::FinishSpawningActor(SpawnedTreeActor, FTransform(FRotator::ZeroRotator, chunkPosition));
 
 
+		// TODO Add the tree actor to a map so I can update the collision
 		// WTSR->AddChunkToMap(waitingMeshLocationData.ChunkWorldCoords, SpawnedChunkActor);
-		UE_LOG(LogTemp, Warning, TEXT("Spawned Tree!"));
+		
+		//UE_LOG(LogTemp, Warning, TEXT("Spawned Tree!"));
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Tree Actor!"));
 	}
@@ -331,6 +334,34 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		isMeshTaskRunning.AtomicSet(false);
 	}
 
+	// TODO In ChunkMeshDataRunnable.cpp, get the points to spawn the trees in.
+	// Add the points to a list, the same as I'm adding the mesh data
+	// Consume those points and spawn the trees
+
+	// Add trees to the chunk
+	
+
+	if (CLDR->isTreeWaitingToBeSpawned()) {
+		FVoxelObjectLocationData treePosition;
+		CLDR->getTreeSpawnPosition(treePosition);
+
+		SpawnTrees(treePosition.ObjectPosition, PlayerPosition);
+		WTSR->TreeCount++;
+
+		// Print the tree count every 50
+		if (WTSR->TreeCount % 50 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("Tree count: %d"), WTSR->TreeCount);
+		}
+	}
+
+	if (CLDR->isGrassWaitingToBeSpawned()) {
+
+	}
+
+	if (CLDR->isFlowerWaitingToBeSpawned()) {
+
+	}
+
 	// Spawn chunk if there is a calculated mesh data waiting
 	if (CLDR->isMeshWaitingToBeSpawned()) {
 		
@@ -344,10 +375,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		// Spawn the chunk actor deferred
 		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
-		if (WTSR->TreeCount < WTSR->TreeCountMax) {
-			SpawnTrees(waitingMeshLocationData.ObjectPosition, PlayerPosition);
-			WTSR->TreeCount++;
-		}
 
 
 		if (SpawnedChunkActor) {

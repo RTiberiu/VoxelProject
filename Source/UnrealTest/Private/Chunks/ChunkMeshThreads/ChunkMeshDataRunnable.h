@@ -6,8 +6,8 @@
 #include <vector>
 #include <chrono>
 
-#include "..\ChunkData\ChunkLocationData.h" // This is here JUST for FVoxelObjectLocationData struct. TODO Move the struct in a different file
-#include "..\ChunkData\VoxelObjectMeshData.h"
+#include "..\DataStructures\VoxelObjectMeshData.h"
+#include "..\DataStructures\VoxelObjectLocationData.h"
 #include "CoreMinimal.h"
 
 class FastNoiseLite;

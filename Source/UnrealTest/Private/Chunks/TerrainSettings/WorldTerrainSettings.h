@@ -8,6 +8,8 @@
 #include <atomic>
 
 #include "..\..\Utils\Semaphore\FairSemaphore.h"
+#include "..\DataStructures\VoxelObjectLocationData.h"
+#include "..\DataStructures\VoxelObjectMeshData.h"
 #include "CoreMinimal.h"
 #include "WorldTerrainSettings.generated.h"
 
@@ -87,11 +89,17 @@ public:
 		FColor(221, 156, 156), FColor(224, 163, 163), FColor(228, 170, 170), FColor(231, 177, 177), FColor(233, 185, 185)
 	};
 
+	// Vegetation settings
+	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
+	const float TreeSpawnChance{ 0.01f };
+	const float FlowerSpawnChance{ 0.4f };
+	const float GrassSpawnChance{ 0.9f };
+
 	// Trees settings
 	const uint8_t TreeVariations{ 10 };
 	uint8_t TreeCount{ 0 };
 	const uint8_t TreeScale{ 4 }; // this changes the voxel size (100 is 1m)
-	const uint8_t TreeCountMax{ 1 };
+	const uint8_t TreeCountMax{ 40 };
 	const uint16_t TreeHeight{ 248 }; // 5 bits
 	const uint8_t TreeSize{ 62 }; 
 	const uint8_t TreeSizePadding{ 64 }; 
@@ -107,14 +115,15 @@ public:
 	const uint8_t GrassVariations{ 10 };
 
 
+	// TODO I might want to move this to VegetationMeshData.cpp eventually
 	// Vegetation interacting methods 
 	void AddTreeMeshData(FVoxelObjectMeshData treeData);
 	void AddGrassMeshData(FVoxelObjectMeshData grassData);
 	void AddFlowerMeshData(FVoxelObjectMeshData flowerData);
 
-	FVoxelObjectMeshData GetRandomTreeMeshData();
-	FVoxelObjectMeshData GetRandomGrassMeshData();
-	FVoxelObjectMeshData GetRandomFlowerMeshData();
+	FVoxelObjectMeshData* GetRandomTreeMeshData();
+	FVoxelObjectMeshData* GetRandomGrassMeshData();
+	FVoxelObjectMeshData* GetRandomFlowerMeshData();
 
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;

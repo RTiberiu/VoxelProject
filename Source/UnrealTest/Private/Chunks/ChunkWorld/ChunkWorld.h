@@ -3,6 +3,7 @@
 #pragma once
 
 #include "..\Vegetation\Trees\Tree.h"
+#include "..\Vegetation\Trees\TreeMeshGenerator.h"
 #include "..\SingleChunk\BinaryChunk.h"
 #include "..\ChunkMeshThreads\ChunksLocationRunnable.h"
 #include "..\ChunkMeshThreads\ChunkMeshDataRunnable.h"

@@ -3,10 +3,10 @@
 #include "..\..\Utils\Semaphore\FairSemaphore.h"
 
 #include "CoreMinimal.h"
-#include "VoxelObjectMeshData.h"
+#include "..\DataStructures\VoxelObjectMeshData.h"
+#include "..\DataStructures\VoxelObjectLocationData.h"
 #include "Containers/Queue.h"
 #include "Misc/ScopeLock.h"
-#include "../DataStructures/VoxelObjectLocationData.h"
 #include "ChunkLocationData.generated.h"
 
 
@@ -31,6 +31,19 @@ public:
 
     void emptyPositionQueues();
 
+    bool getTreeSpawnPosition(FVoxelObjectLocationData& OutLocation);
+    bool getGrassSpawnPosition(FVoxelObjectLocationData& OutLocation);
+    bool getFlowerSpawnPosition(FVoxelObjectLocationData& OutLocation);
+
+    void addTreeSpawnPosition(const FVoxelObjectLocationData position);
+    void addGrassSpawnPosition(const FVoxelObjectLocationData position);
+    void addFlowerSpawnPosition(const FVoxelObjectLocationData position);
+
+    bool isTreeWaitingToBeSpawned();
+    bool isGrassWaitingToBeSpawned();
+    bool isFlowerWaitingToBeSpawned();
+
+
 private:
     // Queue for storing chunks position that need to be spawned
     TQueue<FVoxelObjectLocationData> chunksToSpawnPositions;
@@ -40,9 +53,15 @@ private:
     TQueue<FIntPoint> chunksToDestroyPositions;
     FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
 
-    // Map for storing chunks mesh data
+    // Queue for storing chunks mesh data
     TQueue<FVoxelObjectLocationData> locationDataForComputedMeshes;
     TQueue<FVoxelObjectMeshData> computedMeshData;
+
+    // Queue for storing vegetation spawn points data
+    TQueue<FVoxelObjectLocationData> treesSpawnPositions;
+    TQueue<FVoxelObjectLocationData> grassSpawnPositions;
+    TQueue<FVoxelObjectLocationData> flowersSpawnPositions;
+
 
     FairSemaphore* MeshDataSemaphore;
 };

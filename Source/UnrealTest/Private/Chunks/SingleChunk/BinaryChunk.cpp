@@ -98,29 +98,6 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize, const std::string&
 
 }
 
-void ABinaryChunk::apply3DNoiseToHeightColumn(uint64_t& column, int& x, int& z, int& y, int& bitIndex, const FVector& chunkWorldLocation, int& height) {
-	// Return early if total height is bigger than the threshold
-	if (height > 50) {
-		return;
-	}
-
-	// Getting perlin noise position, adjusted to the Unreal Engine grid system 
-	const float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
-	const float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
-	const float noisePositionY = static_cast<float>(((y + bitIndex * WTSR->chunkSizePadding) * WTSR->UnrealScale + chunkWorldLocation.Z) / WTSR->UnrealScale);
-	
-	const float squashingFactor = (y + bitIndex * WTSR->chunkSizePadding) * PNSR->squashingFactor;
-
-	// noise->SetFrequency(PNSR->noiseFrequency3D);
-
-	// const float noiseValue3D = noise->GetNoise(noisePositionX, noisePositionZ, noisePositionY) + 1;
-
-	// TODO Add 3d noise depending on the height of the actual 2D noise
-	if (y + bitIndex * WTSR->chunkSizePadding < 50 && height < 50) { // y + bitIndex * WTSR->chunkSizePadding > 100)
-		column |= 1ULL << y;
-	}
-}
-
 void ABinaryChunk::spawnTerrainChunkMeshes() {	
 
 	Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), hasCollision);
@@ -147,36 +124,7 @@ void ABinaryChunk::printExecutionTime(Time& start, Time& end, const char* functi
 void ABinaryChunk::BeginPlay() {
 	Super::BeginPlay();
 
-	//Time start = std::chrono::high_resolution_clock::now();
-
-	// createBinarySolidColumnsYXZ();
-
-	//Time end = std::chrono::high_resolution_clock::now();
-
-	// printExecutionTime(start, end, "createBinarySolidColumnsYXZ");
-
-	//start = std::chrono::high_resolution_clock::now();
-
-	// createTerrainMeshesData();
-
-	//end = std::chrono::high_resolution_clock::now();
-
-	// printExecutionTime(start, end, "createTerrainMeshesData");
-
-	//start = std::chrono::high_resolution_clock::now();
-
 	spawnTerrainChunkMeshes();
-
-	//end = std::chrono::high_resolution_clock::now();
-
-	// Removing the mesh data after the chunk is spawned
-	// meshData = FChunkMeshData(); 
-
-	// printExecutionTime(start, end, "spawnTerrainChunkMeshes");
-
-	// Testing generating simple cube
-	// testingMeshingCreation();
-	// generateChunkMeshes();
 
 }
 

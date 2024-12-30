@@ -7,6 +7,8 @@
 #include <bitset>
 #include <limits>
 #include "..\..\Noise\NoiseLibrary\FastNoiseLite.h"
+#include "..\ChunkData\ChunkLocationData.h"
+
 //#include "..\ChunkData\ObjectMeshData.h"
 
 
@@ -67,7 +69,10 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 	binaryChunk.xBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 	binaryChunk.zBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
-#
+#	
+	// Vegetation spawn area 
+	int vegetationXZLimit = WTSR->chunkSizePadding - WTSR->chunkSize;
+	
 	// Loop over the chunk dimensions (X, Y, Z)
 	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
 		for (int z = 0; z < WTSR->chunkSizePadding; z++) {
@@ -137,6 +142,30 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 
 			// Ensuring height remains between chunk borders
 			int height = std::clamp(combinedNoiseHeight, 0, static_cast<int>(WTSR->chunkHeight));
+
+			// TODO ADD VEGETATION POINT
+			float spawnVegetationChance = FMath::RandRange(0.0f, 1.0f);
+
+
+
+			bool isVegetationInsideChunk = x >= vegetationXZLimit && z >= vegetationXZLimit;
+
+			if (isVegetationInsideChunk) {
+				FVoxelObjectLocationData vegetationSpawnPosition;
+				float treeX = x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2;
+				float treeZ = z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2;
+				vegetationSpawnPosition.ObjectPosition = FVector(treeX, treeZ, height * WTSR->UnrealScale);
+				vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
+				if (spawnVegetationChance < WTSR->TreeSpawnChance) {
+					CLDR->addTreeSpawnPosition(vegetationSpawnPosition);
+				} else if (spawnVegetationChance < WTSR->FlowerSpawnChance) {
+					CLDR->addFlowerSpawnPosition(vegetationSpawnPosition);
+				} else if (spawnVegetationChance < WTSR->GrassSpawnChance) {
+					CLDR->addGrassSpawnPosition(vegetationSpawnPosition);
+				}
+			}
+			
 
 			// Add enough bits to y to cover the entire height (4 64bit integers when the max height is 256)
 			for (int bitIndex = 0; bitIndex < WTSR->intsPerHeight; bitIndex++) {

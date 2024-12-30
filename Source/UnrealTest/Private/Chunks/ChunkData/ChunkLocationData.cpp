@@ -57,3 +57,41 @@ void UChunkLocationData::emptyPositionQueues() {
     chunksToDestroyPositions.Empty();
 }
 
+bool UChunkLocationData::getTreeSpawnPosition(FVoxelObjectLocationData& OutLocation) {
+    return treesSpawnPositions.Dequeue(OutLocation);
+}
+
+bool UChunkLocationData::getGrassSpawnPosition(FVoxelObjectLocationData& OutLocation) {
+    return grassSpawnPositions.Dequeue(OutLocation);
+}
+
+bool UChunkLocationData::getFlowerSpawnPosition(FVoxelObjectLocationData& OutLocation) {
+    return flowersSpawnPositions.Dequeue(OutLocation);
+}
+
+void UChunkLocationData::addTreeSpawnPosition(const FVoxelObjectLocationData position) {
+    treesSpawnPositions.Enqueue(position);
+}
+
+void UChunkLocationData::addGrassSpawnPosition(const FVoxelObjectLocationData position) {
+    grassSpawnPositions.Enqueue(position);
+}
+
+void UChunkLocationData::addFlowerSpawnPosition(const FVoxelObjectLocationData position) {
+    flowersSpawnPositions.Enqueue(position);
+}
+
+bool UChunkLocationData::isTreeWaitingToBeSpawned() {
+    bool isTreeWaiting = !treesSpawnPositions.IsEmpty();
+    return isTreeWaiting;
+}
+
+bool UChunkLocationData::isGrassWaitingToBeSpawned() {
+    bool isGrassWaiting = !grassSpawnPositions.IsEmpty();
+    return isGrassWaiting;
+}
+
+bool UChunkLocationData::isFlowerWaitingToBeSpawned() {
+    bool isFlowerWaiting = !flowersSpawnPositions.IsEmpty();
+    return isFlowerWaiting;
+}

@@ -5,7 +5,7 @@
 #include "..\..\Noise\PerlinNoiseSettings.h"
 #include <vector>
 #include <chrono>
-#include "..\ChunkData\VoxelObjectMeshData.h"
+#include "..\DataStructures\VoxelObjectMeshData.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BinaryChunk.generated.h"
