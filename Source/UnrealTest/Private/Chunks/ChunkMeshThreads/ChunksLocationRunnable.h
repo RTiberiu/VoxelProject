@@ -6,6 +6,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
+class ATree;
+class ABinaryChunk;
 class UWorldTerrainSettings; // forward declaration to the world settings
 class UChunkLocationData;
 
@@ -34,6 +36,9 @@ private:
 	FVector PlayerPosition;
 
 	void UpdateChunks();
+
+	void UpdateChunkCollisions();
+	void UpdateTreeCollisions();
 
 	FIntPoint GetChunkCoordinates(FVector Position) const;
 

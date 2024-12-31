@@ -84,18 +84,12 @@ private:
 	// Destroy entire world when perlin noise settings change
 	void destroyCurrentWorldChunks();
 
-	// Update collisions to chunks, making sure they have collision if they're around the player
-	void UpdateChunkCollisions(const FVector& PlayerPosition);
-
-	// Control how many frames chunks get their collision checked and updated
-	int frameCounterCollision;
-	int framesUntilCollisionCheck = 10;
-
 	TArray<FVoxelObjectLocationData> testingThreadLocations; // TODO Delete this when done testing
 
 	// Tree implementation
 	void SpawnTrees(FVector chunkPosition, FVector PlayerPosition);
 	TSubclassOf<AActor> Tree;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

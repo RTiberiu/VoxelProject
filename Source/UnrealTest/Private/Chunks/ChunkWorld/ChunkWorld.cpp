@@ -17,8 +17,6 @@ AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThre
 
 	isInitialWorldGenerated = false;
 
-	frameCounterCollision = 0;
-
 	// Initializing Chunk with the BinaryChunk class
 	Chunk = ABinaryChunk::StaticClass();
 
@@ -63,6 +61,8 @@ void AChunkWorld::spawnInitialWorld() {
 	while (currentSpiralRing <= maxSpiralRings) {
 		for (int x = -currentSpiralRing; x < currentSpiralRing; x++) {
 			for (int z = -currentSpiralRing; z < currentSpiralRing; z++) {
+				/*for (int x = 0; x < 1; x++) {
+					for (int z = 0; z < 1; z++) {*/
 				std::pair<int, int> currentPair = { x, z };
 
 				if (avoidPosition.find(currentPair) != avoidPosition.end()) {
@@ -143,43 +143,6 @@ void AChunkWorld::destroyCurrentWorldChunks() {
 	}
 }
 
-/*
-* Get read-only items of SpawnedChunksMap and iterate to see if chunks are outside or inside of 
-* the collision threshold. Chunks inside the threshold will have their meshes regenerated with 
-* collision and chunks outside of it will get their collision disabled through a mesh update.
-*/
-void AChunkWorld::UpdateChunkCollisions(const FVector& PlayerPosition) {
-	
-	for (const TPair<FIntPoint, AActor*>& ChunkPair : WTSR->GetSpawnedChunksMap()) {
-		ABinaryChunk* ChunkActor = Cast<ABinaryChunk>(ChunkPair.Value);
-
-		if (ChunkActor) {
-			const FVector ChunkPosition = ChunkActor->GetActorLocation();
-
-			// Define the boundaries for the collision check
-			float minX = PlayerPosition.X - WTSR->CollisionDistance;
-			float maxX = PlayerPosition.X + WTSR->CollisionDistance;
-			float minY = PlayerPosition.Y - WTSR->CollisionDistance;
-			float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
-
-			// Check if the player is within the collision boundaries
-			bool withinCollisionDistance = (ChunkPosition.X >= minX && ChunkPosition.X <= maxX) &&
-				(ChunkPosition.Y >= minY && ChunkPosition.Y <= maxY);
-
-			// Update collision state based on proximity
-			if (withinCollisionDistance) {
-				if (!ChunkActor->HasCollision()) {
- 					ChunkActor->UpdateCollision(true);
-				}
-			} else {
-				if (ChunkActor->HasCollision()) {
-					ChunkActor->UpdateCollision(false);
-				}
-			}
-		}
-	}
-}
-
 void AChunkWorld::SpawnTrees(FVector chunkPosition, FVector PlayerPosition) {
 	// Spawn the chunk actor deferred
 	ATree* SpawnedTreeActor = GetWorld()->SpawnActorDeferred<ATree>(Tree, FTransform(FRotator::ZeroRotator, chunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
@@ -207,10 +170,10 @@ void AChunkWorld::SpawnTrees(FVector chunkPosition, FVector PlayerPosition) {
 		// Finish spawning the chunk actor
 		UGameplayStatics::FinishSpawningActor(SpawnedTreeActor, FTransform(FRotator::ZeroRotator, chunkPosition));
 
-
 		// TODO Add the tree actor to a map so I can update the collision
 		// WTSR->AddChunkToMap(waitingMeshLocationData.ChunkWorldCoords, SpawnedChunkActor);
-		
+		WTSR->AddSpawnedTrees(SpawnedTreeActor);
+
 		//UE_LOG(LogTemp, Warning, TEXT("Spawned Tree!"));
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Tree Actor!"));
@@ -274,14 +237,16 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	const FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
-	const bool isPlayerMovingOnAxisX = false; //  PlayerChunkCoords.X != InitialChunkCoords.X; // TODO SET TO FALSE FOR TESTING ONLY
-	const bool isPlayerMovingOnAxisZ = false; // PlayerChunkCoords.Y != InitialChunkCoords.Y; // TODO SET TO FALSE FOR TESTING ONLY
+	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X; //   // TODO SET TO FALSE FOR TESTING ONLY
+	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y; //  // TODO SET TO FALSE FOR TESTING ONLY
 
 	if (!isLocationTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
 		isLocationTaskRunning.AtomicSet(true);
 		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR);
 		chunksLocationThread = FRunnableThread::Create(chunksLocationRunnable, TEXT("chunksLocationThread"), 0, TPri_Normal);
 	}
+	// TODO ADD TO A LIST CHUNKS THAT NEED THEIR COLLISION UPDATED IN THAT SEPARATE THREAD
+	// TODO ADD TO A LIST TREES THAT NEED THEIR COLLISION UPDATED IN THAT SEPARATE THREAD
 
 	// Clean up terrain thread if it's done computing
 	if (chunksLocationRunnable && chunksLocationRunnable->IsTaskComplete()) {
@@ -334,13 +299,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		isMeshTaskRunning.AtomicSet(false);
 	}
 
-	// TODO In ChunkMeshDataRunnable.cpp, get the points to spawn the trees in.
-	// Add the points to a list, the same as I'm adding the mesh data
-	// Consume those points and spawn the trees
-
 	// Add trees to the chunk
-	
-
 	if (CLDR->isTreeWaitingToBeSpawned()) {
 		FVoxelObjectLocationData treePosition;
 		CLDR->getTreeSpawnPosition(treePosition);
@@ -374,8 +333,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 		// Spawn the chunk actor deferred
 		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-
-
 
 		if (SpawnedChunkActor) {
 				// Add references to BinaryChunk and pass the computed mesh data
@@ -424,14 +381,27 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		}
 	}
 
-	frameCounterCollision++;
+	ATree* removeCollisionTree = WTSR->GetTreeToRemoveCollision();
+	ATree* enableCollisionTree = WTSR->GetTreeToEnableCollision(); 
+	
+	ABinaryChunk* removeCollisionChunk = WTSR->GetChunkToRemoveCollision();
+	ABinaryChunk* enableCollisionChunk = WTSR->GetChunkToEnableCollision();
 
-	// TODO This part might be worth delegating to a separate thread (especially if the render distance is high)
-	if (frameCounterCollision >= framesUntilCollisionCheck) {
-		UpdateChunkCollisions(PlayerPosition);
-		frameCounterCollision = 0;
+	if (removeCollisionTree) {
+		removeCollisionTree->UpdateCollision(false);
 	}
 
+	if (enableCollisionTree) {
+		enableCollisionTree->UpdateCollision(true);
+	}
+
+	if (removeCollisionChunk) {
+		removeCollisionChunk->UpdateCollision(false);
+	}
+
+	if (enableCollisionChunk) {
+		enableCollisionChunk->UpdateCollision(true);
+	}
 
 }
 

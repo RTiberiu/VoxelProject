@@ -26,7 +26,9 @@ public:
 	~ATree();
 
 	void SetTreeCollision(bool InHasCollision);
+	void UpdateCollision(bool InHasCollision);
 	void SetTreeMeshData(FVoxelObjectMeshData* InMeshData);
+	bool HasCollision();
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);

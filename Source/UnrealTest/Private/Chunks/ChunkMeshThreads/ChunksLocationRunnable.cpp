@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ChunksLocationRunnable.h"
+#include "..\SingleChunk\BinaryChunk.h"
+#include "..\Vegetation\Trees\Tree.h"
 #include "..\TerrainSettings\WorldTerrainSettings.h"
 #include "..\ChunkData\ChunkLocationData.h"
 
@@ -23,6 +25,8 @@ uint32 ChunksLocationRunnable::Run() {
 		// Spawn new chunks
 		WTSR->UpdateChunkSemaphore->Acquire();
 		UpdateChunks();
+		UpdateChunkCollisions();
+		UpdateTreeCollisions();
 		WTSR->UpdateChunkSemaphore->Release();
 
 		isTaskComplete = true;
@@ -115,6 +119,75 @@ void ChunksLocationRunnable::UpdateChunks() {
 
 	// Update the initial position for the next frame
 	WTSR->updateInitialPlayerPosition(PlayerPosition);
+}
+
+
+/*
+* Get read-only items of SpawnedChunksMap and iterate to see if chunks are outside or inside of
+* the collision threshold. Chunks inside the threshold will have their meshes regenerated with
+* collision and chunks outside of it will get their collision disabled through a mesh update.
+*/
+void ChunksLocationRunnable::UpdateChunkCollisions() {
+	for (const TPair<FIntPoint, AActor*>& ChunkPair : WTSR->GetSpawnedChunksMap()) {
+		ABinaryChunk* ChunkActor = Cast<ABinaryChunk>(ChunkPair.Value);
+
+		if (ChunkActor) {
+			const FVector ChunkPosition = ChunkActor->GetActorLocation();
+
+			// Define the boundaries for the collision check
+			float minX = PlayerPosition.X - WTSR->CollisionDistance;
+			float maxX = PlayerPosition.X + WTSR->CollisionDistance;
+			float minY = PlayerPosition.Y - WTSR->CollisionDistance;
+			float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
+
+			// Check if the player is within the collision boundaries
+			bool withinCollisionDistance = (ChunkPosition.X >= minX && ChunkPosition.X <= maxX) &&
+				(ChunkPosition.Y >= minY && ChunkPosition.Y <= maxY);
+
+			// Update collision state based on proximity
+			if (withinCollisionDistance) {
+				if (!ChunkActor->HasCollision()) {
+					WTSR->AddChunkToEnableCollision(ChunkActor);
+				}
+			} else {
+				if (ChunkActor->HasCollision()) {
+					WTSR->AddChunkToRemoveCollision(ChunkActor);
+				}
+			}
+		}
+	}
+
+}
+
+void ChunksLocationRunnable::UpdateTreeCollisions() {
+	for (AActor* tree : WTSR->GetSpawnedTrees()) {
+		ATree* TreeActor = Cast<ATree>(tree);
+
+		if (TreeActor) {
+			const FVector ChunkPosition = TreeActor->GetActorLocation();
+
+			// Define the boundaries for the collision check
+			float minX = PlayerPosition.X - WTSR->VegetationCollisionDistance;
+			float maxX = PlayerPosition.X + WTSR->VegetationCollisionDistance;
+			float minY = PlayerPosition.Y - WTSR->VegetationCollisionDistance;
+			float maxY = PlayerPosition.Y + WTSR->VegetationCollisionDistance;
+
+			// Check if the player is within the collision boundaries
+			bool withinCollisionDistance = (ChunkPosition.X >= minX && ChunkPosition.X <= maxX) &&
+				(ChunkPosition.Y >= minY && ChunkPosition.Y <= maxY);
+
+			// Update collision state based on proximity
+			if (withinCollisionDistance) {
+				if (!TreeActor->HasCollision()) {
+					WTSR->AddTreeToEnableCollision(TreeActor);
+				}
+			} else {
+				if (TreeActor->HasCollision()) {
+					WTSR->AddTreeToRemoveCollision(TreeActor);
+				}
+			}
+		}
+	}
 }
 
 FIntPoint ChunksLocationRunnable::GetChunkCoordinates(FVector Position) const {

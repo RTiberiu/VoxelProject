@@ -22,9 +22,9 @@ void UTreeMeshGenerator::createTrunkBinarySolidColumnsYXZ() {
 
 	// Set the tree values to air for all 3 axis (Y, X, Z)
 	const int treeDimensions{ WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight };
-	binaryTree.yBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
-	binaryTree.xBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
-	binaryTree.zBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
+	binaryTree.yBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
+	binaryTree.xBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
+	binaryTree.zBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
 
 	const int halfTreeChunk = WTSR->TreeSize / 2;
 
@@ -113,20 +113,20 @@ void UTreeMeshGenerator::createTrunkBinarySolidColumnsYXZ() {
 		const int yIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex };
 
 		// Add blocks height data (Y) to the current X and Z
-		binaryTree.yBinaryColumn[yIndex] |= (1ULL << localTreeChunkHeight);
+		binaryTree.yBinaryColumn[yIndex] |= (1U << localTreeChunkHeight);
 
-		const uint64_t currentYCol = binaryTree.yBinaryColumn[yIndex];
+		const uint32_t currentYCol = binaryTree.yBinaryColumn[yIndex];
 
 		// Next Y index (column) means the same X index (column), but a change in Y bit index
 		const int xIndex{ (height * WTSR->TreeSizePadding) + x }; // (bitIndex * WTSR->TreeSizePadding * WTSR->TreeSizePadding)
 
-		binaryTree.xBinaryColumn[xIndex] |= (1ULL << z);
+		binaryTree.xBinaryColumn[xIndex] |= (1U << z);
 
 		// Next Y index (column) means the next Z index (column), but the same Y bit index
 		const int zIndex{ (height * WTSR->TreeSizePadding) + z }; // + (bitIndex * WTSR->TreeSizePadding * WTSR->TreeSizePadding)
 
 		// Assign to actual bit the change
-		binaryTree.zBinaryColumn[zIndex] |= (1ULL << x);
+		binaryTree.zBinaryColumn[zIndex] |= (1U << x);
 	}
 }
 
@@ -135,9 +135,9 @@ void UTreeMeshGenerator::createCrownBinarySolidColumnsYXZ() {
 
 	// Set the tree values to air for all 3 axis (Y, X, Z)
 	const int treeDimensions{ WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight };
-	binaryTree.yBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
-	binaryTree.xBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
-	binaryTree.zBinaryColumn = std::vector<uint64_t>(treeDimensions, 0);
+	binaryTree.yBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
+	binaryTree.xBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
+	binaryTree.zBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
 
 	TArray<FVector> CrownPoints;
 
@@ -157,20 +157,20 @@ void UTreeMeshGenerator::createCrownBinarySolidColumnsYXZ() {
 		const int yIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex };
 
 		// Add blocks height data (Y) to the current X and Z
-		binaryTree.yBinaryColumn[yIndex] |= (1ULL << localTreeChunkHeight);
+		binaryTree.yBinaryColumn[yIndex] |= (1U << localTreeChunkHeight);
 
-		const uint64_t currentYCol = binaryTree.yBinaryColumn[yIndex];
+		const uint32_t currentYCol = binaryTree.yBinaryColumn[yIndex];
 
 		// Next Y index (column) means the same X index (column), but a change in Y bit index
 		const int xIndex{ (height * WTSR->TreeSizePadding) + x };
 
-		binaryTree.xBinaryColumn[xIndex] |= (1ULL << z);
+		binaryTree.xBinaryColumn[xIndex] |= (1U << z);
 
 		// Next Y index (column) means the next Z index (column), but the same Y bit index
 		const int zIndex{ (height * WTSR->TreeSizePadding) + z };
 
 		// Assign to actual bit the change
-		binaryTree.zBinaryColumn[zIndex] |= (1ULL << x);
+		binaryTree.zBinaryColumn[zIndex] |= (1U << x);
 	}
 }
 
@@ -251,7 +251,7 @@ void UTreeMeshGenerator::AddTrunkPoints(TArray<FVector>& Points, float TreeLengt
 
 
 // Debugging function that prints a 64-bit integer in groups
-void UTreeMeshGenerator::printBinary(uint64_t value, int groupSize, const std::string& otherData) {
+void UTreeMeshGenerator::printBinary(uint32_t value, int groupSize, const std::string& otherData) {
 	// Ensure groupSize is a positive integer
 	if (groupSize <= 0) {
 		std::cerr << "Group size must be a positive integer" << std::endl;
@@ -285,26 +285,26 @@ void UTreeMeshGenerator::printBinary(uint64_t value, int groupSize, const std::s
 void UTreeMeshGenerator::createTerrainMeshesData(bool forTreeTrunk) {
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
-	std::vector<std::vector<uint64_t>> columnFaceMasks{
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y ascending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y descending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X ascending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X descending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z ascending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z descending
+	std::vector<std::vector<uint32_t>> columnFaceMasks{
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y ascending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y descending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X ascending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X descending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z ascending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z descending
 	};
 
 	// Face cull the binary columns on the 3 axis, ascending and descending
 	faceCullingBinaryColumnsYXZ(columnFaceMasks);
 
 	// Storing planes for all axis, ascending and descending
-	std::vector<std::vector<uint64_t>> binaryPlanes{
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y ascending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y descending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X ascending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X descending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z ascending
-		std::vector<uint64_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z descending
+	std::vector<std::vector<uint32_t>> binaryPlanes{
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y ascending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y descending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X ascending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X descending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z ascending
+		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z descending
 	};
 
 	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending 
@@ -316,7 +316,7 @@ void UTreeMeshGenerator::createTerrainMeshesData(bool forTreeTrunk) {
 	}
 }
 
-void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
+void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint32_t>>& columnFaceMasks) {
 	// Face culling for all the 3 axis (Y, X, Z)
 	for (int axis = 0; axis < 3; axis++) {
 		for (int x = 0; x < WTSR->TreeSizePadding; x++) {
@@ -324,7 +324,7 @@ void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uin
 				for (int bitIndex = 0; bitIndex < WTSR->TreeIntsPerHeight; bitIndex++) {
 					const int columnIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex };
 
-					uint64_t column = 0;
+					uint32_t column = 0;
 					switch (axis) {
 					case 0:
 						column = binaryTree.yBinaryColumn[columnIndex];
@@ -340,7 +340,7 @@ void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uin
 					// If is the Y axis and not the last bitIndex
 					if (axis == 0 && bitIndex < WTSR->TreeIntsPerHeight - 1) {
 						const bool isAboveSolid = binaryTree.yBinaryColumn[columnIndex + 1] != 0;
-						const bool columnAllSolid = column == std::numeric_limits<uint64_t>::max();
+						const bool columnAllSolid = column == std::numeric_limits<uint32_t>::max();
 
 						// Skip creating face between height chunks if there's more solid blocks above 
 						if (isAboveSolid && columnAllSolid) {
@@ -360,17 +360,17 @@ void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uin
 							const bool isFaceMaskSolid = columnFaceMasks[axis * 2 + 1][columnIndex] != 0;
 
 							// Check if the leftmost bit is 1
-							const uint64_t leftmostBitMask = 1ULL << 63;
+							const uint32_t leftmostBitMask = 1U << 31;
 							const bool isLeftmostBitSet = (binaryTree.yBinaryColumn[columnIndex - 1] & leftmostBitMask) != 0;
 
 							// Remove bottom face if there are solid blocks beneath chunk
 							if (isFaceMaskSolid && isLeftmostBitSet) {
 								// Flip the rightmost bit to 0
-								columnFaceMasks[axis * 2 + 1][columnIndex] &= ~1ULL;
+								columnFaceMasks[axis * 2 + 1][columnIndex] &= ~1U;
 							}
 						} else {
 							// Remove the bottom face of the world for the bottom chunk
-							columnFaceMasks[axis * 2 + 1][columnIndex] &= ~1ULL;
+							columnFaceMasks[axis * 2 + 1][columnIndex] &= ~1U;
 						}
 					}
 
@@ -380,19 +380,19 @@ void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uin
 	}
 }
 
-void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis) {
+void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint32_t>& faceMaskColumn, std::vector<uint32_t>& binaryPlane, const int& axis) {
 	for (int x = 0; x < WTSR->TreeSizePadding; x++) {
 		for (int z = 0; z < WTSR->TreeSizePadding; z++) {
 			for (int bitIndex = 0; bitIndex < WTSR->TreeIntsPerHeight; bitIndex++) {
 
 				const int columnIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
 
-				uint64_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
+				uint32_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
 
 				// Remove padding only for X and Z axis 
 				if (axis != 0 && axis != 1) {
 					// Remove the leftmost bit and the rightmost bit and replace them with 0
-					column = (column & ~(1ULL << 63)) & ~1ULL;
+					column = (column & ~(1U << 31)) & ~1U;
 				}
 
 				while (column != 0) {
@@ -406,7 +406,7 @@ void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint64_t>& faceMask
 					case 1:
 						// Get to the correct plane and then add x to get to the correct row in the plane
 						planeIndex = (y + bitIndex * WTSR->TreeSizePadding) * WTSR->TreeSizePadding + x;
-						binaryPlane[planeIndex] |= (1ULL << z);
+						binaryPlane[planeIndex] |= (1U << z);
 						break;
 					case 2:
 					case 3:
@@ -420,12 +420,12 @@ void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint64_t>& faceMask
 							planeIndex = planeRowIndex;
 						}
 
-						binaryPlane[planeIndex] |= (1ULL << columnIndex % WTSR->TreeSizePadding);
+						binaryPlane[planeIndex] |= (1U << columnIndex % WTSR->TreeSizePadding);
 						break;
 					}
 
 					// Remove the padding from the plane
-					binaryPlane[planeIndex] = (binaryPlane[planeIndex] & ~(1ULL << 63)) & ~1ULL;
+					binaryPlane[planeIndex] = (binaryPlane[planeIndex] & ~(1U << 31)) & ~1U;
 
 					// Clear the position 
 					column &= column - 1;
@@ -436,7 +436,7 @@ void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint64_t>& faceMask
 	}
 }
 
-void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis, bool forTreeTrunk) {
+void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint32_t>& planes, const int& axis, bool forTreeTrunk) {
 	for (int row = 0; row < planes.size(); row++) {
 
 		// Removing padding by skipping the first and last row in the plane
@@ -450,7 +450,7 @@ void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes,
 			// Trailing ones are the height of the vertex
 			const int height = std::countr_one(planes[row] >> y);
 
-			uint64_t heightMask = ((1ULL << height) - 1) << y;
+			uint32_t heightMask = ((1U << height) - 1) << y;
 
 			// Flip the solid bits used to create the height mask 
 			planes[row] = planes[row] & ~heightMask;
@@ -471,7 +471,7 @@ void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes,
 					const int planesIndex = row + width;
 
 					// Get the bits spanning height for the next row
-					const uint64_t nextRowHeight = planes[planesIndex] & heightMask;
+					const uint32_t nextRowHeight = planes[planesIndex] & heightMask;
 
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
@@ -496,7 +496,7 @@ void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes,
 					const int planesIndex = row + (width * WTSR->TreeSizePadding);
 
 					// Get the bits spanning height for the next row
-					const uint64_t nextRowHeight = planes[planesIndex] & heightMask;
+					const uint32_t nextRowHeight = planes[planesIndex] & heightMask;
 
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally

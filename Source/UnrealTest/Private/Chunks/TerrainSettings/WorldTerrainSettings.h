@@ -11,6 +11,8 @@
 #include "..\DataStructures\VoxelObjectLocationData.h"
 #include "..\DataStructures\VoxelObjectMeshData.h"
 #include "CoreMinimal.h"
+#include <Chunks/SingleChunk/BinaryChunk.h>
+#include <Chunks/Vegetation/Trees/Tree.h>
 #include "WorldTerrainSettings.generated.h"
 
 class FastNoiseLite;
@@ -91,21 +93,21 @@ public:
 
 	// Vegetation settings
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
-	const float TreeSpawnChance{ 0.01f };
-	const float FlowerSpawnChance{ 0.4f };
-	const float GrassSpawnChance{ 0.9f };
+	const float TreeSpawnChance{ 0.005f };
+	const float FlowerSpawnChance{ 0.04f };
+	const float GrassSpawnChance{ 0.04f };
 
 	// Trees settings
-	const uint8_t TreeVariations{ 10 };
-	uint8_t TreeCount{ 0 };
-	const uint8_t TreeScale{ 4 }; // this changes the voxel size (100 is 1m)
+	const uint8_t TreeVariations{ 30 };
+	int TreeCount{ 0 };
+	const uint8_t TreeScale{ 15 }; // this changes the voxel size (100 is 1m)
 	const uint8_t TreeCountMax{ 40 };
-	const uint16_t TreeHeight{ 248 }; // 5 bits
-	const uint8_t TreeSize{ 62 }; 
-	const uint8_t TreeSizePadding{ 64 }; 
+	const uint16_t TreeHeight{ 60 }; // 5 bits
+	const uint8_t TreeSize{ 30 }; 
+	const uint8_t TreeSizePadding{ 32 }; 
 	const uint8_t TreeIntsPerHeight{ static_cast<uint8_t>(TreeHeight / TreeSize) };
-	const uint16_t MaxTreeTrunkWidth{ 8 };
-	const uint16_t MinTreeTrunkWidth{ 4 };
+	const uint16_t MaxTreeTrunkWidth{ 2 };
+	const uint16_t MinTreeTrunkWidth{ 1 };
 
 	// Flowers settings
 	const uint8_t FlowerVariations{ 10 };
@@ -124,6 +126,19 @@ public:
 	FVoxelObjectMeshData* GetRandomTreeMeshData();
 	FVoxelObjectMeshData* GetRandomGrassMeshData();
 	FVoxelObjectMeshData* GetRandomFlowerMeshData();
+
+	void AddSpawnedTrees(AActor* Tree);
+	const TArray<AActor*>& GetSpawnedTrees();
+
+	void AddChunkToRemoveCollision(ABinaryChunk* actor);
+	void AddTreeToRemoveCollision(ATree* actor);
+	void AddChunkToEnableCollision(ABinaryChunk* actor);
+	void AddTreeToEnableCollision(ATree* actor);
+	ABinaryChunk* GetChunkToRemoveCollision();
+	ATree* GetTreeToRemoveCollision();
+	ABinaryChunk* GetChunkToEnableCollision();
+	ATree* GetTreeToEnableCollision();
+
 
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;
@@ -148,6 +163,15 @@ private:
 
 	// Map to store spawned chunks with 2D coordinates as keys
 	TMap<FIntPoint, AActor*> SpawnedChunksMap;
+
+	// Array to store spawned trees
+	TArray<AActor*> SpawnedTrees;
+
+	// Arrays to update collision for actors (chunks and trees)
+	TArray<ABinaryChunk*> RemoveCollisionChunks;
+	TArray<ATree*> RemoveCollisionTrees;
+	TArray<ABinaryChunk*> AddCollisionChunks;
+	TArray<ATree*> AddCollisionTrees;
 
 	void initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise);
 

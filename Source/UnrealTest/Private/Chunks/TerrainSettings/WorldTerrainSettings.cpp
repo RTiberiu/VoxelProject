@@ -155,6 +155,75 @@ FVoxelObjectMeshData* UWorldTerrainSettings::GetRandomFlowerMeshData() {
 	return &FlowersMeshData[FMath::RandRange(0, FlowersMeshData.Num() - 1)];
 }
 
+void UWorldTerrainSettings::AddSpawnedTrees(AActor* Tree) {
+	SpawnedTrees.Add(Tree);
+}
+
+const TArray<AActor*>& UWorldTerrainSettings::GetSpawnedTrees() {
+	return SpawnedTrees;
+}
+
+void UWorldTerrainSettings::AddChunkToRemoveCollision(ABinaryChunk* actor) {
+	RemoveCollisionChunks.Add(actor);
+}
+
+void UWorldTerrainSettings::AddTreeToRemoveCollision(ATree* actor) {
+	RemoveCollisionTrees.Add(actor);
+}
+
+void UWorldTerrainSettings::AddChunkToEnableCollision(ABinaryChunk* actor) {
+	AddCollisionChunks.Add(actor);
+}
+
+void UWorldTerrainSettings::AddTreeToEnableCollision(ATree* actor) {
+	AddCollisionTrees.Add(actor);
+}
+
+ABinaryChunk* UWorldTerrainSettings::GetChunkToRemoveCollision() {
+	// Return and remove the first actor
+	if (!RemoveCollisionChunks.IsEmpty()) {
+		ABinaryChunk* ActorToRemove = RemoveCollisionChunks[0];
+		RemoveCollisionChunks.RemoveAt(0);
+		return ActorToRemove;
+	}
+
+	return nullptr;
+}
+
+ATree* UWorldTerrainSettings::GetTreeToRemoveCollision() {
+	// Return and remove the first actor
+	if (!RemoveCollisionTrees.IsEmpty()) {
+		ATree* ActorToRemove = RemoveCollisionTrees[0];
+		RemoveCollisionTrees.RemoveAt(0);
+		return ActorToRemove;
+	}
+
+	return nullptr;
+}
+
+ABinaryChunk* UWorldTerrainSettings::GetChunkToEnableCollision() {
+	// Return and remove the first actor
+	if (!AddCollisionChunks.IsEmpty()) {
+		ABinaryChunk* ActorToRemove = AddCollisionChunks[0];
+		AddCollisionChunks.RemoveAt(0);
+		return ActorToRemove;
+	}
+
+	return nullptr;
+}
+
+ATree* UWorldTerrainSettings::GetTreeToEnableCollision() {
+	// Return and remove the first actor
+	if (!AddCollisionTrees.IsEmpty()) {
+		ATree* ActorToRemove = AddCollisionTrees[0];
+		AddCollisionTrees.RemoveAt(0);
+		return ActorToRemove;
+	}
+
+	return nullptr;
+}
+
+
 // Testing method that checks for duplicated Chunk (AActor) pointers  in SpawnChunkMap
 void UWorldTerrainSettings::CheckForDuplicateActorPointers() {
 	// Create a set to track encountered actors

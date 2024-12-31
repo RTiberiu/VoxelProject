@@ -18,9 +18,9 @@ class  UTreeMeshGenerator : public UObject {
     GENERATED_BODY()
 
 	struct BinaryTree3D {
-		std::vector<uint64_t> yBinaryColumn;
-		std::vector<uint64_t> xBinaryColumn;
-		std::vector<uint64_t> zBinaryColumn;
+		std::vector<uint32_t> yBinaryColumn;
+		std::vector<uint32_t> xBinaryColumn;
+		std::vector<uint32_t> zBinaryColumn;
 	};
 
 public:
@@ -40,7 +40,7 @@ private:
 
 	BinaryTree3D binaryTree = BinaryTree3D{};
 
-	std::vector<uint64_t> columnsFaceMask;
+	std::vector<uint32_t> columnsFaceMask;
 
 	FVoxelObjectMeshData MeshData; // store vertices, normals, triangles, etc.
 
@@ -59,15 +59,15 @@ private:
 
 	void AddTrunkPoints(TArray<FVector>& Points, float TreeLength, float LastLayerProbability, int MaxBaseThickness);
 
-	void printBinary(uint64_t value, int groupSize, const std::string& otherData);
+	void printBinary(uint32_t value, int groupSize, const std::string& otherData);
 
 	void createTerrainMeshesData(bool forTreeTrunk);
 
-	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
+	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint32_t>>& columnFaceMasks);
 
-	void buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis);
+	void buildBinaryPlanes(const std::vector<uint32_t>& faceMaskColumn, std::vector<uint32_t>& binaryPlane, const int& axis);
 
-	void greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis, bool forTreeTrunk);
+	void greedyMeshingBinaryPlane(std::vector<uint32_t>& planes, const int& axis, bool forTreeTrunk);
 
 	void createAllVoxelPositionsFromOriginal(
 		FVector& voxelPosition1,

@@ -69,7 +69,7 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	binaryChunk.yBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 	binaryChunk.xBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
 	binaryChunk.zBinaryColumn = std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight, 0);
-#	
+	
 	// Vegetation spawn area 
 	int vegetationXZLimit = WTSR->chunkSizePadding - WTSR->chunkSize;
 	
@@ -143,29 +143,8 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 			// Ensuring height remains between chunk borders
 			int height = std::clamp(combinedNoiseHeight, 0, static_cast<int>(WTSR->chunkHeight));
 
-			// TODO ADD VEGETATION POINT
-			float spawnVegetationChance = FMath::RandRange(0.0f, 1.0f);
-
-
-
-			bool isVegetationInsideChunk = x >= vegetationXZLimit && z >= vegetationXZLimit;
-
-			if (isVegetationInsideChunk) {
-				FVoxelObjectLocationData vegetationSpawnPosition;
-				float treeX = x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2;
-				float treeZ = z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2;
-				vegetationSpawnPosition.ObjectPosition = FVector(treeX, treeZ, height * WTSR->UnrealScale);
-				vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
-
-				if (spawnVegetationChance < WTSR->TreeSpawnChance) {
-					CLDR->addTreeSpawnPosition(vegetationSpawnPosition);
-				} else if (spawnVegetationChance < WTSR->FlowerSpawnChance) {
-					CLDR->addFlowerSpawnPosition(vegetationSpawnPosition);
-				} else if (spawnVegetationChance < WTSR->GrassSpawnChance) {
-					CLDR->addGrassSpawnPosition(vegetationSpawnPosition);
-				}
-			}
-			
+			// Spawn some vegetation at current voxel point
+			attemptToSpawnVegetationAtLocation(x, z, height, vegetationXZLimit, chunkWorldLocation);
 
 			// Add enough bits to y to cover the entire height (4 64bit integers when the max height is 256)
 			for (int bitIndex = 0; bitIndex < WTSR->intsPerHeight; bitIndex++) {
@@ -639,5 +618,26 @@ int ChunkMeshDataRunnable::getColorIndexFromVoxelHeight(const FVector& voxelPosi
 	}
 
 	return colorIndex;
+}
+
+void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, const int& z, const int& height, const int& vegetationXZLimit, const FVector& chunkWorldLocation) {
+	float spawnVegetationChance = FMath::RandRange(0.0f, 1.0f);
+	bool isVegetationInsideChunk = x >= vegetationXZLimit && z >= vegetationXZLimit;
+
+	if (isVegetationInsideChunk) {
+		FVoxelObjectLocationData vegetationSpawnPosition;
+		float treeX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
+		float treeZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
+		vegetationSpawnPosition.ObjectPosition = FVector(treeX, treeZ, height * WTSR->UnrealScale);
+		vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
+		if (spawnVegetationChance < WTSR->TreeSpawnChance) {
+			CLDR->addTreeSpawnPosition(vegetationSpawnPosition);
+		} else if (spawnVegetationChance < WTSR->FlowerSpawnChance) {
+			CLDR->addFlowerSpawnPosition(vegetationSpawnPosition);
+		} else if (spawnVegetationChance < WTSR->GrassSpawnChance) {
+			CLDR->addGrassSpawnPosition(vegetationSpawnPosition);
+		}
+	}
 }
 

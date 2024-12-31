@@ -33,9 +33,36 @@ void ATree::SetTreeCollision(bool InHasCollision) {
 	hasCollision = InHasCollision;
 }
 
+void ATree::UpdateCollision(bool InHasCollision) {
+	SetTreeCollision(InHasCollision);
+
+	// Set mesh color based on collision state
+	FColor CollisionColor = InHasCollision ? FColor::Red : FColor::White;
+	for (FColor& VertexColor : MeshData->Colors) {
+		VertexColor = CollisionColor;
+	}
+
+	if (InHasCollision) {
+		// If the tree has collision, enable it by regenerating the mesh
+		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Mesh->SetCollisionResponseToAllChannels(ECR_Block);
+		Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+		Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), InHasCollision);
+	} else {
+		// If the tree does not have collision, disable it by updating the mesh
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Mesh->UpdateMeshSection(0, MeshData->Vertices, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>());
+	}
+}
+
 // Set a pointer to the mesh data.
 void ATree::SetTreeMeshData(FVoxelObjectMeshData* InMeshData) {
 	MeshData = InMeshData;
+}
+
+bool ATree::HasCollision() {
+	return hasCollision;
 }
 
 void ATree::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
