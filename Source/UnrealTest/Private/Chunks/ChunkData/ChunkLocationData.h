@@ -3,6 +3,7 @@
 #include "..\..\Utils\Semaphore\FairSemaphore.h"
 
 #include "CoreMinimal.h"
+#include "..\Vegetation\Trees\Tree.h"
 #include "..\DataStructures\VoxelObjectMeshData.h"
 #include "..\DataStructures\VoxelObjectLocationData.h"
 #include "Containers/Queue.h"
@@ -29,11 +30,16 @@ public:
     void addChunksToDestroyPosition(const FIntPoint& position);
     void addMeshDataForPosition(const FVoxelObjectLocationData chunkLocationData, const FVoxelObjectMeshData meshData);
 
+    void addTreeToDestroyPosition(const FIntPoint& tree);
+    bool getTreeToDestroyPosition(FIntPoint& tree);
+    
     void emptyPositionQueues();
 
     bool getTreeSpawnPosition(FVoxelObjectLocationData& OutLocation);
     bool getGrassSpawnPosition(FVoxelObjectLocationData& OutLocation);
     bool getFlowerSpawnPosition(FVoxelObjectLocationData& OutLocation);
+
+    TArray<FVoxelObjectLocationData> getTreesAtLocation(FIntPoint worldLocation);
 
     void addTreeSpawnPosition(const FVoxelObjectLocationData position);
     void addGrassSpawnPosition(const FVoxelObjectLocationData position);
@@ -42,6 +48,8 @@ public:
     bool isTreeWaitingToBeSpawned();
     bool isGrassWaitingToBeSpawned();
     bool isFlowerWaitingToBeSpawned();
+
+    bool isTreeWaitingToBeDestroyed();
 
 
 private:
@@ -52,6 +60,10 @@ private:
     // Queue for storing chunks position that need to be destroyed
     TQueue<FIntPoint> chunksToDestroyPositions;
     FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
+
+    TQueue<FIntPoint> treesToDestroy;
+    TQueue<FIntPoint> grassToDestroy;
+    TQueue<FIntPoint> flowersToDestroy;
 
     // Queue for storing chunks mesh data
     TQueue<FVoxelObjectLocationData> locationDataForComputedMeshes;

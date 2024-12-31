@@ -9,7 +9,8 @@
 UWorldTerrainSettings::UWorldTerrainSettings() : 
 	UpdateChunkSemaphore(new FairSemaphore(1)),
 	PlayerPositionSemaphore(new FairSemaphore(1)),
-	MapSemaphore(new FairSemaphore(1)),
+	ChunkMapSemaphore(new FairSemaphore(1)),
+	TreeMapSemaphore(new FairSemaphore(1)),
 	DrawDistanceSemaphore(new FairSemaphore(1)) {
 	// Reserve memory for double the draw distance for X and Z 
 	SpawnedChunksMap.Reserve(DrawDistance * DrawDistance * 2); 
@@ -19,30 +20,31 @@ UWorldTerrainSettings::~UWorldTerrainSettings() {
 	// Clean up semaphores
 	delete UpdateChunkSemaphore;
 	delete PlayerPositionSemaphore;
-	delete MapSemaphore;
+	delete ChunkMapSemaphore;
+	delete TreeMapSemaphore;
 	delete DrawDistanceSemaphore;
 }
 
 void UWorldTerrainSettings::AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor) {
-	MapSemaphore->Acquire();
+	ChunkMapSemaphore->Acquire();
 	SpawnedChunksMap.Add(ChunkCoordinates, ChunkActor);
-	MapSemaphore->Release();
+	ChunkMapSemaphore->Release();
 }
 
 AActor* UWorldTerrainSettings::GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates) {
-	MapSemaphore->Acquire();
+	ChunkMapSemaphore->Acquire();
 	// ValidateSpawnedChunksMap();
 	AActor* RemovedChunk = nullptr;
 	if (SpawnedChunksMap.Contains(ChunkCoordinates)) {
 		RemovedChunk = SpawnedChunksMap.FindAndRemoveChecked(ChunkCoordinates);
 	}
 	// ValidateSpawnedChunksMap();
-	MapSemaphore->Release();
+	ChunkMapSemaphore->Release();
 	return RemovedChunk;
 }
 
 AActor* UWorldTerrainSettings::GetNextChunkFromMap() {
-	MapSemaphore->Acquire();
+	ChunkMapSemaphore->Acquire();
 	AActor* RemovedChunk = nullptr;
 	FIntPoint keyToRemove = FIntPoint::ZeroValue;
 
@@ -56,14 +58,14 @@ AActor* UWorldTerrainSettings::GetNextChunkFromMap() {
 		// Remove the retrived chunk from the map 
 		SpawnedChunksMap.Remove(keyToRemove);
 	}
-	MapSemaphore->Release();
+	ChunkMapSemaphore->Release();
 	return RemovedChunk;
 }
 
 int UWorldTerrainSettings::GetMapSize() {
-	MapSemaphore->Acquire();
+	ChunkMapSemaphore->Acquire();
 	int MapSize = SpawnedChunksMap.Num();
-	MapSemaphore->Release();
+	ChunkMapSemaphore->Release();
 	return MapSize;
 }
 
@@ -81,9 +83,9 @@ FVector UWorldTerrainSettings::getInitialPlayerPosition() {
 }
 
 void UWorldTerrainSettings::EmptyChunkMap() {
-	MapSemaphore->Acquire();
+	ChunkMapSemaphore->Acquire();
 	SpawnedChunksMap.Empty();
-	MapSemaphore->Release();
+	ChunkMapSemaphore->Release();
 }
 
 // Get a read-only version of the map
@@ -155,12 +157,48 @@ FVoxelObjectMeshData* UWorldTerrainSettings::GetRandomFlowerMeshData() {
 	return &FlowersMeshData[FMath::RandRange(0, FlowersMeshData.Num() - 1)];
 }
 
-void UWorldTerrainSettings::AddSpawnedTrees(AActor* Tree) {
-	SpawnedTrees.Add(Tree);
+void UWorldTerrainSettings::AddSpawnedTrees(const FIntPoint& TreeWorldCoordinates, ATree* TreeActor) {
+	TreeMapSemaphore->Acquire();
+
+	// If it exists, add the new tree to the existing array
+	if (SpawnedTreesMap.Contains(TreeWorldCoordinates)) {
+		SpawnedTreesMap[TreeWorldCoordinates].Add(TreeActor);
+	} else {
+		// If not, create a new array with the new tree
+		SpawnedTreesMap.Add(TreeWorldCoordinates, TArray<ATree*>({ TreeActor }));
+	}
+	TreeMapSemaphore->Release();
 }
 
-const TArray<AActor*>& UWorldTerrainSettings::GetSpawnedTrees() {
-	return SpawnedTrees;
+const TMap<FIntPoint, TArray<ATree*>>& UWorldTerrainSettings::GetSpawnedTreesMap() const {
+	return SpawnedTreesMap;
+}
+
+TArray<ATree*> UWorldTerrainSettings::GetAndRemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates) {
+	TreeMapSemaphore->Acquire();
+	TArray<ATree*> RemovedTrees;  // Array to hold the remaining trees at the location
+
+	// Check if the map contains the coordinates
+	if (SpawnedTreesMap.Contains(TreeWorldCoordinates)) {
+		// Get the array of trees at this location
+		RemovedTrees = SpawnedTreesMap[TreeWorldCoordinates];
+
+		TArray<ATree*>& TreesAtLocation = SpawnedTreesMap[TreeWorldCoordinates];
+		SpawnedTreesMap.Remove(TreeWorldCoordinates);
+	}
+
+	TreeMapSemaphore->Release();
+	return RemovedTrees;
+}
+
+void UWorldTerrainSettings::RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates) {
+	TreeMapSemaphore->Acquire();
+
+	if (SpawnedTreesMap.Contains(TreeWorldCoordinates)) {
+		SpawnedTreesMap.Remove(TreeWorldCoordinates);
+	}
+
+	TreeMapSemaphore->Release();
 }
 
 void UWorldTerrainSettings::AddChunkToRemoveCollision(ABinaryChunk* actor) {

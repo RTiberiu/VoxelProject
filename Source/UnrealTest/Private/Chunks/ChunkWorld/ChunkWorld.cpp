@@ -143,9 +143,9 @@ void AChunkWorld::destroyCurrentWorldChunks() {
 	}
 }
 
-void AChunkWorld::SpawnTrees(FVector chunkPosition, FVector PlayerPosition) {
+void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
 	// Spawn the chunk actor deferred
-	ATree* SpawnedTreeActor = GetWorld()->SpawnActorDeferred<ATree>(Tree, FTransform(FRotator::ZeroRotator, chunkPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+	ATree* SpawnedTreeActor = GetWorld()->SpawnActorDeferred<ATree>(Tree, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 	if (SpawnedTreeActor) {
 		// Add references to BinaryChunk and pass the computed mesh data
@@ -160,19 +160,19 @@ void AChunkWorld::SpawnTrees(FVector chunkPosition, FVector PlayerPosition) {
 		float maxY = PlayerPosition.Y + WTSR->VegetationCollisionDistance;
 
 		// Check if the player is within the collision boundaries
-		bool withinCollisionDistance = (chunkPosition.X >= minX && chunkPosition.X <= maxX) &&
-			(chunkPosition.Y >= minY && chunkPosition.Y <= maxY);
+		bool withinCollisionDistance = (ChunkLocationData.ObjectPosition.X >= minX && ChunkLocationData.ObjectPosition.X <= maxX) &&
+			(ChunkLocationData.ObjectPosition.Y >= minY && ChunkLocationData.ObjectPosition.Y <= maxY);
 
 		if (withinCollisionDistance) {
 			 SpawnedTreeActor->SetTreeCollision(true);
 		}
 
 		// Finish spawning the chunk actor
-		UGameplayStatics::FinishSpawningActor(SpawnedTreeActor, FTransform(FRotator::ZeroRotator, chunkPosition));
+		UGameplayStatics::FinishSpawningActor(SpawnedTreeActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
 
 		// TODO Add the tree actor to a map so I can update the collision
 		// WTSR->AddChunkToMap(waitingMeshLocationData.ChunkWorldCoords, SpawnedChunkActor);
-		WTSR->AddSpawnedTrees(SpawnedTreeActor);
+		WTSR->AddSpawnedTrees(ChunkLocationData.ObjectWorldCoords, SpawnedTreeActor);
 
 		//UE_LOG(LogTemp, Warning, TEXT("Spawned Tree!"));
 	} else {
@@ -304,7 +304,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		FVoxelObjectLocationData treePosition;
 		CLDR->getTreeSpawnPosition(treePosition);
 
-		SpawnTrees(treePosition.ObjectPosition, PlayerPosition);
+		SpawnTrees(treePosition, PlayerPosition);
 		WTSR->TreeCount++;
 
 		// Print the tree count every 50
@@ -367,7 +367,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	}
 
 	// Destroy a chunk and remove it from the map if there is a destroy position in queue
-	FIntPoint chunkToDestroyPosition;
+	FIntPoint chunkToDestroyPosition{};
 	bool doesDestroyPositionExist = CLDR->getChunkToDestroyPosition(chunkToDestroyPosition);
 
 	// I need to check if the destroy position exists in the map, otherwise I need to push it back 
@@ -381,6 +381,35 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		}
 	}
 
+	FIntPoint treeToDestroyPosition{};
+	bool doesTreeDestroyPositionExist = CLDR->getTreeToDestroyPosition(treeToDestroyPosition);
+
+	// I need to check if the destroy position exists in the map, otherwise I need to push it back 
+	if (doesTreeDestroyPositionExist) {
+		TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(treeToDestroyPosition);
+
+		for (ATree* treeToRemove : treesToRemove) {
+			if (treeToRemove) {
+				treeToRemove->Destroy();
+			} else {
+				// Add the tree position back because the tree is not yet spawned
+				WTSR->AddSpawnedTrees(treeToDestroyPosition, treeToRemove); // TODO THIS IS A MAYBE. I SHOULD STILL FOLLOW HOW THE CHUNKS MAP IS DONE
+				CLDR->addTreeToDestroyPosition(treeToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back
+			}
+		}
+	}
+
+	/*if (CLDR->isTreeWaitingToBeDestroyed()) {
+		ATree* treeToRemove = nullptr;
+		bool returnedTree = CLDR->getTreeToDestroyPosition(treeToRemove);
+
+		if (treeToRemove) {
+			treeToRemove->Destroy();
+		}
+	}*/
+	// TODO ADD AND REMOVE NEW TREES AS THE PLAYER MOVES IN THE WORLD 
+
+	// Enabling and disabling collision for chunks and trees
 	ATree* removeCollisionTree = WTSR->GetTreeToRemoveCollision();
 	ATree* enableCollisionTree = WTSR->GetTreeToEnableCollision(); 
 	

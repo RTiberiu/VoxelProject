@@ -36,12 +36,6 @@ void ATree::SetTreeCollision(bool InHasCollision) {
 void ATree::UpdateCollision(bool InHasCollision) {
 	SetTreeCollision(InHasCollision);
 
-	// Set mesh color based on collision state
-	FColor CollisionColor = InHasCollision ? FColor::Red : FColor::White;
-	for (FColor& VertexColor : MeshData->Colors) {
-		VertexColor = CollisionColor;
-	}
-
 	if (InHasCollision) {
 		// If the tree has collision, enable it by regenerating the mesh
 		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

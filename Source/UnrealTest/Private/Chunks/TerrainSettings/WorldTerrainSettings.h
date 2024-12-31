@@ -28,7 +28,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 5 }; // 5 
+	const uint8_t DrawDistance{ 2 }; // 5 
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -127,8 +127,10 @@ public:
 	FVoxelObjectMeshData* GetRandomGrassMeshData();
 	FVoxelObjectMeshData* GetRandomFlowerMeshData();
 
-	void AddSpawnedTrees(AActor* Tree);
-	const TArray<AActor*>& GetSpawnedTrees();
+	void AddSpawnedTrees(const FIntPoint& TreeWorldCoordinates, ATree* TreeActor);
+	const TMap<FIntPoint, TArray<ATree*>>& GetSpawnedTreesMap() const;
+	TArray<ATree*> GetAndRemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
+	void RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
 
 	void AddChunkToRemoveCollision(ABinaryChunk* actor);
 	void AddTreeToRemoveCollision(ATree* actor);
@@ -158,14 +160,16 @@ private:
 
 	// Locks for critical sections
 	FairSemaphore* PlayerPositionSemaphore;
-	FairSemaphore* MapSemaphore;
+	FairSemaphore* ChunkMapSemaphore;
+	FairSemaphore* TreeMapSemaphore;
 	FairSemaphore* DrawDistanceSemaphore;
 
 	// Map to store spawned chunks with 2D coordinates as keys
 	TMap<FIntPoint, AActor*> SpawnedChunksMap;
 
 	// Array to store spawned trees
-	TArray<AActor*> SpawnedTrees;
+	TMap<FIntPoint, TArray<ATree*>> SpawnedTreesMap;
+	// TArray<AActor*> SpawnedTrees;
 
 	// Arrays to update collision for actors (chunks and trees)
 	TArray<ABinaryChunk*> RemoveCollisionChunks;

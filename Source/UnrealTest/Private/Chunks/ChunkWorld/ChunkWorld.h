@@ -87,7 +87,7 @@ private:
 	TArray<FVoxelObjectLocationData> testingThreadLocations; // TODO Delete this when done testing
 
 	// Tree implementation
-	void SpawnTrees(FVector chunkPosition, FVector PlayerPosition);
+	void SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
 	TSubclassOf<AActor> Tree;
 
 protected:
