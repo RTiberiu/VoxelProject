@@ -77,29 +77,6 @@ bool UChunkLocationData::getFlowerSpawnPosition(FVoxelObjectLocationData& OutLoc
     return flowersSpawnPositions.Dequeue(OutLocation);
 }
 
-TArray<FVoxelObjectLocationData> UChunkLocationData::getTreesAtLocation(FIntPoint worldLocation) {
-    TArray<FVoxelObjectLocationData> matchingTrees;
-    TArray<FVoxelObjectLocationData> nonMatchingTrees;
-
-    FVoxelObjectLocationData treeData;
-
-    // Process the queue and separate the matching and non-matching items.
-    while (treesSpawnPositions.Dequeue(treeData)) {
-        if (treeData.ObjectWorldCoords == worldLocation) {
-            matchingTrees.Add(treeData); // Add matching trees to the result array.
-        } else {
-            nonMatchingTrees.Add(treeData); // Store non-matching items.
-        }
-    }
-
-    // Re-enqueue the non-matching items back into the original queue.
-    for (const FVoxelObjectLocationData& nonMatchingTree : nonMatchingTrees) {
-        treesSpawnPositions.Enqueue(nonMatchingTree);
-    }
-
-    return matchingTrees;
-}
-
 void UChunkLocationData::addTreeSpawnPosition(const FVoxelObjectLocationData position) {
     treesSpawnPositions.Enqueue(position);
 }

@@ -170,8 +170,7 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 		// Finish spawning the chunk actor
 		UGameplayStatics::FinishSpawningActor(SpawnedTreeActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
 
-		// TODO Add the tree actor to a map so I can update the collision
-		// WTSR->AddChunkToMap(waitingMeshLocationData.ChunkWorldCoords, SpawnedChunkActor);
+		// TODO Add the tree actor to a map so I can update the collision and remove it later on
 		WTSR->AddSpawnedTrees(ChunkLocationData.ObjectWorldCoords, SpawnedTreeActor);
 
 		//UE_LOG(LogTemp, Warning, TEXT("Spawned Tree!"));
@@ -397,16 +396,10 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 				CLDR->addTreeToDestroyPosition(treeToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back
 			}
 		}
+
 	}
 
-	/*if (CLDR->isTreeWaitingToBeDestroyed()) {
-		ATree* treeToRemove = nullptr;
-		bool returnedTree = CLDR->getTreeToDestroyPosition(treeToRemove);
-
-		if (treeToRemove) {
-			treeToRemove->Destroy();
-		}
-	}*/
+	
 	// TODO ADD AND REMOVE NEW TREES AS THE PLAYER MOVES IN THE WORLD 
 
 	// Enabling and disabling collision for chunks and trees

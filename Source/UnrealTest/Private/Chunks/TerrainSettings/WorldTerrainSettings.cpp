@@ -167,6 +167,7 @@ void UWorldTerrainSettings::AddSpawnedTrees(const FIntPoint& TreeWorldCoordinate
 		// If not, create a new array with the new tree
 		SpawnedTreesMap.Add(TreeWorldCoordinates, TArray<ATree*>({ TreeActor }));
 	}
+
 	TreeMapSemaphore->Release();
 }
 
@@ -175,16 +176,16 @@ const TMap<FIntPoint, TArray<ATree*>>& UWorldTerrainSettings::GetSpawnedTreesMap
 }
 
 TArray<ATree*> UWorldTerrainSettings::GetAndRemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates) {
-	TreeMapSemaphore->Acquire();
 	TArray<ATree*> RemovedTrees;  // Array to hold the remaining trees at the location
+	
+	TreeMapSemaphore->Acquire();
 
 	// Check if the map contains the coordinates
 	if (SpawnedTreesMap.Contains(TreeWorldCoordinates)) {
-		// Get the array of trees at this location
-		RemovedTrees = SpawnedTreesMap[TreeWorldCoordinates];
-
-		TArray<ATree*>& TreesAtLocation = SpawnedTreesMap[TreeWorldCoordinates];
-		SpawnedTreesMap.Remove(TreeWorldCoordinates);
+		// Get and remove the array of trees at this location if it's not empty
+		if (!SpawnedTreesMap[TreeWorldCoordinates].IsEmpty()) {
+			RemovedTrees = SpawnedTreesMap.FindAndRemoveChecked(TreeWorldCoordinates);
+		}
 	}
 
 	TreeMapSemaphore->Release();

@@ -39,8 +39,6 @@ public:
     bool getGrassSpawnPosition(FVoxelObjectLocationData& OutLocation);
     bool getFlowerSpawnPosition(FVoxelObjectLocationData& OutLocation);
 
-    TArray<FVoxelObjectLocationData> getTreesAtLocation(FIntPoint worldLocation);
-
     void addTreeSpawnPosition(const FVoxelObjectLocationData position);
     void addGrassSpawnPosition(const FVoxelObjectLocationData position);
     void addFlowerSpawnPosition(const FVoxelObjectLocationData position);
