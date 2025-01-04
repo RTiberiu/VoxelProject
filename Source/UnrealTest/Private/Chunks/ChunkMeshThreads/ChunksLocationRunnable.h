@@ -36,7 +36,6 @@ private:
 	FVector PlayerPosition;
 
 	void UpdateChunks();
-	void UpdateTrees();
 	void UpdateChunkCollisions();
 	void UpdateTreeCollisions();
 

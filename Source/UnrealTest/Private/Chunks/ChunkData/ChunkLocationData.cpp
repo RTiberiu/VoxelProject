@@ -72,7 +72,8 @@ TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions(const
     TreesToSpawnSemaphore->Acquire();
     for (const FIntPoint& point : treeRadiusPoints) {
         if (treesSpawnPositions.Contains(point)) {
-            output = treesSpawnPositions.FindAndRemoveChecked(point);
+            output = treesSpawnPositions[point];
+            treesSpawnPositions.Remove(point);
             break;
         }
     }

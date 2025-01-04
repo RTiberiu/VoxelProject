@@ -25,7 +25,6 @@ uint32 ChunksLocationRunnable::Run() {
 		// Spawn new chunks
 		WTSR->UpdateChunkSemaphore->Acquire();
 		UpdateChunks();
-		UpdateTrees();
 		WTSR->UpdateChunksCollision(PlayerPosition);
 		WTSR->UpdateTreeCollisions(PlayerPosition);
 		//UpdateChunkCollisions();
@@ -57,14 +56,20 @@ void ChunksLocationRunnable::UpdateChunks() {
 
 		int lastRowX{ 0 };
 		int newRowX{ 0 };
+		int lastTreeRowX{ 0 };
+		int newTreeRowX{ 0 };
 		if (PlayerChunkCoords.X > InitialChunkCoords.X) {
 			// Get the first row by adding the draw distance to the player's X
 			lastRowX = PlayerChunkCoords.X - WTSR->DrawDistance;
 			newRowX = PlayerChunkCoords.X + WTSR->DrawDistance;
+			lastTreeRowX = PlayerChunkCoords.X - WTSR->TreeSpawnRadius;
+			newTreeRowX = PlayerChunkCoords.X + WTSR->TreeSpawnRadius;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial X
 			lastRowX = InitialChunkCoords.X + WTSR->DrawDistance;
 			newRowX = InitialChunkCoords.X - WTSR->DrawDistance;
+			lastTreeRowX = PlayerChunkCoords.X + WTSR->TreeSpawnRadius;
+			newTreeRowX = PlayerChunkCoords.X - WTSR->TreeSpawnRadius;
 		}
 
 		// Add new chunks and remove old chunks based on the player's new X position
@@ -76,12 +81,6 @@ void ChunksLocationRunnable::UpdateChunks() {
 			FIntPoint oldChunkCoords = FIntPoint(lastRowX, z);
 
 			CLDR->addChunksToDestroyPosition(oldChunkCoords);
-
-			// At the old chunk coordinates, add any tree actors to a destroy list
-			CLDR->addTreeToDestroyPosition(oldChunkCoords);
-			
-			// Update tree spawn radius
-			WTSR->RemovePlayer2DTreeRadiusPoint(oldChunkCoords);
 			
 			// Adding new row 
 			FIntPoint newChunkCoords = FIntPoint(newRowX, z);
@@ -90,8 +89,18 @@ void ChunksLocationRunnable::UpdateChunks() {
 			CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
 
 			// Add world coordinates for tree spawning if is inside the tree radius
-			if (WTSR->isPointWithinTreeRadiusRange(PlayerChunkCoords)) {
-				WTSR->AddPlayer2DTreeRadiusPoint(newChunkCoords);
+			// TODO I MIGHT HAVE TO JUST CHECK FOR THE CURRENT AXIS, NOT BOTH
+			// TODO CHECK IF I SHOULD PASS PlayerChunkCoords, as this might be incorrect
+			if (WTSR->isPointWithinTreeRadiusRange(PlayerChunkCoords)) { 
+				// At the old chunk coordinates, add any tree actors to a destroy list
+				FIntPoint oldTreeCoords = FIntPoint(lastTreeRowX, z);
+				FIntPoint newTreeCoords = FIntPoint(newTreeRowX, z);
+
+				CLDR->addTreeToDestroyPosition(oldTreeCoords);
+			
+				// Update tree spawn radius
+				WTSR->RemovePlayer2DTreeRadiusPoint(oldTreeCoords);
+				WTSR->AddPlayer2DTreeRadiusPoint(newTreeCoords);
 			}
 		}
 	}
@@ -105,14 +114,20 @@ void ChunksLocationRunnable::UpdateChunks() {
 		// Add new chunks and remove old chunks based on the player's new Y position
 		int lastRowZ{ 0 };
 		int newRowZ{ 0 };
+		int lastTreeRowZ{ 0 };
+		int newTreeRowZ{ 0 };
 		if (PlayerChunkCoords.Y > InitialChunkCoords.Y) {
 			// Get the first row by adding the draw distance to the player's Z
 			lastRowZ = InitialChunkCoords.Y - WTSR->DrawDistance;
 			newRowZ = InitialChunkCoords.Y + WTSR->DrawDistance;
+			lastTreeRowZ = PlayerChunkCoords.Y - WTSR->TreeSpawnRadius;
+			newTreeRowZ = PlayerChunkCoords.Y + WTSR->TreeSpawnRadius;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial Z
 			lastRowZ = PlayerChunkCoords.Y + WTSR->DrawDistance;
 			newRowZ = PlayerChunkCoords.Y - WTSR->DrawDistance;
+			lastTreeRowZ = PlayerChunkCoords.Y + WTSR->TreeSpawnRadius;
+			newTreeRowZ = PlayerChunkCoords.Y - WTSR->TreeSpawnRadius;
 		}
 
 		const int firstIndexChunkX = PlayerChunkCoords.X - WTSR->DrawDistance + 1;
@@ -123,39 +138,32 @@ void ChunksLocationRunnable::UpdateChunks() {
 			FIntPoint oldChunkCoords = FIntPoint(x, lastRowZ);
 			CLDR->addChunksToDestroyPosition(oldChunkCoords);
 
-			// At the old chunk coordinates, add any tree actors to a destroy list
-			CLDR->addTreeToDestroyPosition(oldChunkCoords);
-
-			// Update tree spawn radius
-			WTSR->RemovePlayer2DTreeRadiusPoint(oldChunkCoords);
-
 			FIntPoint newChunkCoords = FIntPoint(x, newRowZ);
 			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, newRowZ * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
 			CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
 
 			// Add world coordinates for tree spawning if is inside the tree radius
-			if (WTSR->isPointWithinTreeRadiusRange(PlayerChunkCoords)) { // TODO THIS SHOULD BE MOVED TO A DIFFERENT METHOD, NOT INSIDE UPDATECHUNKS()
-				WTSR->AddPlayer2DTreeRadiusPoint(newChunkCoords);
+			// TODO I MIGHT HAVE TO JUST CHECK FOR THE CURRENT AXIS, NOT BOTH
+			// TODO CHECK IF I SHOULD PASS PlayerChunkCoords, as this might be incorrect
+			if (WTSR->isPointWithinTreeRadiusRange(PlayerChunkCoords)) {
+				FIntPoint oldTreeCoords = FIntPoint(x, lastTreeRowZ);
+				FIntPoint newTreeCoords = FIntPoint(x, newTreeRowZ);
+
+				// At the old chunk coordinates, add any tree actors to a destroy list
+				CLDR->addTreeToDestroyPosition(oldTreeCoords);
+
+				// Update tree spawn radius
+				WTSR->RemovePlayer2DTreeRadiusPoint(oldTreeCoords);
+				WTSR->AddPlayer2DTreeRadiusPoint(newTreeCoords);
 			}
 		}
+
 	}
 
 	// Update the initial position for the next frame
 	WTSR->updateInitialPlayerPosition(PlayerPosition);
 }
-
-void ChunksLocationRunnable::UpdateTrees() {
-	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
-
-	// TODO THIS FUNCTION NEEDS TO BE RETHINKED. IT MIGHT NOT WORK AS I INTEDEND IT TO
-	// Validate it with the call of isTreeWaitingToBeSpawned() in ChunkWorld.cpp
-
-	if (WTSR->isPointWithinTreeRadiusRange(PlayerChunkCoords)) {
-		WTSR->AddPlayer2DTreeRadiusPoint(PlayerChunkCoords);
-	}
-}
-
 
 /*
 * Get read-only items of SpawnedChunksMap and iterate to see if chunks are outside or inside of

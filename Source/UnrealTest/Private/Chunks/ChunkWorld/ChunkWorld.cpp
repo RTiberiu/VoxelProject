@@ -315,6 +315,19 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		// Get all tree positions that are within the tree spawn radius around the player
 		TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositions(tempTreeRadiusPoints);
 
+		// TESTING - Validating that no trees have the same vector
+		TSet<FVector> uniquePositions;
+		bool hasDuplicate = false;
+
+		for (const FVoxelObjectLocationData& treePosition : treeSpawnPositions) {
+			if (uniquePositions.Contains(treePosition.ObjectPosition)) {
+				hasDuplicate = true;
+				UE_LOG(LogTemp, Warning, TEXT("Duplicate position found: %s"), *treePosition.ObjectPosition.ToString());
+			} else {
+				uniquePositions.Add(treePosition.ObjectPosition);
+			}
+		}
+
 		// Spawn all the trees that are in the returned spawn radius array
 		for (const FVoxelObjectLocationData& treePosition : treeSpawnPositions) {
 			SpawnTrees(treePosition, PlayerPosition);
