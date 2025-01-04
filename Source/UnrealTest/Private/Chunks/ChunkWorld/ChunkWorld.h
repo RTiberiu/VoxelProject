@@ -90,6 +90,8 @@ private:
 	void SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
 	TSubclassOf<AActor> Tree;
 
+	bool isPointWithinTreeRadiusRange(const FIntPoint& point);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

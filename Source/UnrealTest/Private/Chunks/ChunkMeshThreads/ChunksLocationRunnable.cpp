@@ -25,8 +25,10 @@ uint32 ChunksLocationRunnable::Run() {
 		// Spawn new chunks
 		WTSR->UpdateChunkSemaphore->Acquire();
 		UpdateChunks();
-		UpdateChunkCollisions();
-		UpdateTreeCollisions();
+		UpdateTrees();
+		WTSR->UpdateChunksCollision(PlayerPosition);
+		WTSR->UpdateTreeCollisions(PlayerPosition);
+		//UpdateChunkCollisions();
 		WTSR->UpdateChunkSemaphore->Release();
 
 		isTaskComplete = true;
@@ -78,11 +80,19 @@ void ChunksLocationRunnable::UpdateChunks() {
 			// At the old chunk coordinates, add any tree actors to a destroy list
 			CLDR->addTreeToDestroyPosition(oldChunkCoords);
 			
+			// Update tree spawn radius
+			WTSR->RemovePlayer2DTreeRadiusPoint(oldChunkCoords);
+			
 			// Adding new row 
 			FIntPoint newChunkCoords = FIntPoint(newRowX, z);
 			FVector ChunkPosition = FVector(newRowX * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
 			CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
+
+			// Add world coordinates for tree spawning if is inside the tree radius
+			if (WTSR->isPointWithinTreeRadiusRange(PlayerChunkCoords)) {
+				WTSR->AddPlayer2DTreeRadiusPoint(newChunkCoords);
+			}
 		}
 	}
 
@@ -116,15 +126,34 @@ void ChunksLocationRunnable::UpdateChunks() {
 			// At the old chunk coordinates, add any tree actors to a destroy list
 			CLDR->addTreeToDestroyPosition(oldChunkCoords);
 
+			// Update tree spawn radius
+			WTSR->RemovePlayer2DTreeRadiusPoint(oldChunkCoords);
+
 			FIntPoint newChunkCoords = FIntPoint(x, newRowZ);
 			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, newRowZ * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
 			CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
+
+			// Add world coordinates for tree spawning if is inside the tree radius
+			if (WTSR->isPointWithinTreeRadiusRange(PlayerChunkCoords)) { // TODO THIS SHOULD BE MOVED TO A DIFFERENT METHOD, NOT INSIDE UPDATECHUNKS()
+				WTSR->AddPlayer2DTreeRadiusPoint(newChunkCoords);
+			}
 		}
 	}
 
 	// Update the initial position for the next frame
 	WTSR->updateInitialPlayerPosition(PlayerPosition);
+}
+
+void ChunksLocationRunnable::UpdateTrees() {
+	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
+
+	// TODO THIS FUNCTION NEEDS TO BE RETHINKED. IT MIGHT NOT WORK AS I INTEDEND IT TO
+	// Validate it with the call of isTreeWaitingToBeSpawned() in ChunkWorld.cpp
+
+	if (WTSR->isPointWithinTreeRadiusRange(PlayerChunkCoords)) {
+		WTSR->AddPlayer2DTreeRadiusPoint(PlayerChunkCoords);
+	}
 }
 
 
@@ -162,7 +191,6 @@ void ChunksLocationRunnable::UpdateChunkCollisions() {
 			}
 		}
 	}
-
 }
 
 void ChunksLocationRunnable::UpdateTreeCollisions() {

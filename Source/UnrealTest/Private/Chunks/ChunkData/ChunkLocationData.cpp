@@ -3,7 +3,8 @@
 UChunkLocationData::UChunkLocationData() : 
     ChunksToSpawnSemaphore(new FairSemaphore(1)),
     ChunksToDestroySemaphore(new FairSemaphore(1)),
-    MeshDataSemaphore(new FairSemaphore(1)) {
+    MeshDataSemaphore(new FairSemaphore(1)),
+    TreesToSpawnSemaphore(new FairSemaphore(1)) {
 }
 
 UChunkLocationData::~UChunkLocationData() {
@@ -11,6 +12,7 @@ UChunkLocationData::~UChunkLocationData() {
     delete ChunksToSpawnSemaphore;
     delete ChunksToDestroySemaphore;
     delete MeshDataSemaphore;
+    delete TreesToSpawnSemaphore;
 }
 
 bool UChunkLocationData::getChunkToSpawnPosition(FVoxelObjectLocationData& OutLocation) {
@@ -65,8 +67,18 @@ void UChunkLocationData::emptyPositionQueues() {
     chunksToDestroyPositions.Empty();
 }
 
-bool UChunkLocationData::getTreeSpawnPosition(FVoxelObjectLocationData& OutLocation) {
-    return treesSpawnPositions.Dequeue(OutLocation);
+TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions(const TArray<FIntPoint>& treeRadiusPoints) {
+    TArray<FVoxelObjectLocationData> output;
+    TreesToSpawnSemaphore->Acquire();
+    for (const FIntPoint& point : treeRadiusPoints) {
+        if (treesSpawnPositions.Contains(point)) {
+            output = treesSpawnPositions.FindAndRemoveChecked(point);
+            break;
+        }
+    }
+    TreesToSpawnSemaphore->Release();
+
+    return output;
 }
 
 bool UChunkLocationData::getGrassSpawnPosition(FVoxelObjectLocationData& OutLocation) {
@@ -78,7 +90,18 @@ bool UChunkLocationData::getFlowerSpawnPosition(FVoxelObjectLocationData& OutLoc
 }
 
 void UChunkLocationData::addTreeSpawnPosition(const FVoxelObjectLocationData position) {
-    treesSpawnPositions.Enqueue(position);
+    TreesToSpawnSemaphore->Acquire();
+
+    // If it exists, add the new tree position to the existing array
+    if (treesSpawnPositions.Contains(position.ObjectWorldCoords)) {
+        treesSpawnPositions[position.ObjectWorldCoords].Add(position);
+    }
+    else {
+        // If not, create a new array with the new tree position
+        treesSpawnPositions.Add(position.ObjectWorldCoords, TArray<FVoxelObjectLocationData>({ position }));
+    }
+
+    TreesToSpawnSemaphore->Release();
 }
 
 void UChunkLocationData::addGrassSpawnPosition(const FVoxelObjectLocationData position) {
@@ -89,9 +112,20 @@ void UChunkLocationData::addFlowerSpawnPosition(const FVoxelObjectLocationData p
     flowersSpawnPositions.Enqueue(position);
 }
 
-bool UChunkLocationData::isTreeWaitingToBeSpawned() {
-    bool isTreeWaiting = !treesSpawnPositions.IsEmpty();
-    return isTreeWaiting;
+bool UChunkLocationData::isTreeWaitingToBeSpawned(const TArray<FIntPoint>& treeRadiusPoints) {
+    TreesToSpawnSemaphore->Acquire();
+
+    bool output = false;
+    for (const FIntPoint& point : treeRadiusPoints) {
+        if (treesSpawnPositions.Contains(point)) {
+            output = true;
+            break;
+        }
+    }
+    TreesToSpawnSemaphore->Release();
+
+    return output;
+
 }
 
 bool UChunkLocationData::isGrassWaitingToBeSpawned() {

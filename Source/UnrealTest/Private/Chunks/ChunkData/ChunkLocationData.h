@@ -35,7 +35,7 @@ public:
     
     void emptyPositionQueues();
 
-    bool getTreeSpawnPosition(FVoxelObjectLocationData& OutLocation);
+    TArray<FVoxelObjectLocationData> getTreeSpawnPositions(const TArray<FIntPoint>& treeRadiusPoints);
     bool getGrassSpawnPosition(FVoxelObjectLocationData& OutLocation);
     bool getFlowerSpawnPosition(FVoxelObjectLocationData& OutLocation);
 
@@ -43,7 +43,7 @@ public:
     void addGrassSpawnPosition(const FVoxelObjectLocationData position);
     void addFlowerSpawnPosition(const FVoxelObjectLocationData position);
 
-    bool isTreeWaitingToBeSpawned();
+    bool isTreeWaitingToBeSpawned(const TArray<FIntPoint>& treeRadiusPoints);
     bool isGrassWaitingToBeSpawned();
     bool isFlowerWaitingToBeSpawned();
 
@@ -68,7 +68,9 @@ private:
     TQueue<FVoxelObjectMeshData> computedMeshData;
 
     // Queue for storing vegetation spawn points data
-    TQueue<FVoxelObjectLocationData> treesSpawnPositions;
+    FairSemaphore* TreesToSpawnSemaphore;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>> treesSpawnPositions;
+
     TQueue<FVoxelObjectLocationData> grassSpawnPositions;
     TQueue<FVoxelObjectLocationData> flowersSpawnPositions;
 

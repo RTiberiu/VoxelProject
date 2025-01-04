@@ -28,7 +28,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m)
-	const uint8_t DrawDistance{ 2 }; // 5 
+	const uint8_t DrawDistance{ 5 }; // 5 
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -53,6 +53,10 @@ public:
 	FVector getInitialPlayerPosition();
 	void EmptyChunkMap();
 	const TMap<FIntPoint, AActor*>& GetSpawnedChunksMap() const;
+
+	void UpdateChunksCollision(FVector& PlayerPosition);
+
+	void UpdateTreeCollisions(FVector& PlayerPosition);
 
 	FairSemaphore* UpdateChunkSemaphore;
 
@@ -99,6 +103,8 @@ public:
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };
+	const int TreeSpawnRadius{ DrawDistance / 2};
+	const int TreeChunkRadius{ UnrealScale * TreeSpawnRadius * chunkSizePadding };
 	int TreeCount{ 0 };
 	const uint8_t TreeScale{ 15 }; // this changes the voxel size (100 is 1m)
 	const uint8_t TreeCountMax{ 40 };
@@ -141,6 +147,11 @@ public:
 	ABinaryChunk* GetChunkToEnableCollision();
 	ATree* GetTreeToEnableCollision();
 
+	void AddPlayer2DTreeRadiusPoint(FIntPoint point);
+	void RemovePlayer2DTreeRadiusPoint(FIntPoint& point);
+	TArray<FIntPoint> GetPlayer2DTreeRadiusPoints();
+
+	bool isPointWithinTreeRadiusRange(const FIntPoint& point);
 
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;
@@ -163,6 +174,11 @@ private:
 	FairSemaphore* ChunkMapSemaphore;
 	FairSemaphore* TreeMapSemaphore;
 	FairSemaphore* DrawDistanceSemaphore;
+	FairSemaphore* AddCollisionTreesSemaphore;
+	FairSemaphore* RemoveCollisionTreesSemaphore;
+	FairSemaphore* AddCollisionChunksSemaphore;
+	FairSemaphore* RemoveCollisionChunksSemaphore;
+	FairSemaphore* Player2DTreeRadiusSemaphore;
 
 	// Map to store spawned chunks with 2D coordinates as keys
 	TMap<FIntPoint, AActor*> SpawnedChunksMap;
@@ -176,6 +192,8 @@ private:
 	TArray<ATree*> RemoveCollisionTrees;
 	TArray<ABinaryChunk*> AddCollisionChunks;
 	TArray<ATree*> AddCollisionTrees;
+
+	TArray<FIntPoint> Player2DTreeRadius;
 
 	void initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise);
 

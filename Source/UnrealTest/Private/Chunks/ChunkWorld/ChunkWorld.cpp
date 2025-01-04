@@ -53,6 +53,9 @@ void AChunkWorld::spawnInitialWorld() {
 	FIntPoint ChunkWorldCoords = FIntPoint(0, 0);
 	CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
+	// Add points for tree radius 
+	WTSR->AddPlayer2DTreeRadiusPoint(ChunkWorldCoords);
+
 	// Add chunk positions to spawn by going in a spiral from origin position
 	std::set<std::pair<int, int>> avoidPosition = { {0,0} };
 	int currentSpiralRing = 1;
@@ -72,6 +75,11 @@ void AChunkWorld::spawnInitialWorld() {
 				ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 				ChunkWorldCoords = FIntPoint(x, z);
 				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
+
+				// Add world coordinates for tree spawning if is inside the tree radius
+				if (WTSR->isPointWithinTreeRadiusRange(ChunkWorldCoords)) {
+					WTSR->AddPlayer2DTreeRadiusPoint(ChunkWorldCoords);
+				}
 
 				avoidPosition.insert(currentPair);
 			}
@@ -178,6 +186,8 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Tree Actor!"));
 	}
 }
+
+
 
 // Called when the game starts or when spawned
 void AChunkWorld::BeginPlay() {
@@ -298,17 +308,22 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		isMeshTaskRunning.AtomicSet(false);
 	}
 
+	const TArray<FIntPoint> tempTreeRadiusPoints = WTSR->GetPlayer2DTreeRadiusPoints();
+
 	// Add trees to the chunk
-	if (CLDR->isTreeWaitingToBeSpawned()) {
-		FVoxelObjectLocationData treePosition;
-		CLDR->getTreeSpawnPosition(treePosition);
+	if (CLDR->isTreeWaitingToBeSpawned(tempTreeRadiusPoints)) {
+		// Get all tree positions that are within the tree spawn radius around the player
+		TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositions(tempTreeRadiusPoints);
 
-		SpawnTrees(treePosition, PlayerPosition);
-		WTSR->TreeCount++;
+		// Spawn all the trees that are in the returned spawn radius array
+		for (const FVoxelObjectLocationData& treePosition : treeSpawnPositions) {
+			SpawnTrees(treePosition, PlayerPosition);
+			WTSR->TreeCount++;
 
-		// Print the tree count every 50
-		if (WTSR->TreeCount % 50 == 0) {
-			UE_LOG(LogTemp, Log, TEXT("Tree count: %d"), WTSR->TreeCount);
+			// Print the tree count every 50
+			if (WTSR->TreeCount % 50 == 0) {
+				UE_LOG(LogTemp, Log, TEXT("Tree count: %d"), WTSR->TreeCount);
+			}
 		}
 	}
 
@@ -390,6 +405,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		for (ATree* treeToRemove : treesToRemove) {
 			if (treeToRemove) {
 				treeToRemove->Destroy();
+				WTSR->TreeCount--;
 			} else {
 				// Add the tree position back because the tree is not yet spawned
 				WTSR->AddSpawnedTrees(treeToDestroyPosition, treeToRemove); // TODO THIS IS A MAYBE. I SHOULD STILL FOLLOW HOW THE CHUNKS MAP IS DONE

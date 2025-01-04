@@ -6,14 +6,19 @@
 #include "..\..\Utils\Semaphore\FairSemaphore.h"
 
 
-UWorldTerrainSettings::UWorldTerrainSettings() : 
+UWorldTerrainSettings::UWorldTerrainSettings() :
 	UpdateChunkSemaphore(new FairSemaphore(1)),
 	PlayerPositionSemaphore(new FairSemaphore(1)),
 	ChunkMapSemaphore(new FairSemaphore(1)),
 	TreeMapSemaphore(new FairSemaphore(1)),
-	DrawDistanceSemaphore(new FairSemaphore(1)) {
+	DrawDistanceSemaphore(new FairSemaphore(1)),
+	AddCollisionTreesSemaphore(new FairSemaphore(1)),
+	RemoveCollisionTreesSemaphore(new FairSemaphore(1)),
+	AddCollisionChunksSemaphore(new FairSemaphore(1)),
+	RemoveCollisionChunksSemaphore(new FairSemaphore(1)),
+	Player2DTreeRadiusSemaphore(new FairSemaphore(1)) {
 	// Reserve memory for double the draw distance for X and Z 
-	SpawnedChunksMap.Reserve(DrawDistance * DrawDistance * 2); 
+	SpawnedChunksMap.Reserve(DrawDistance * DrawDistance * 2);
 }
 
 UWorldTerrainSettings::~UWorldTerrainSettings() {
@@ -23,6 +28,12 @@ UWorldTerrainSettings::~UWorldTerrainSettings() {
 	delete ChunkMapSemaphore;
 	delete TreeMapSemaphore;
 	delete DrawDistanceSemaphore;
+
+	delete AddCollisionTreesSemaphore;
+	delete RemoveCollisionTreesSemaphore;
+	delete AddCollisionChunksSemaphore;
+	delete RemoveCollisionChunksSemaphore;
+	delete Player2DTreeRadiusSemaphore;
 }
 
 void UWorldTerrainSettings::AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor) {
@@ -53,7 +64,7 @@ AActor* UWorldTerrainSettings::GetNextChunkFromMap() {
 		for (TPair<FIntPoint, AActor*>& Elem : SpawnedChunksMap) {
 			RemovedChunk = Elem.Value;
 			keyToRemove = Elem.Key;
-			break; 
+			break;
 		}
 		// Remove the retrived chunk from the map 
 		SpawnedChunksMap.Remove(keyToRemove);
@@ -91,6 +102,91 @@ void UWorldTerrainSettings::EmptyChunkMap() {
 // Get a read-only version of the map
 const TMap<FIntPoint, AActor*>& UWorldTerrainSettings::GetSpawnedChunksMap() const {
 	return SpawnedChunksMap;
+}
+
+void UWorldTerrainSettings::UpdateChunksCollision(FVector& PlayerPosition) {
+	ChunkMapSemaphore->Acquire();
+
+	for (const TPair<FIntPoint, AActor*>& ChunkPair : SpawnedChunksMap) {
+		ABinaryChunk* ChunkActor = Cast<ABinaryChunk>(ChunkPair.Value);
+
+		if (ChunkActor) {
+			const FVector ChunkPosition = ChunkActor->GetActorLocation();
+
+			// Define the boundaries for the collision check
+			float minX = PlayerPosition.X - CollisionDistance;
+			float maxX = PlayerPosition.X + CollisionDistance;
+			float minY = PlayerPosition.Y - CollisionDistance;
+			float maxY = PlayerPosition.Y + CollisionDistance;
+
+			// Check if the player is within the collision boundaries
+			bool withinCollisionDistance = (ChunkPosition.X >= minX && ChunkPosition.X <= maxX) &&
+				(ChunkPosition.Y >= minY && ChunkPosition.Y <= maxY);
+
+			// Update collision state based on proximity
+			if (withinCollisionDistance) {
+				if (!ChunkActor->HasCollision()) {
+					AddCollisionChunksSemaphore->Acquire();
+					AddCollisionChunks.Add(ChunkActor);
+					AddCollisionChunksSemaphore->Release();
+
+				}
+			}
+			else {
+				if (ChunkActor->HasCollision()) {
+					RemoveCollisionChunksSemaphore->Acquire();
+					RemoveCollisionChunks.Add(ChunkActor);
+					RemoveCollisionChunksSemaphore->Release();
+				}
+			}
+		}
+	}
+
+	ChunkMapSemaphore->Release();
+}
+
+void UWorldTerrainSettings::UpdateTreeCollisions(FVector& PlayerPosition) {
+	TreeMapSemaphore->Acquire();
+
+	const TMap<FIntPoint, TArray<ATree*>> SpawnedTreesMapTemp = SpawnedTreesMap;
+
+	TreeMapSemaphore->Release(); // TODO THIS MIGHT BREAK, SINCE THE TREE ACTOR MIGHT NOT EXIST WHEN I TRY TO UPDATE IT
+
+	for (const TPair<FIntPoint, TArray<ATree*>>& treesAtLocation : SpawnedTreesMapTemp) {
+		// Iterate through each tree in the array for this specific location
+		for (ATree* tree : treesAtLocation.Value) {
+			if (tree) {
+				const FVector ChunkPosition = tree->GetActorLocation();
+
+				// Define the boundaries for the collision check
+				float minX = PlayerPosition.X - VegetationCollisionDistance;
+				float maxX = PlayerPosition.X + VegetationCollisionDistance;
+				float minY = PlayerPosition.Y - VegetationCollisionDistance;
+				float maxY = PlayerPosition.Y + VegetationCollisionDistance;
+
+				// Check if the player is within the collision boundaries
+				bool withinCollisionDistance = (ChunkPosition.X >= minX && ChunkPosition.X <= maxX) &&
+					(ChunkPosition.Y >= minY && ChunkPosition.Y <= maxY);
+
+				// Update collision state based on proximity
+				if (withinCollisionDistance) {
+					if (!tree->HasCollision()) {
+						AddCollisionTreesSemaphore->Acquire();
+						AddCollisionTrees.Add(tree);
+						AddCollisionTreesSemaphore->Release();
+					}
+				}
+				else {
+					if (tree->HasCollision()) {
+						RemoveCollisionTreesSemaphore->Acquire();
+						RemoveCollisionTrees.Add(tree);
+						RemoveCollisionTreesSemaphore->Release();
+					}
+				}
+			}
+		}
+	}
+
 }
 
 bool UWorldTerrainSettings::isActorPresentInMap(AActor* actor) {
@@ -163,7 +259,8 @@ void UWorldTerrainSettings::AddSpawnedTrees(const FIntPoint& TreeWorldCoordinate
 	// If it exists, add the new tree to the existing array
 	if (SpawnedTreesMap.Contains(TreeWorldCoordinates)) {
 		SpawnedTreesMap[TreeWorldCoordinates].Add(TreeActor);
-	} else {
+	}
+	else {
 		// If not, create a new array with the new tree
 		SpawnedTreesMap.Add(TreeWorldCoordinates, TArray<ATree*>({ TreeActor }));
 	}
@@ -177,7 +274,7 @@ const TMap<FIntPoint, TArray<ATree*>>& UWorldTerrainSettings::GetSpawnedTreesMap
 
 TArray<ATree*> UWorldTerrainSettings::GetAndRemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates) {
 	TArray<ATree*> RemovedTrees;  // Array to hold the remaining trees at the location
-	
+
 	TreeMapSemaphore->Acquire();
 
 	// Check if the map contains the coordinates
@@ -203,19 +300,27 @@ void UWorldTerrainSettings::RemoveTreeFromMap(const FIntPoint& TreeWorldCoordina
 }
 
 void UWorldTerrainSettings::AddChunkToRemoveCollision(ABinaryChunk* actor) {
+	RemoveCollisionChunksSemaphore->Acquire();
 	RemoveCollisionChunks.Add(actor);
+	RemoveCollisionChunksSemaphore->Release();
 }
 
 void UWorldTerrainSettings::AddTreeToRemoveCollision(ATree* actor) {
+	RemoveCollisionTreesSemaphore->Acquire();
 	RemoveCollisionTrees.Add(actor);
+	RemoveCollisionTreesSemaphore->Release();
 }
 
 void UWorldTerrainSettings::AddChunkToEnableCollision(ABinaryChunk* actor) {
+	AddCollisionChunksSemaphore->Acquire();
 	AddCollisionChunks.Add(actor);
+	AddCollisionChunksSemaphore->Release();
 }
 
 void UWorldTerrainSettings::AddTreeToEnableCollision(ATree* actor) {
+	AddCollisionTreesSemaphore->Acquire();
 	AddCollisionTrees.Add(actor);
+	AddCollisionTreesSemaphore->Release();
 }
 
 ABinaryChunk* UWorldTerrainSettings::GetChunkToRemoveCollision() {
@@ -262,6 +367,31 @@ ATree* UWorldTerrainSettings::GetTreeToEnableCollision() {
 	return nullptr;
 }
 
+void UWorldTerrainSettings::AddPlayer2DTreeRadiusPoint(FIntPoint point) {
+	Player2DTreeRadiusSemaphore->Acquire();
+	Player2DTreeRadius.Add(point);
+	Player2DTreeRadiusSemaphore->Release();
+
+}
+
+void UWorldTerrainSettings::RemovePlayer2DTreeRadiusPoint(FIntPoint& point) {
+	Player2DTreeRadiusSemaphore->Acquire();
+	Player2DTreeRadius.Remove(point);
+	Player2DTreeRadiusSemaphore->Release();
+}
+
+TArray<FIntPoint> UWorldTerrainSettings::GetPlayer2DTreeRadiusPoints() {
+	Player2DTreeRadiusSemaphore->Acquire();
+	TArray<FIntPoint> tempTreeRadiusPoints = Player2DTreeRadius;
+	Player2DTreeRadiusSemaphore->Release();
+	return tempTreeRadiusPoints;
+}
+
+bool UWorldTerrainSettings::isPointWithinTreeRadiusRange(const FIntPoint& point) {
+	bool withinTreeSpawnRadiusX = point.X <= TreeSpawnRadius && point.X >= -TreeSpawnRadius;
+	bool withinTreeSpawnRadiusZ = point.Y <= TreeSpawnRadius && point.Y >= -TreeSpawnRadius;
+	return withinTreeSpawnRadiusX && withinTreeSpawnRadiusZ;
+}
 
 // Testing method that checks for duplicated Chunk (AActor) pointers  in SpawnChunkMap
 void UWorldTerrainSettings::CheckForDuplicateActorPointers() {
@@ -295,7 +425,8 @@ void UWorldTerrainSettings::CheckNumberOfElements() {
 	if (SpawnedChunksMap.Num() < 100) {
 		printMapElements("CheckNumberOfElements(): ");
 		UE_LOG(LogTemp, Error, TEXT("Map has less than 100 items!: Map size: %d"), SpawnedChunksMap.Num());
-	} else if (SpawnedChunksMap.Num() > 101) {
+	}
+	else if (SpawnedChunksMap.Num() > 101) {
 		printMapElements("CheckNumberOfElements(): ");
 		UE_LOG(LogTemp, Error, TEXT("Map has more than 100 items!: Map size: %d"), SpawnedChunksMap.Num());
 	}
