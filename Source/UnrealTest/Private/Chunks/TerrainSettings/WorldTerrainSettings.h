@@ -85,6 +85,11 @@ public:
 		FColor(45, 41, 32), FColor(48, 44, 35), FColor(79, 69, 55), FColor(105, 87, 59), FColor(143, 118, 80), FColor(113, 125, 73), FColor(109, 120, 67), FColor(98, 110, 59), FColor(88, 99, 49), FColor(78, 89, 39), FColor(53, 60, 29), FColor(41, 48, 25), FColor(36, 43, 20), FColor(63, 63, 63), FColor(73, 73, 73), FColor(89, 89, 89), FColor(99, 99, 94), FColor(140, 140, 140), FColor(230, 225, 210), FColor(255, 251, 233)
 	};
 
+	const int GrassColorStartIndex = 5;
+	const int GrassColorEndIndex = 9;
+	const int LayerHeight = 10;
+	const int ColorLayers = 20;
+
 	TArray<FColor> TreeTrunkColorArray = {
 		FColor(46, 35, 77), FColor(47, 36, 76), FColor(47, 38, 75), FColor(48, 39, 73), FColor(49, 40, 72), FColor(49, 41, 71), FColor(50, 42, 70), FColor(50, 43, 69)
 	};
@@ -97,7 +102,7 @@ public:
 
 	// Vegetation settings
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
-	const float TreeSpawnChance{ 0.005f };
+	const float TreeSpawnChance{ 0.002f };
 	const float FlowerSpawnChance{ 0.04f };
 	const float GrassSpawnChance{ 0.04f };
 
@@ -147,12 +152,6 @@ public:
 	ABinaryChunk* GetChunkToEnableCollision();
 	ATree* GetTreeToEnableCollision();
 
-	void AddPlayer2DTreeRadiusPoint(FIntPoint point);
-	void RemovePlayer2DTreeRadiusPoint(FIntPoint& point);
-	TArray<FIntPoint> GetPlayer2DTreeRadiusPoints();
-
-	bool isPointWithinTreeRadiusRange(const FIntPoint& point);
-
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;
 	APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
@@ -160,6 +159,7 @@ private:
 	void CheckForDuplicateActorPointers();
 	void CheckNumberOfElements();
 	void CheckIfActorIsNullOrPendingKill();
+	void CheckForDuplicateWorldCoordinates();
 
 	// Vegetation mesh data 
 	TArray<FVoxelObjectMeshData> TreesMeshData;
@@ -178,22 +178,18 @@ private:
 	FairSemaphore* RemoveCollisionTreesSemaphore;
 	FairSemaphore* AddCollisionChunksSemaphore;
 	FairSemaphore* RemoveCollisionChunksSemaphore;
-	FairSemaphore* Player2DTreeRadiusSemaphore;
 
 	// Map to store spawned chunks with 2D coordinates as keys
 	TMap<FIntPoint, AActor*> SpawnedChunksMap;
 
 	// Array to store spawned trees
 	TMap<FIntPoint, TArray<ATree*>> SpawnedTreesMap;
-	// TArray<AActor*> SpawnedTrees;
 
 	// Arrays to update collision for actors (chunks and trees)
 	TArray<ABinaryChunk*> RemoveCollisionChunks;
 	TArray<ATree*> RemoveCollisionTrees;
 	TArray<ABinaryChunk*> AddCollisionChunks;
 	TArray<ATree*> AddCollisionTrees;
-
-	TArray<FIntPoint> Player2DTreeRadius;
 
 	void initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise);
 

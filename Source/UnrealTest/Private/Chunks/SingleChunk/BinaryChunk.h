@@ -29,6 +29,7 @@ public:
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
 	void SetComputedMeshData(FVoxelObjectMeshData InMeshData);
 	void SetChunkCollision(bool InHasCollision);
+	void SetChunkLocation(FIntPoint InChunkLocation);
 
 	bool HasCollision();
 	void UpdateCollision(bool InHasCollision);
@@ -41,7 +42,10 @@ private:
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
 
 	FVoxelObjectMeshData meshData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chunk Settings", meta = (AllowPrivateAccess = "true"))
 	FIntPoint chunkLocation;
+
 
 	bool hasCollision;
 

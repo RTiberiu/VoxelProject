@@ -11,7 +11,7 @@
 #include <set>
 
 // Sets default values
-AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThread(nullptr), isLocationTaskRunning(false), isMeshTaskRunning(false){
+AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThread(nullptr), isLocationTaskRunning(false), isMeshTaskRunning(false) {
 	// Set this actor to call Tick() every frame.  Yosu can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -49,12 +49,10 @@ void AChunkWorld::spawnInitialWorld() {
 	Time start = std::chrono::high_resolution_clock::now();
 
 	// Add initial chunk position to spawn
+	FIntPoint PlayerStartCoords = FIntPoint(0, 0);
 	FVector ChunkPosition = FVector(0, 0, 0);
 	FIntPoint ChunkWorldCoords = FIntPoint(0, 0);
 	CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
-
-	// Add points for tree radius 
-	WTSR->AddPlayer2DTreeRadiusPoint(ChunkWorldCoords);
 
 	// Add chunk positions to spawn by going in a spiral from origin position
 	std::set<std::pair<int, int>> avoidPosition = { {0,0} };
@@ -63,6 +61,7 @@ void AChunkWorld::spawnInitialWorld() {
 
 	while (currentSpiralRing <= maxSpiralRings) {
 		for (int x = -currentSpiralRing; x < currentSpiralRing; x++) {
+			FString rowString; // TESTING
 			for (int z = -currentSpiralRing; z < currentSpiralRing; z++) {
 				/*for (int x = 0; x < 1; x++) {
 					for (int z = 0; z < 1; z++) {*/
@@ -74,12 +73,8 @@ void AChunkWorld::spawnInitialWorld() {
 
 				ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 				ChunkWorldCoords = FIntPoint(x, z);
-				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
-				// Add world coordinates for tree spawning if is inside the tree radius
-				if (WTSR->isPointWithinTreeRadiusRange(ChunkWorldCoords)) {
-					WTSR->AddPlayer2DTreeRadiusPoint(ChunkWorldCoords);
-				}
+				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
 				avoidPosition.insert(currentPair);
 			}
@@ -93,6 +88,7 @@ void AChunkWorld::spawnInitialWorld() {
 	UE_LOG(LogTemp, Warning, TEXT("Chunks spawned: %d"), spawnedChunks);
 	UE_LOG(LogTemp, Warning, TEXT("SpawnedChunkMap size = %d"), WTSR->GetMapSize());
 	UE_LOG(LogTemp, Warning, TEXT("DrawDistance = %d"), WTSR->DrawDistance);
+
 }
 
 void AChunkWorld::generateTreeMeshVariations() {
@@ -160,6 +156,7 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 		SpawnedTreeActor->SetWorldTerrainSettings(WTSR);
 		SpawnedTreeActor->SetPerlinNoiseSettings(PNSR);
 		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
+		SpawnedTreeActor->SetTreeWorldLocation(ChunkLocationData.ObjectWorldCoords);
 
 		// Define the boundaries for the collision check
 		float minX = PlayerPosition.X - WTSR->VegetationCollisionDistance;
@@ -172,7 +169,7 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 			(ChunkLocationData.ObjectPosition.Y >= minY && ChunkLocationData.ObjectPosition.Y <= maxY);
 
 		if (withinCollisionDistance) {
-			 SpawnedTreeActor->SetTreeCollision(true);
+			SpawnedTreeActor->SetTreeCollision(true);
 		}
 
 		// Finish spawning the chunk actor
@@ -180,8 +177,6 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 
 		// TODO Add the tree actor to a map so I can update the collision and remove it later on
 		WTSR->AddSpawnedTrees(ChunkLocationData.ObjectWorldCoords, SpawnedTreeActor);
-
-		//UE_LOG(LogTemp, Warning, TEXT("Spawned Tree!"));
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Tree Actor!"));
 	}
@@ -240,22 +235,20 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		UE_LOG(LogTemp, Error, TEXT("WTSR is nullptr!"));
 		return;
 	}
-	
+
 	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
 	const FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
-	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X; //   // TODO SET TO FALSE FOR TESTING ONLY
-	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y; //  // TODO SET TO FALSE FOR TESTING ONLY
+	const bool isPlayerMovingOnAxisX = PlayerChunkCoords.X != InitialChunkCoords.X; // TODO SET TO FALSE FOR TESTING ONLY
+	const bool isPlayerMovingOnAxisZ = PlayerChunkCoords.Y != InitialChunkCoords.Y; // TODO SET TO FALSE FOR TESTING ONLY
 
 	if (!isLocationTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
 		isLocationTaskRunning.AtomicSet(true);
 		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR);
 		chunksLocationThread = FRunnableThread::Create(chunksLocationRunnable, TEXT("chunksLocationThread"), 0, TPri_Normal);
 	}
-	// TODO ADD TO A LIST CHUNKS THAT NEED THEIR COLLISION UPDATED IN THAT SEPARATE THREAD
-	// TODO ADD TO A LIST TREES THAT NEED THEIR COLLISION UPDATED IN THAT SEPARATE THREAD
 
 	// Clean up terrain thread if it's done computing
 	if (chunksLocationRunnable && chunksLocationRunnable->IsTaskComplete()) {
@@ -308,36 +301,27 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		isMeshTaskRunning.AtomicSet(false);
 	}
 
-	const TArray<FIntPoint> tempTreeRadiusPoints = WTSR->GetPlayer2DTreeRadiusPoints();
+	// Append positions waiting to be spawned
+	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositions();
+	TreePositionsToSpawn.Append(treeSpawnPositions);
 
-	// Add trees to the chunk
-	if (CLDR->isTreeWaitingToBeSpawned(tempTreeRadiusPoints)) {
-		// Get all tree positions that are within the tree spawn radius around the player
-		TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositions(tempTreeRadiusPoints);
-
-		// TESTING - Validating that no trees have the same vector
-		TSet<FVector> uniquePositions;
-		bool hasDuplicate = false;
-
-		for (const FVoxelObjectLocationData& treePosition : treeSpawnPositions) {
-			if (uniquePositions.Contains(treePosition.ObjectPosition)) {
-				hasDuplicate = true;
-				UE_LOG(LogTemp, Warning, TEXT("Duplicate position found: %s"), *treePosition.ObjectPosition.ToString());
-			} else {
-				uniquePositions.Add(treePosition.ObjectPosition);
-			}
+	// Spawn a few trees in the current frame
+	int spawnedTreeCounter = 0;
+	for (int32 positionIndex = 0; positionIndex < TreePositionsToSpawn.Num();) {
+		if (spawnedTreeCounter >= treesToSpawnPerFrame) {
+			break;
 		}
 
-		// Spawn all the trees that are in the returned spawn radius array
-		for (const FVoxelObjectLocationData& treePosition : treeSpawnPositions) {
-			SpawnTrees(treePosition, PlayerPosition);
-			WTSR->TreeCount++;
+		SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
+		WTSR->TreeCount++;
 
-			// Print the tree count every 50
-			if (WTSR->TreeCount % 50 == 0) {
-				UE_LOG(LogTemp, Log, TEXT("Tree count: %d"), WTSR->TreeCount);
-			}
+		// Print the tree count every 50
+		if (WTSR->TreeCount % 50 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("Tree count: %d"), WTSR->TreeCount);
 		}
+
+		TreePositionsToSpawn.RemoveAt(positionIndex);
+		spawnedTreeCounter++;
 	}
 
 	if (CLDR->isGrassWaitingToBeSpawned()) {
@@ -350,7 +334,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	// Spawn chunk if there is a calculated mesh data waiting
 	if (CLDR->isMeshWaitingToBeSpawned()) {
-		
 		// Get the location data and the computed mesh data for the chunk
 		FVoxelObjectLocationData waitingMeshLocationData;
 		FVoxelObjectMeshData waitingMeshData;
@@ -362,29 +345,30 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 		if (SpawnedChunkActor) {
-				// Add references to BinaryChunk and pass the computed mesh data
-				SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
-				SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
-				SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
+			// Add references to BinaryChunk and pass the computed mesh data
+			SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
+			SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
+			SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
+			SpawnedChunkActor->SetChunkLocation(waitingMeshLocationData.ObjectWorldCoords);
 
-				// Define the boundaries for the collision check
-				float minX = PlayerPosition.X - WTSR->CollisionDistance;
-				float maxX = PlayerPosition.X + WTSR->CollisionDistance;
-				float minY = PlayerPosition.Y - WTSR->CollisionDistance;
-				float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
+			// Define the boundaries for the collision check
+			float minX = PlayerPosition.X - WTSR->CollisionDistance;
+			float maxX = PlayerPosition.X + WTSR->CollisionDistance;
+			float minY = PlayerPosition.Y - WTSR->CollisionDistance;
+			float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
 
-				// Check if the player is within the collision boundaries
-				bool withinCollisionDistance = (waitingMeshLocationData.ObjectPosition.X >= minX && waitingMeshLocationData.ObjectPosition.X <= maxX) &&
-					(waitingMeshLocationData.ObjectPosition.Y >= minY && waitingMeshLocationData.ObjectPosition.Y <= maxY);
+			// Check if the player is within the collision boundaries
+			bool withinCollisionDistance = (waitingMeshLocationData.ObjectPosition.X >= minX && waitingMeshLocationData.ObjectPosition.X <= maxX) &&
+				(waitingMeshLocationData.ObjectPosition.Y >= minY && waitingMeshLocationData.ObjectPosition.Y <= maxY);
 
-				if (withinCollisionDistance) {
-					SpawnedChunkActor->SetChunkCollision(true);
-				}
+			if (withinCollisionDistance) {
+				SpawnedChunkActor->SetChunkCollision(true);
+			}
 
-				// Finish spawning the chunk actor
-				UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition));
+			// Finish spawning the chunk actor
+			UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition));
 
-				WTSR->AddChunkToMap(waitingMeshLocationData.ObjectWorldCoords, SpawnedChunkActor);
+			WTSR->AddChunkToMap(waitingMeshLocationData.ObjectWorldCoords, SpawnedChunkActor);
 		} else {
 			UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
 		}
@@ -402,55 +386,77 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		AActor* chunkToRemove = WTSR->GetAndRemoveChunkFromMap(chunkToDestroyPosition);
 		if (chunkToRemove) {
 			chunkToRemove->Destroy();
+
+			// Remove remaining trees to spawn position at current chunk destroyed
+			CLDR->RemoveTreeSpawnPosition(chunkToDestroyPosition);
+
+			// Remove trees to spawn in the ChunkWorld cache
+			TreePositionsToSpawn.RemoveAll([&](const FVoxelObjectLocationData& Item) {
+				return Item.ObjectWorldCoords == chunkToDestroyPosition;
+				});
+
+			// Add spawned trees to a remove list to remove over multiple frames
+			TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(chunkToDestroyPosition);
+			TreeActorsToRemove.Append(treesToRemove);
+
 		} else {
 			// Add the chunk position back because the chunk is not yet spawned
-			CLDR->addChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back
+			CLDR->addChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back. I should use a TMap instead and remove the entry of that object instead, preventing it from spawning in the first place.
 		}
 	}
 
-	FIntPoint treeToDestroyPosition{};
-	bool doesTreeDestroyPositionExist = CLDR->getTreeToDestroyPosition(treeToDestroyPosition);
-
-	// I need to check if the destroy position exists in the map, otherwise I need to push it back 
-	if (doesTreeDestroyPositionExist) {
-		TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(treeToDestroyPosition);
-
-		for (ATree* treeToRemove : treesToRemove) {
-			if (treeToRemove) {
-				treeToRemove->Destroy();
-				WTSR->TreeCount--;
-			} else {
-				// Add the tree position back because the tree is not yet spawned
-				WTSR->AddSpawnedTrees(treeToDestroyPosition, treeToRemove); // TODO THIS IS A MAYBE. I SHOULD STILL FOLLOW HOW THE CHUNKS MAP IS DONE
-				CLDR->addTreeToDestroyPosition(treeToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back
-			}
+	// Remove tree actors
+	int removedTreeCounter = 0;
+	for (int32 treeIndex = 0; treeIndex < TreeActorsToRemove.Num();) {
+		if (removedTreeCounter >= treesToRemovePerFrame) {
+			break;
 		}
 
+		ATree* treeToRemove = TreeActorsToRemove[treeIndex];
+		if (treeToRemove) {
+			treeToRemove->Destroy();
+			WTSR->TreeCount--;
+		} else {
+			CLDR->AddUnspawnedTreeToDestroy(treeToRemove);
+		}
+
+		TreeActorsToRemove.RemoveAt(treeIndex);
+		removedTreeCounter++;
 	}
 
-	
-	// TODO ADD AND REMOVE NEW TREES AS THE PLAYER MOVES IN THE WORLD 
+	// Check for any previously unspawned trees that could be now destroyed 
+	ATree* unspawnedTree = nullptr;
+	CLDR->GetUnspawnedTreeToDestroy(unspawnedTree);
+	if (unspawnedTree) {
+		// Destroy if it's valid and part of the world
+		if (IsValid(unspawnedTree) && unspawnedTree->IsActorInitialized()) {
+			unspawnedTree->Destroy();
+		} else {
+			// Add back to the list and wait for the tree to be spawned.
+			CLDR->AddUnspawnedTreeToDestroy(unspawnedTree);
+		}
+	}
 
 	// Enabling and disabling collision for chunks and trees
 	ATree* removeCollisionTree = WTSR->GetTreeToRemoveCollision();
-	ATree* enableCollisionTree = WTSR->GetTreeToEnableCollision(); 
-	
+	ATree* enableCollisionTree = WTSR->GetTreeToEnableCollision();
+
 	ABinaryChunk* removeCollisionChunk = WTSR->GetChunkToRemoveCollision();
 	ABinaryChunk* enableCollisionChunk = WTSR->GetChunkToEnableCollision();
 
-	if (removeCollisionTree) {
+	if (IsValid(removeCollisionTree) && removeCollisionTree->IsActorInitialized()) {
 		removeCollisionTree->UpdateCollision(false);
 	}
 
-	if (enableCollisionTree) {
+	if (IsValid(enableCollisionTree) && enableCollisionTree->IsActorInitialized()) {
 		enableCollisionTree->UpdateCollision(true);
 	}
 
-	if (removeCollisionChunk) {
+	if (IsValid(removeCollisionChunk) && removeCollisionChunk->IsActorInitialized()) {
 		removeCollisionChunk->UpdateCollision(false);
 	}
 
-	if (enableCollisionChunk) {
+	if (IsValid(enableCollisionChunk) && enableCollisionChunk->IsActorInitialized()) {
 		enableCollisionChunk->UpdateCollision(true);
 	}
 

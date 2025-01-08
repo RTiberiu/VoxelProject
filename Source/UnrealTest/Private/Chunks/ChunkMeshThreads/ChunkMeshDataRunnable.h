@@ -90,7 +90,7 @@ private:
 		const int& height, const int& width,
 		const int& axis);
 
-	int getColorIndexFromVoxelHeight(const FVector& voxelPosition);
+	int getColorIndexFromVoxelHeight(const int& height);
 
 	void attemptToSpawnVegetationAtLocation(const int& x, const int& z, const int& height, const int& vegetationXZLimit, const FVector& chunkWorldLocation);
 

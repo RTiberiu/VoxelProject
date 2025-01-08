@@ -591,7 +591,7 @@ void ChunkMeshDataRunnable::createQuadAndAddToMeshData(const FVector& voxelPosit
 	// TODO Create a dynamic texture and assign a random color from the layer for each 1x1 of the quad. 
 
 	// Assign different random colors for each vertex; This lets the GPU interpolate the colors
-	int layerIndex = getColorIndexFromVoxelHeight(voxelPosition1);
+	int layerIndex = getColorIndexFromVoxelHeight(static_cast<int>(voxelPosition1.Z));
 	FColor layerColor = WTSR->ChunkColorArray[layerIndex];
 
 	TemporaryMeshData.Colors.Append({
@@ -602,25 +602,20 @@ void ChunkMeshDataRunnable::createQuadAndAddToMeshData(const FVector& voxelPosit
 		});
 }
 
-int ChunkMeshDataRunnable::getColorIndexFromVoxelHeight(const FVector& voxelPosition) {
-	const int voxelHeight = static_cast<int>(voxelPosition.Z);
-	int colorIndex = 0;
-
-	constexpr int layerHeight = 10;
-	constexpr int layers = 19;
-
-	while (colorIndex < layers) {
-		const int maxLayerHeight = colorIndex * layerHeight + layerHeight;
-		if (voxelHeight < maxLayerHeight) {
-			break;
-		}
-		colorIndex++;
-	}
-
+int ChunkMeshDataRunnable::getColorIndexFromVoxelHeight(const int& height) {
+	const int colorIndex = FMath::Clamp(height / WTSR->LayerHeight, 0, WTSR->ColorLayers - 1);
 	return colorIndex;
 }
 
 void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, const int& z, const int& height, const int& vegetationXZLimit, const FVector& chunkWorldLocation) {
+
+	// Return early if the point is not on grass
+	const int colorIndex = getColorIndexFromVoxelHeight(height);
+	bool pointNotOnGrass = colorIndex < WTSR->GrassColorStartIndex || colorIndex > WTSR->GrassColorEndIndex;
+	if (pointNotOnGrass) {
+		return;
+	}
+
 	float spawnVegetationChance = FMath::RandRange(0.0f, 1.0f);
 	bool isVegetationInsideChunk = x >= vegetationXZLimit && z >= vegetationXZLimit;
 

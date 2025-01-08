@@ -45,6 +45,10 @@ void ABinaryChunk::SetChunkCollision(bool InHasCollision) {
 	hasCollision = InHasCollision;
 }
 
+void ABinaryChunk::SetChunkLocation(FIntPoint InChunkLocation) {
+	chunkLocation = InChunkLocation;
+}
+
 bool ABinaryChunk::HasCollision() {
 	return hasCollision;
 }
@@ -53,10 +57,10 @@ void ABinaryChunk::UpdateCollision(bool InHasCollision) {
 	SetChunkCollision(InHasCollision);
 
 	// Testing collision by updating the color based on it
-	FColor newColor = hasCollision ? FColor::Red : FColor::White;
+	/*FColor newColor = hasCollision ? FColor::Red : FColor::White;
 	for (int32 i = 0; i < meshData.Vertices.Num(); i++) {
 		meshData.Colors[i] = newColor;
-	}
+	}*/
 
 	if (hasCollision) {
 		// If the chunk has collision, enable it by regenerating the mesh

@@ -84,13 +84,15 @@ private:
 	// Destroy entire world when perlin noise settings change
 	void destroyCurrentWorldChunks();
 
-	TArray<FVoxelObjectLocationData> testingThreadLocations; // TODO Delete this when done testing
-
 	// Tree implementation
 	void SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
 	TSubclassOf<AActor> Tree;
 
-	bool isPointWithinTreeRadiusRange(const FIntPoint& point);
+	TArray<ATree*> TreeActorsToRemove;
+	const int treesToRemovePerFrame = 2;
+
+	TArray<FVoxelObjectLocationData> TreePositionsToSpawn;
+	const int treesToSpawnPerFrame = 2;
 
 protected:
 	// Called when the game starts or when spawned

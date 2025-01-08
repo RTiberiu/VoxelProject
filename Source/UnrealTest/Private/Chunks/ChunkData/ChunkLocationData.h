@@ -35,7 +35,7 @@ public:
     
     void emptyPositionQueues();
 
-    TArray<FVoxelObjectLocationData> getTreeSpawnPositions(const TArray<FIntPoint>& treeRadiusPoints);
+    TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
     bool getGrassSpawnPosition(FVoxelObjectLocationData& OutLocation);
     bool getFlowerSpawnPosition(FVoxelObjectLocationData& OutLocation);
 
@@ -47,8 +47,12 @@ public:
     bool isGrassWaitingToBeSpawned();
     bool isFlowerWaitingToBeSpawned();
 
+    void RemoveTreeSpawnPosition(const FIntPoint& point);
+
     bool isTreeWaitingToBeDestroyed();
 
+    bool AddUnspawnedTreeToDestroy(ATree* treeToDestroy);
+    bool GetUnspawnedTreeToDestroy(ATree* treeToDestroy);
 
 private:
     // Queue for storing chunks position that need to be spawned
@@ -58,6 +62,8 @@ private:
     // Queue for storing chunks position that need to be destroyed
     TQueue<FIntPoint> chunksToDestroyPositions;
     FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
+
+    TQueue<ATree*> unspawnedTreesToDestroy;
 
     TQueue<FIntPoint> treesToDestroy;
     TQueue<FIntPoint> grassToDestroy;
@@ -70,6 +76,8 @@ private:
     // Queue for storing vegetation spawn points data
     FairSemaphore* TreesToSpawnSemaphore;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>> treesSpawnPositions;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>> usedTreesSpawnPositions;
+
 
     TQueue<FVoxelObjectLocationData> grassSpawnPositions;
     TQueue<FVoxelObjectLocationData> flowersSpawnPositions;

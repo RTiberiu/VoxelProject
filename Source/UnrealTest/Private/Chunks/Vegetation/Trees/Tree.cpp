@@ -59,6 +59,10 @@ bool ATree::HasCollision() {
 	return hasCollision;
 }
 
+void ATree::SetTreeWorldLocation(FIntPoint InTreeLocation) {
+	treeWorldLocation = InTreeLocation;
+}
+
 void ATree::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }

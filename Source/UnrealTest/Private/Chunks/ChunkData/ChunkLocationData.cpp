@@ -44,6 +44,9 @@ void UChunkLocationData::addChunksToSpawnPosition(const FVoxelObjectLocationData
 }
 
 void UChunkLocationData::addChunksToDestroyPosition(const FIntPoint& position) {
+    if (position.X == 5 && position.Y == -3) {
+        UE_LOG(LogTemp, Warning, TEXT("addChunksToDestroyPosition() -- Added the point X:5 Z:-3."));
+    }
     chunksToDestroyPositions.Enqueue(position);
 }
 
@@ -67,18 +70,20 @@ void UChunkLocationData::emptyPositionQueues() {
     chunksToDestroyPositions.Empty();
 }
 
-TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions(const TArray<FIntPoint>& treeRadiusPoints) {
+TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions() {
     TArray<FVoxelObjectLocationData> output;
     TreesToSpawnSemaphore->Acquire();
-    for (const FIntPoint& point : treeRadiusPoints) {
-        if (treesSpawnPositions.Contains(point)) {
-            output = treesSpawnPositions[point];
-            treesSpawnPositions.Remove(point);
-            break;
+   
+    // Get the first item from the map // TODO Might be worth replacing the map with a Queue
+    if (!treesSpawnPositions.IsEmpty()) {
+        for (const TPair<FIntPoint, TArray<FVoxelObjectLocationData>>& pair : treesSpawnPositions) {
+            output = pair.Value; 
+            treesSpawnPositions.Remove(pair.Key);
+            break; 
         }
     }
-    TreesToSpawnSemaphore->Release();
 
+    TreesToSpawnSemaphore->Release();
     return output;
 }
 
@@ -139,7 +144,29 @@ bool UChunkLocationData::isFlowerWaitingToBeSpawned() {
     return isFlowerWaiting;
 }
 
+void UChunkLocationData::RemoveTreeSpawnPosition(const FIntPoint& point) {
+    TreesToSpawnSemaphore->Acquire();
+
+    // Iterating over the map and removing the key and value
+    for (TMap<FIntPoint, TArray<FVoxelObjectLocationData>>::TIterator SpawnPosition(treesSpawnPositions); SpawnPosition; ++SpawnPosition) {
+        if (SpawnPosition.Key() == point) {
+            SpawnPosition.RemoveCurrent();
+            break;  
+        }
+    }
+
+    TreesToSpawnSemaphore->Release();
+}
+
 bool UChunkLocationData::isTreeWaitingToBeDestroyed() {
     bool isTreeWaiting = !treesToDestroy.IsEmpty();
     return isTreeWaiting;
+}
+
+bool UChunkLocationData::AddUnspawnedTreeToDestroy(ATree* treeToDestroy) {
+    return unspawnedTreesToDestroy.Enqueue(treeToDestroy);
+}
+
+bool UChunkLocationData::GetUnspawnedTreeToDestroy(ATree* treeToDestroy) {
+    return unspawnedTreesToDestroy.Dequeue(treeToDestroy);
 }

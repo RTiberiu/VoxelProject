@@ -29,6 +29,7 @@ public:
 	void UpdateCollision(bool InHasCollision);
 	void SetTreeMeshData(FVoxelObjectMeshData* InMeshData);
 	bool HasCollision();
+	void SetTreeWorldLocation(FIntPoint InTreeLocation);
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
@@ -41,6 +42,10 @@ private:
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
 
 	FVoxelObjectLocationData TreeLocationData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tree Settings", meta = (AllowPrivateAccess = "true"))
+	FIntPoint treeWorldLocation;
+
 
 	TObjectPtr<UProceduralMeshComponent> Mesh;
 

@@ -15,8 +15,7 @@ UWorldTerrainSettings::UWorldTerrainSettings() :
 	AddCollisionTreesSemaphore(new FairSemaphore(1)),
 	RemoveCollisionTreesSemaphore(new FairSemaphore(1)),
 	AddCollisionChunksSemaphore(new FairSemaphore(1)),
-	RemoveCollisionChunksSemaphore(new FairSemaphore(1)),
-	Player2DTreeRadiusSemaphore(new FairSemaphore(1)) {
+	RemoveCollisionChunksSemaphore(new FairSemaphore(1)) {
 	// Reserve memory for double the draw distance for X and Z 
 	SpawnedChunksMap.Reserve(DrawDistance * DrawDistance * 2);
 }
@@ -33,23 +32,24 @@ UWorldTerrainSettings::~UWorldTerrainSettings() {
 	delete RemoveCollisionTreesSemaphore;
 	delete AddCollisionChunksSemaphore;
 	delete RemoveCollisionChunksSemaphore;
-	delete Player2DTreeRadiusSemaphore;
 }
 
 void UWorldTerrainSettings::AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor) {
 	ChunkMapSemaphore->Acquire();
+	ValidateSpawnedChunksMap(); // TESTING
 	SpawnedChunksMap.Add(ChunkCoordinates, ChunkActor);
+	ValidateSpawnedChunksMap(); // TESTING
 	ChunkMapSemaphore->Release();
 }
 
 AActor* UWorldTerrainSettings::GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates) {
 	ChunkMapSemaphore->Acquire();
-	// ValidateSpawnedChunksMap();
+	ValidateSpawnedChunksMap(); // TESTING
 	AActor* RemovedChunk = nullptr;
 	if (SpawnedChunksMap.Contains(ChunkCoordinates)) {
 		RemovedChunk = SpawnedChunksMap.FindAndRemoveChecked(ChunkCoordinates);
 	}
-	// ValidateSpawnedChunksMap();
+	ValidateSpawnedChunksMap(); // TESTING
 	ChunkMapSemaphore->Release();
 	return RemovedChunk;
 }
@@ -104,6 +104,11 @@ const TMap<FIntPoint, AActor*>& UWorldTerrainSettings::GetSpawnedChunksMap() con
 	return SpawnedChunksMap;
 }
 
+/*
+* Get read-only items of SpawnedChunksMap and iterate to see if chunks are outside or inside of
+* the collision threshold. Chunks inside the threshold will have their meshes regenerated with
+* collision and chunks outside of it will get their collision disabled through a mesh update.
+*/
 void UWorldTerrainSettings::UpdateChunksCollision(FVector& PlayerPosition) {
 	ChunkMapSemaphore->Acquire();
 
@@ -225,7 +230,9 @@ void UWorldTerrainSettings::ValidateSpawnedChunksMap() {
 
 	CheckIfActorIsNullOrPendingKill();
 
-	CheckNumberOfElements();
+	CheckForDuplicateWorldCoordinates();
+
+	// CheckNumberOfElements();
 }
 
 void UWorldTerrainSettings::AddTreeMeshData(FVoxelObjectMeshData treeData) {
@@ -259,8 +266,7 @@ void UWorldTerrainSettings::AddSpawnedTrees(const FIntPoint& TreeWorldCoordinate
 	// If it exists, add the new tree to the existing array
 	if (SpawnedTreesMap.Contains(TreeWorldCoordinates)) {
 		SpawnedTreesMap[TreeWorldCoordinates].Add(TreeActor);
-	}
-	else {
+	} else {
 		// If not, create a new array with the new tree
 		SpawnedTreesMap.Add(TreeWorldCoordinates, TArray<ATree*>({ TreeActor }));
 	}
@@ -282,6 +288,7 @@ TArray<ATree*> UWorldTerrainSettings::GetAndRemoveTreeFromMap(const FIntPoint& T
 		// Get and remove the array of trees at this location if it's not empty
 		if (!SpawnedTreesMap[TreeWorldCoordinates].IsEmpty()) {
 			RemovedTrees = SpawnedTreesMap.FindAndRemoveChecked(TreeWorldCoordinates);
+			//RemovedTrees = *SpawnedTreesMap.Find(TreeWorldCoordinates);
 		}
 	}
 
@@ -367,32 +374,6 @@ ATree* UWorldTerrainSettings::GetTreeToEnableCollision() {
 	return nullptr;
 }
 
-void UWorldTerrainSettings::AddPlayer2DTreeRadiusPoint(FIntPoint point) {
-	Player2DTreeRadiusSemaphore->Acquire();
-	Player2DTreeRadius.Add(point);
-	Player2DTreeRadiusSemaphore->Release();
-
-}
-
-void UWorldTerrainSettings::RemovePlayer2DTreeRadiusPoint(FIntPoint& point) {
-	Player2DTreeRadiusSemaphore->Acquire();
-	Player2DTreeRadius.Remove(point);
-	Player2DTreeRadiusSemaphore->Release();
-}
-
-TArray<FIntPoint> UWorldTerrainSettings::GetPlayer2DTreeRadiusPoints() {
-	Player2DTreeRadiusSemaphore->Acquire();
-	TArray<FIntPoint> tempTreeRadiusPoints = Player2DTreeRadius;
-	Player2DTreeRadiusSemaphore->Release();
-	return tempTreeRadiusPoints;
-}
-
-bool UWorldTerrainSettings::isPointWithinTreeRadiusRange(const FIntPoint& point) {
-	bool withinTreeSpawnRadiusX = point.X <= TreeSpawnRadius && point.X >= -TreeSpawnRadius;
-	bool withinTreeSpawnRadiusZ = point.Y <= TreeSpawnRadius && point.Y >= -TreeSpawnRadius;
-	return withinTreeSpawnRadiusX && withinTreeSpawnRadiusZ;
-}
-
 // Testing method that checks for duplicated Chunk (AActor) pointers  in SpawnChunkMap
 void UWorldTerrainSettings::CheckForDuplicateActorPointers() {
 	// Create a set to track encountered actors
@@ -418,6 +399,31 @@ void UWorldTerrainSettings::CheckIfActorIsNullOrPendingKill() {
 		if (!IsValid(Elem.Value) || Elem.Value->IsPendingKillPending()) {
 			UE_LOG(LogTemp, Error, TEXT("CheckIfActorIsNullOrPendingKill(): Invalid chunk at coordinates: (%d, %d)"), Elem.Key.X, Elem.Key.Y);
 		}
+	}
+}
+
+void UWorldTerrainSettings::CheckForDuplicateWorldCoordinates() {
+	TSet<FIntPoint> uniqueCoordinates; // A set to store unique FIntPoint values
+	TArray<FIntPoint> duplicateCoordinates; // Array to track duplicates
+
+	for (const TPair<FIntPoint, AActor*>& Elem : SpawnedChunksMap) {
+		const FIntPoint& chunkCoord = Elem.Key;
+
+		// Check if the FIntPoint is already in the set
+		if (uniqueCoordinates.Contains(chunkCoord)) {
+			duplicateCoordinates.Add(chunkCoord);
+		} else {
+			uniqueCoordinates.Add(chunkCoord); 
+		}
+	}
+
+	// Log duplicate coordinates if any are found
+	if (duplicateCoordinates.Num() > 0) {
+		FString duplicatesLog = TEXT("Duplicate World Coordinates Found:\n");
+		for (const FIntPoint& coord : duplicateCoordinates) {
+			duplicatesLog += FString::Printf(TEXT("(%d, %d)\n"), coord.X, coord.Y);
+		}
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *duplicatesLog);
 	}
 }
 
