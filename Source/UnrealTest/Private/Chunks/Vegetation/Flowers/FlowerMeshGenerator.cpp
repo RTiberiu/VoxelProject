@@ -1,32 +1,33 @@
-#include "TreeMeshGenerator.h"
+#include "FlowerMeshGenerator.h"
 #include <iostream>
 #include <array>
 #include <bitset>
 #include <limits>
 #include <string>
+#include <set>
 #include "..\..\TerrainSettings\WorldTerrainSettings.h"
 
-UTreeMeshGenerator::UTreeMeshGenerator() {
+UFlowerMeshGenerator::UFlowerMeshGenerator() {
 }
 
-UTreeMeshGenerator::~UTreeMeshGenerator() {
+UFlowerMeshGenerator::~UFlowerMeshGenerator() {
 }
 
 
-void UTreeMeshGenerator::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
+void UFlowerMeshGenerator::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }
 
-void UTreeMeshGenerator::createTrunkBinarySolidColumnsYXZ() {
-	const FVector treeWorldLocation = TreeLocationData.ObjectPosition;
+void UFlowerMeshGenerator::createTrunkBinarySolidColumnsYXZ() {
+	const FVector FlowerWorldLocation = FlowerLocationData.ObjectPosition;
 
-	// Set the tree values to air for all 3 axis (Y, X, Z)
-	const int treeDimensions{ WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight };
-	binaryTree.yBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
-	binaryTree.xBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
-	binaryTree.zBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
+	// Set the Flower values to air for all 3 axis (Y, X, Z)
+	const int FlowerDimensions{ WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight };
+	binaryFlower.yBinaryColumn = std::vector<uint16_t>(FlowerDimensions, 0);
+	binaryFlower.xBinaryColumn = std::vector<uint16_t>(FlowerDimensions, 0);
+	binaryFlower.zBinaryColumn = std::vector<uint16_t>(FlowerDimensions, 0);
 
-	const int halfTreeChunk = WTSR->TreeSize / 2;
+	const int halfFlowerChunk = WTSR->FlowerSize / 2;
 
 	// TODO Move this random generator to a different class, as this should be initialized only once
 	// Create a random number generator
@@ -34,110 +35,75 @@ void UTreeMeshGenerator::createTrunkBinarySolidColumnsYXZ() {
 	std::mt19937 gen(rd());
 
 	// Define the distribution
-	std::uniform_int_distribution<> treeTrunkHeightDistribution(WTSR->TreeHeight / 2, WTSR->TreeHeight * 0.8);
-	std::uniform_int_distribution<> treeBranchDistribution(2, 5);
-	std::uniform_int_distribution<> treeBranchLengthDistribution(20, 30);
-	std::uniform_int_distribution<> treeTrunkSizeDistribution(WTSR->MinTreeTrunkWidth, WTSR->MaxTreeTrunkWidth);
-	std::uniform_real_distribution<> branchStartPoint(0.4, 0.8);
+	std::uniform_int_distribution<> FlowerBlades(4, 10);
+	std::uniform_int_distribution<> FlowerHeight(3, WTSR->FlowerHeight);
+	std::uniform_int_distribution<> FlowerPoint(2, WTSR->FlowerSize);
 
-	std::uniform_int_distribution<> branchPointLocation(WTSR->MaxTreeTrunkWidth, WTSR->TreeSize - WTSR->MaxTreeTrunkWidth - 10);
+	// Get the Flower blade voxels and add them to the binary columns
+	const int TotalFlowerBlades = FlowerBlades(gen);
 
-	// Get the tree trunk voxels and add them to the binary columns
-	const int treeTrunkHeight = treeTrunkHeightDistribution(gen);
-	const int treeBranches = treeBranchDistribution(gen);
-	const int treeTrunkWidth = treeTrunkSizeDistribution(gen);
+	TArray<FVector> BladePoints;
 
-	TArray<FVector> TrunkPoints;
+	int bladeCounter = 0;
 
-	// Create all the points for the tree trunk
-	for (int height = 0; height < treeTrunkHeight; height++) {
+	// Add only unique random X and Z coordinates with random height
+	std::set<std::pair<int, int>> uniqueBladePoints;
+	while (bladeCounter < TotalFlowerBlades) {
 
-		FVector trunkPoint(halfTreeChunk, halfTreeChunk, height);
+		const int x = FlowerPoint(gen);
+		const int z = FlowerPoint(gen);
 
-		TrunkPoints.Add(trunkPoint);
-	}
+		// Continue only if x and z weren't used before
+		if (uniqueBladePoints.emplace(x, z).second) {
+			const int FlowerBladeHeight = FlowerHeight(gen);
 
-	// Add the main trunk as part of an branch end point (to spawn the crown there too)
-	branchEndPoints.Add(TrunkPoints[TrunkPoints.Num() - 1]);
+			// Create all the points for the Flower Blade
+			for (int height = 0; height < FlowerBladeHeight; height++) {
+				FVector BladePoint(x, z, height);
 
-	// Add the branches points
-	for (int branch = 0; branch < treeBranches; branch++) {
-
-		const int randomX = branchPointLocation(gen);
-		const int randomZ = branchPointLocation(gen);
-
-		// Add the points that connect the trunk with the final branch point
-		int startX = halfTreeChunk;
-		int startZ = halfTreeChunk;
-
-		float startBranchPoint = branchStartPoint(gen);
-		int startY = FMath::FloorToInt(treeTrunkHeight * startBranchPoint);
-
-
-		std::uniform_int_distribution<> branchHeight(startY, treeTrunkHeight);
-		int endBranchPoint = branchHeight(gen);
-
-		branchEndPoints.Add(FVector(randomX, randomZ, endBranchPoint));
-
-		while (startX != randomX || startZ != randomZ || startY != endBranchPoint) {
-
-			if (startX != randomX) {
-				startX += (startX > randomX) ? -1 : 1;
+				BladePoints.Add(BladePoint);
 			}
 
-			if (startZ != randomZ) {
-				startZ += (startZ > randomZ) ? -1 : 1;
-			}
-
-			if (startY != endBranchPoint) {
-				startY += (startY > endBranchPoint) ? -1 : 1;
-			}
-
-			FVector branchPoint(startX, startZ, startY);
-			TrunkPoints.Add(branchPoint);
+			bladeCounter++;
 		}
-
 	}
 
-	// Increasing the trunk width by adding more points
-	AddTrunkPoints(TrunkPoints, treeTrunkHeight, static_cast<float>(.9), treeTrunkWidth);
-
-	for (int point = 0; point < TrunkPoints.Num(); point++) {
-		int x = TrunkPoints[point].X;
-		int z = TrunkPoints[point].Y;
-		int height = TrunkPoints[point].Z;
-		int localTreeChunkHeight = (height % WTSR->TreeHeight);
-		int bitIndex = FMath::FloorToInt(height / (float)WTSR->TreeSizePadding);
+	for (int point = 0; point < BladePoints.Num(); point++) {
+		int x = BladePoints[point].X;
+		int z = BladePoints[point].Y;
+		int height = BladePoints[point].Z;
+		int localFlowerChunkHeight = (height % WTSR->FlowerHeight);
+		int bitIndex = FMath::FloorToInt(height / (float)WTSR->FlowerSizePadding);
 
 		// Get index of y 
-		const int yIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex };
+		const int yIndex{ (x * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight) + (z * WTSR->FlowerIntsPerHeight) + bitIndex };
 
 		// Add blocks height data (Y) to the current X and Z
-		binaryTree.yBinaryColumn[yIndex] |= (1U << localTreeChunkHeight);
+		binaryFlower.yBinaryColumn[yIndex] |= (1U << localFlowerChunkHeight);
 
-		const uint32_t currentYCol = binaryTree.yBinaryColumn[yIndex];
+		const uint16_t currentYCol = binaryFlower.yBinaryColumn[yIndex];
 
 		// Next Y index (column) means the same X index (column), but a change in Y bit index
-		const int xIndex{ (height * WTSR->TreeSizePadding) + x }; // (bitIndex * WTSR->TreeSizePadding * WTSR->TreeSizePadding)
+		const int xIndex{ (height * WTSR->FlowerSizePadding) + x };
 
-		binaryTree.xBinaryColumn[xIndex] |= (1U << z);
+		binaryFlower.xBinaryColumn[xIndex] |= (1U << z);
 
 		// Next Y index (column) means the next Z index (column), but the same Y bit index
-		const int zIndex{ (height * WTSR->TreeSizePadding) + z }; // + (bitIndex * WTSR->TreeSizePadding * WTSR->TreeSizePadding)
+		const int zIndex{ (height * WTSR->FlowerSizePadding) + z };
 
 		// Assign to actual bit the change
-		binaryTree.zBinaryColumn[zIndex] |= (1U << x);
+		binaryFlower.zBinaryColumn[zIndex] |= (1U << x);
 	}
 }
 
-void UTreeMeshGenerator::createCrownBinarySolidColumnsYXZ() {
-	const FVector treeWorldLocation = TreeLocationData.ObjectPosition;
+void UFlowerMeshGenerator::createCrownBinarySolidColumnsYXZ() {
+	const FVector FlowerWorldLocation = FlowerLocationData.ObjectPosition;
 
-	// Set the tree values to air for all 3 axis (Y, X, Z)
-	const int treeDimensions{ WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight };
-	binaryTree.yBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
-	binaryTree.xBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
-	binaryTree.zBinaryColumn = std::vector<uint32_t>(treeDimensions, 0);
+	// Set the Flower values to air for all 3 axis (Y, X, Z)
+	const int FlowerDimensions{ WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight };
+	binaryFlower.yBinaryColumn = std::vector<uint16_t>(FlowerDimensions, 0);
+	binaryFlower.xBinaryColumn = std::vector<uint16_t>(FlowerDimensions, 0);
+	binaryFlower.zBinaryColumn = std::vector<uint16_t>(FlowerDimensions, 0);
 
 	TArray<FVector> CrownPoints;
 
@@ -150,35 +116,35 @@ void UTreeMeshGenerator::createCrownBinarySolidColumnsYXZ() {
 		int x = CrownPoints[point].X;
 		int z = CrownPoints[point].Y;
 		int height = CrownPoints[point].Z;
-		int localTreeChunkHeight = (height % WTSR->TreeHeight);
-		int bitIndex = FMath::FloorToInt(height / (float)WTSR->TreeSizePadding);
+		int localFlowerChunkHeight = (height % WTSR->FlowerHeight);
+		int bitIndex = FMath::FloorToInt(height / (float)WTSR->FlowerSizePadding);
 
 		// Get index of y 
-		const int yIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex };
+		const int yIndex{ (x * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight) + (z * WTSR->FlowerIntsPerHeight) + bitIndex };
 
 		// Add blocks height data (Y) to the current X and Z
-		binaryTree.yBinaryColumn[yIndex] |= (1U << localTreeChunkHeight);
+		binaryFlower.yBinaryColumn[yIndex] |= (1U << localFlowerChunkHeight);
 
-		const uint32_t currentYCol = binaryTree.yBinaryColumn[yIndex];
+		const uint16_t currentYCol = binaryFlower.yBinaryColumn[yIndex];
 
 		// Next Y index (column) means the same X index (column), but a change in Y bit index
-		const int xIndex{ (height * WTSR->TreeSizePadding) + x };
+		const int xIndex{ (height * WTSR->FlowerSizePadding) + x };
 
-		binaryTree.xBinaryColumn[xIndex] |= (1U << z);
+		binaryFlower.xBinaryColumn[xIndex] |= (1U << z);
 
 		// Next Y index (column) means the next Z index (column), but the same Y bit index
-		const int zIndex{ (height * WTSR->TreeSizePadding) + z };
+		const int zIndex{ (height * WTSR->FlowerSizePadding) + z };
 
 		// Assign to actual bit the change
-		binaryTree.zBinaryColumn[zIndex] |= (1U << x);
+		binaryFlower.zBinaryColumn[zIndex] |= (1U << x);
 	}
 }
 
-void UTreeMeshGenerator::GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& endX, const int& endZ, const int& endY) {
+void UFlowerMeshGenerator::GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& endX, const int& endZ, const int& endY) {
 	// Calculate the maximum possible radius based on the boundaries
-	int MaxXRadius = FMath::Min(endX - 2, WTSR->TreeSize - endX - 2);  // Distance to nearest X boundary
-	int MaxZRadius = FMath::Min(endZ - 2, WTSR->TreeSize - endZ - 2);  // Distance to nearest Z boundary
-	int MaxYRadius = FMath::Min(endY - 2, WTSR->TreeHeight - endY - 2); // Distance to nearest Y boundary
+	int MaxXRadius = FMath::Min(endX - 2, WTSR->FlowerSize - endX - 2);  // Distance to nearest X boundary
+	int MaxZRadius = FMath::Min(endZ - 2, WTSR->FlowerSize - endZ - 2);  // Distance to nearest Z boundary
+	int MaxYRadius = FMath::Min(endY - 2, WTSR->FlowerHeight - endY - 2); // Distance to nearest Y boundary
 
 	// The radius is the smallest distance to any of the boundaries
 	int SphereRadius = FMath::Min(MaxXRadius, FMath::Min(MaxZRadius, MaxYRadius));
@@ -202,22 +168,22 @@ void UTreeMeshGenerator::GenerateSpherePoints(TArray<FVector>& CrownPoints, cons
 			float Z = (SphereRadius + NoiseValue) * FMath::Sin(Phi) * FMath::Sin(Theta);
 			float Y = (SphereRadius + NoiseValue) * FMath::Cos(Phi);
 
-			// Ensure all values are positive and fit within the tree chunk
-			int FinalX = FMath::Clamp(FMath::RoundToInt(X + endX), 0, WTSR->TreeSize);
-			int FinalZ = FMath::Clamp(FMath::RoundToInt(Z + endZ), 0, WTSR->TreeSize);
-			int FinalY = FMath::Clamp(FMath::RoundToInt(Y + endY), 0, WTSR->TreeHeight);
+			// Ensure all values are positive and fit within the Flower chunk
+			int FinalX = FMath::Clamp(FMath::RoundToInt(X + endX), 0, WTSR->FlowerSize);
+			int FinalZ = FMath::Clamp(FMath::RoundToInt(Z + endZ), 0, WTSR->FlowerSize);
+			int FinalY = FMath::Clamp(FMath::RoundToInt(Y + endY), 0, WTSR->FlowerHeight);
 
 			CrownPoints.Add(FVector(FinalX, FinalZ, FinalY));
 		}
 	}
 }
 
-void UTreeMeshGenerator::AddTrunkPoints(TArray<FVector>& Points, float TreeLength, float LastLayerProbability, int MaxBaseThickness) {
+void UFlowerMeshGenerator::AddTrunkPoints(TArray<FVector>& Points, float FlowerLength, float LastLayerProbability, int MaxBaseThickness) {
 	int initialLength = Points.Num();
 
 	for (int point = 0; point < initialLength; point++) {
 		// The trunk should be thicker at the bottom
-		int Thickness = FMath::Max(2, static_cast<int>(MaxBaseThickness * FMath::Sqrt(1 - (Points[point].Z - 1) / TreeLength)));
+		int Thickness = FMath::Max(2, static_cast<int>(MaxBaseThickness * FMath::Sqrt(1 - (Points[point].Z - 1) / FlowerLength)));
 
 		// Add points for the trunk
 		for (int ThicknessPoint = 1; ThicknessPoint < Thickness; ThicknessPoint++) {
@@ -251,7 +217,7 @@ void UTreeMeshGenerator::AddTrunkPoints(TArray<FVector>& Points, float TreeLengt
 
 
 // Debugging function that prints a 64-bit integer in groups
-void UTreeMeshGenerator::printBinary(uint32_t value, int groupSize, const std::string& otherData) {
+void UFlowerMeshGenerator::printBinary(uint16_t value, int groupSize, const std::string& otherData) {
 	// Ensure groupSize is a positive integer
 	if (groupSize <= 0) {
 		std::cerr << "Group size must be a positive integer" << std::endl;
@@ -282,29 +248,29 @@ void UTreeMeshGenerator::printBinary(uint32_t value, int groupSize, const std::s
 
 }
 
-void UTreeMeshGenerator::createTerrainMeshesData(bool forTreeTrunk) {
+void UFlowerMeshGenerator::createTerrainMeshesData(bool forFlowerTrunk) {
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
-	std::vector<std::vector<uint32_t>> columnFaceMasks{
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y ascending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y descending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X ascending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X descending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z ascending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z descending
+	std::vector<std::vector<uint16_t>> columnFaceMasks{
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // Y ascending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // Y descending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // X ascending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // X descending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // Z ascending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // Z descending
 	};
 
 	// Face cull the binary columns on the 3 axis, ascending and descending
 	faceCullingBinaryColumnsYXZ(columnFaceMasks);
 
 	// Storing planes for all axis, ascending and descending
-	std::vector<std::vector<uint32_t>> binaryPlanes{
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y ascending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Y descending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X ascending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // X descending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z ascending
-		std::vector<uint32_t>(WTSR->TreeSizePadding * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight), // Z descending
+	std::vector<std::vector<uint16_t>> binaryPlanes{
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // Y ascending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // Y descending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // X ascending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // X descending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // Z ascending
+		std::vector<uint16_t>(WTSR->FlowerSizePadding * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight), // Z descending
 	};
 
 	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending 
@@ -312,35 +278,35 @@ void UTreeMeshGenerator::createTerrainMeshesData(bool forTreeTrunk) {
 		buildBinaryPlanes(columnFaceMasks[axis], binaryPlanes[axis], axis);
 
 		// Greedy mesh each plane and create planes
-		greedyMeshingBinaryPlane(binaryPlanes[axis], axis, forTreeTrunk);
+		greedyMeshingBinaryPlane(binaryPlanes[axis], axis, forFlowerTrunk);
 	}
 }
 
-void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint32_t>>& columnFaceMasks) {
+void UFlowerMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint16_t>>& columnFaceMasks) {
 	// Face culling for all the 3 axis (Y, X, Z)
 	for (int axis = 0; axis < 3; axis++) {
-		for (int x = 0; x < WTSR->TreeSizePadding; x++) {
-			for (int z = 0; z < WTSR->TreeSizePadding; z++) {
-				for (int bitIndex = 0; bitIndex < WTSR->TreeIntsPerHeight; bitIndex++) {
-					const int columnIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex };
+		for (int x = 0; x < WTSR->FlowerSizePadding; x++) {
+			for (int z = 0; z < WTSR->FlowerSizePadding; z++) {
+				for (int bitIndex = 0; bitIndex < WTSR->FlowerIntsPerHeight; bitIndex++) {
+					const int columnIndex{ (x * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight) + (z * WTSR->FlowerIntsPerHeight) + bitIndex };
 
-					uint32_t column = 0;
+					uint16_t column = 0;
 					switch (axis) {
 					case 0:
-						column = binaryTree.yBinaryColumn[columnIndex];
+						column = binaryFlower.yBinaryColumn[columnIndex];
 						break;
 					case 1:
-						column = binaryTree.xBinaryColumn[columnIndex];
+						column = binaryFlower.xBinaryColumn[columnIndex];
 						break;
 					case 2:
-						column = binaryTree.zBinaryColumn[columnIndex];
+						column = binaryFlower.zBinaryColumn[columnIndex];
 						break;
 					}
 
 					// If is the Y axis and not the last bitIndex
-					if (axis == 0 && bitIndex < WTSR->TreeIntsPerHeight - 1) {
-						const bool isAboveSolid = binaryTree.yBinaryColumn[columnIndex + 1] != 0;
-						const bool columnAllSolid = column == std::numeric_limits<uint32_t>::max();
+					if (axis == 0 && bitIndex < WTSR->FlowerIntsPerHeight - 1) {
+						const bool isAboveSolid = binaryFlower.yBinaryColumn[columnIndex + 1] != 0;
+						const bool columnAllSolid = column == std::numeric_limits<uint16_t>::max();
 
 						// Skip creating face between height chunks if there's more solid blocks above 
 						if (isAboveSolid && columnAllSolid) {
@@ -360,8 +326,8 @@ void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uin
 							const bool isFaceMaskSolid = columnFaceMasks[axis * 2 + 1][columnIndex] != 0;
 
 							// Check if the leftmost bit is 1
-							const uint32_t leftmostBitMask = 1U << 31;
-							const bool isLeftmostBitSet = (binaryTree.yBinaryColumn[columnIndex - 1] & leftmostBitMask) != 0;
+							const uint16_t leftmostBitMask = 1U << 15;
+							const bool isLeftmostBitSet = (binaryFlower.yBinaryColumn[columnIndex - 1] & leftmostBitMask) != 0;
 
 							// Remove bottom face if there are solid blocks beneath chunk
 							if (isFaceMaskSolid && isLeftmostBitSet) {
@@ -380,19 +346,19 @@ void UTreeMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uin
 	}
 }
 
-void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint32_t>& faceMaskColumn, std::vector<uint32_t>& binaryPlane, const int& axis) {
-	for (int x = 0; x < WTSR->TreeSizePadding; x++) {
-		for (int z = 0; z < WTSR->TreeSizePadding; z++) {
-			for (int bitIndex = 0; bitIndex < WTSR->TreeIntsPerHeight; bitIndex++) {
+void UFlowerMeshGenerator::buildBinaryPlanes(const std::vector<uint16_t>& faceMaskColumn, std::vector<uint16_t>& binaryPlane, const int& axis) {
+	for (int x = 0; x < WTSR->FlowerSizePadding; x++) {
+		for (int z = 0; z < WTSR->FlowerSizePadding; z++) {
+			for (int bitIndex = 0; bitIndex < WTSR->FlowerIntsPerHeight; bitIndex++) {
 
-				const int columnIndex{ (x * WTSR->TreeSizePadding * WTSR->TreeIntsPerHeight) + (z * WTSR->TreeIntsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
+				const int columnIndex{ (x * WTSR->FlowerSizePadding * WTSR->FlowerIntsPerHeight) + (z * WTSR->FlowerIntsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
 
-				uint32_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
+				uint16_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
 
 				// Remove padding only for X and Z axis 
 				if (axis != 0 && axis != 1) {
 					// Remove the leftmost bit and the rightmost bit and replace them with 0
-					column = (column & ~(1U << 31)) & ~1U;
+					column = (column & ~(1U << 15)) & ~1U;
 				}
 
 				while (column != 0) {
@@ -405,7 +371,7 @@ void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint32_t>& faceMask
 					case 0:
 					case 1:
 						// Get to the correct plane and then add x to get to the correct row in the plane
-						planeIndex = (y + bitIndex * WTSR->TreeSizePadding) * WTSR->TreeSizePadding + x;
+						planeIndex = (y + bitIndex * WTSR->FlowerSizePadding) * WTSR->FlowerSizePadding + x;
 						binaryPlane[planeIndex] |= (1U << z);
 						break;
 					case 2:
@@ -414,18 +380,18 @@ void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint32_t>& faceMask
 					case 5:
 						planeRowIndex = y;
 						if (columnIndex > 0) {
-							currentPlaneIndex = (columnIndex / WTSR->TreeSizePadding) * WTSR->TreeSizePadding;
+							currentPlaneIndex = (columnIndex / WTSR->FlowerSizePadding) * WTSR->FlowerSizePadding;
 							planeIndex = currentPlaneIndex + planeRowIndex;
 						} else {
 							planeIndex = planeRowIndex;
 						}
 
-						binaryPlane[planeIndex] |= (1U << columnIndex % WTSR->TreeSizePadding);
+						binaryPlane[planeIndex] |= (1U << columnIndex % WTSR->FlowerSizePadding);
 						break;
 					}
 
 					// Remove the padding from the plane
-					binaryPlane[planeIndex] = (binaryPlane[planeIndex] & ~(1U << 31)) & ~1U;
+					binaryPlane[planeIndex] = (binaryPlane[planeIndex] & ~(1U << 15)) & ~1U;
 
 					// Clear the position 
 					column &= column - 1;
@@ -436,21 +402,21 @@ void UTreeMeshGenerator::buildBinaryPlanes(const std::vector<uint32_t>& faceMask
 	}
 }
 
-void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint32_t>& planes, const int& axis, bool forTreeTrunk) {
+void UFlowerMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint16_t>& planes, const int& axis, bool forFlowerTrunk) {
 	for (int row = 0; row < planes.size(); row++) {
 
 		// Removing padding by skipping the first and last row in the plane
 		if (row == 0) continue;
-		else if (row % WTSR->TreeSizePadding == 0 || row % WTSR->TreeSizePadding == WTSR->TreeSizePadding - 1) continue;
+		else if (row % WTSR->FlowerSizePadding == 0 || row % WTSR->FlowerSizePadding == WTSR->FlowerSizePadding - 1) continue;
 
 		while (planes[row] != 0) {
 			// Get the starting point of the vertex
 			const int y = std::countr_zero(planes[row]);
 
 			// Trailing ones are the height of the vertex
-			const int height = std::countr_one(planes[row] >> y);
+			const int height = std::countr_one(static_cast<unsigned int>(planes[row]) >> y);
 
-			uint32_t heightMask = ((1U << height) - 1) << y;
+			uint16_t heightMask = ((1U << height) - 1) << y;
 
 			// Flip the solid bits used to create the height mask 
 			planes[row] = planes[row] & ~heightMask;
@@ -462,16 +428,16 @@ void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint32_t>& planes,
 			switch (axis) {
 			case 0:
 			case 1:
-				currentPlaneLimit = WTSR->TreeSize; // plane Y max limit is 64
+				currentPlaneLimit = WTSR->FlowerSize; // plane Y max limit is 64
 
 				// Check if the next row can be expanded while in the bounds of the current plane 
-				while ((row % WTSR->TreeSizePadding) + width < currentPlaneLimit) {
+				while ((row % WTSR->FlowerSizePadding) + width < currentPlaneLimit) {
 
 					// Get the correct row to expand into, depending on the axis 
 					const int planesIndex = row + width;
 
 					// Get the bits spanning height for the next row
-					const uint32_t nextRowHeight = planes[planesIndex] & heightMask;
+					const uint16_t nextRowHeight = planes[planesIndex] & heightMask;
 
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
@@ -487,16 +453,16 @@ void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint32_t>& planes,
 			case 3:
 			case 4:
 			case 5:
-				currentPlaneLimit = WTSR->TreeHeight * WTSR->TreeSize;
+				currentPlaneLimit = WTSR->FlowerHeight * WTSR->FlowerSize;
 
 				// Check if the next row can be expanded while in the bounds of the current plane 
-				while (row + (width * WTSR->TreeSizePadding) < currentPlaneLimit) {
+				while (row + (width * WTSR->FlowerSizePadding) < currentPlaneLimit) {
 
 					// Get the row above the current one
-					const int planesIndex = row + (width * WTSR->TreeSizePadding);
+					const int planesIndex = row + (width * WTSR->FlowerSizePadding);
 
 					// Get the bits spanning height for the next row
-					const uint32_t nextRowHeight = planes[planesIndex] & heightMask;
+					const uint16_t nextRowHeight = planes[planesIndex] & heightMask;
 
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
@@ -522,30 +488,30 @@ void UTreeMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint32_t>& planes,
 			case 1:
 			case 4:
 			case 5:
-				voxelX = static_cast<double>(row % WTSR->TreeSizePadding);
+				voxelX = static_cast<double>(row % WTSR->FlowerSizePadding);
 				voxelZ = static_cast<double>(y);
 				break;
 			case 2:
 			case 3:
-				voxelZ = static_cast<double>(row % WTSR->TreeSizePadding);
+				voxelZ = static_cast<double>(row % WTSR->FlowerSizePadding);
 				voxelX = static_cast<double>(y);
 				break;
 			}
 
 			// Height increases with each 64 rows for X and Z
-			const double voxelY = row > 0 ? std::floor(static_cast<double>(row / WTSR->TreeSizePadding)) : 0.0;
+			const double voxelY = row > 0 ? std::floor(static_cast<double>(row / WTSR->FlowerSizePadding)) : 0.0;
 			voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
 
 			// Modify the original voxel position and create the remaining three quad position
-			createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forTreeTrunk);
+			createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forFlowerTrunk);
 
 			// Create the quads
-			createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forTreeTrunk);
+			createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forFlowerTrunk);
 		}
 	}
 }
 
-void UTreeMeshGenerator::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& width, const int& height, const int& axis, bool forTreeTrunk) {
+void UFlowerMeshGenerator::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& width, const int& height, const int& axis, bool forFlowerTrunk) {
 	// Get position modifiers depending on the current axis
 	// This values are used to create the 4 quad positions
 	FVector widthPositionModifier = { 0, 0, 0 };
@@ -621,7 +587,7 @@ void UTreeMeshGenerator::createAllVoxelPositionsFromOriginal(FVector& voxelPosit
 	}
 }
 
-void UTreeMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& height, const int& width, const int& axis, bool forTreeTrunk) {
+void UFlowerMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& height, const int& width, const int& axis, bool forFlowerTrunk) {
 	FVector Normal;
 	if (axis == 0 || axis == 3 || axis == 5) {
 		// Calculate the normals for counter clockwise vectors arrangement
@@ -632,21 +598,21 @@ void UTreeMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FVe
 	}
 
 	FColor layerColor;
-	if (forTreeTrunk) {
-		layerColor = trunkColor;
+	if (forFlowerTrunk) {
+		layerColor = stemColor;
 	} else {
 		voxelPosition1 = voxelPosition1 + 0.001f;
 		voxelPosition2 = voxelPosition2 + 0.001f;
 		voxelPosition3 = voxelPosition3 + 0.001f;
 		voxelPosition4 = voxelPosition4 + 0.001f;
-		layerColor = crownColor;
+		layerColor = petalsColor;
 	}
 
 	MeshData.Vertices.Append({
-		voxelPosition1 * WTSR->TreeScale,
-		voxelPosition2 * WTSR->TreeScale,
-		voxelPosition3 * WTSR->TreeScale,
-		voxelPosition4 * WTSR->TreeScale
+		voxelPosition1 * WTSR->FlowerScale,
+		voxelPosition2 * WTSR->FlowerScale,
+		voxelPosition3 * WTSR->FlowerScale,
+		voxelPosition4 * WTSR->FlowerScale
 		});
 
 	// Add triangles and increment vertex count
@@ -678,17 +644,17 @@ void UTreeMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FVe
 		});
 }
 
-FVoxelObjectMeshData UTreeMeshGenerator::GetTreeMeshData() {
+FVoxelObjectMeshData UFlowerMeshGenerator::GetFlowerMeshData() {
 
 	// Select trunk and crown colors
-	trunkColor = WTSR->TreeTrunkColorArray[FMath::RandRange(0, WTSR->TreeTrunkColorArray.Num() - 1)];
-	crownColor = WTSR->TreeCrownColorArray[FMath::RandRange(0, WTSR->TreeCrownColorArray.Num() - 1)];
+	stemColor = WTSR->FlowerColorArray[FMath::RandRange(0, WTSR->FlowerColorArray.Num() - 1)];
+	petalsColor = WTSR->FlowerColorArray[FMath::RandRange(0, WTSR->FlowerColorArray.Num() - 1)];
 
-	createTrunkBinarySolidColumnsYXZ();
+	/*createTrunkBinarySolidColumnsYXZ();
 	createTerrainMeshesData(true);
 
 	createCrownBinarySolidColumnsYXZ();
-	createTerrainMeshesData(false);
+	createTerrainMeshesData(false);*/
 
 	FVoxelObjectMeshData TemporaryMeshData = MeshData;
 
@@ -698,14 +664,14 @@ FVoxelObjectMeshData UTreeMeshGenerator::GetTreeMeshData() {
 	MeshData.Normals.Empty();
 	MeshData.Colors.Empty();
 	MeshData.UV0.Empty();
-	binaryTree = BinaryTree3D{};
-	binaryTree.yBinaryColumn.clear();
-	binaryTree.xBinaryColumn.clear();
-	binaryTree.zBinaryColumn.clear();
+	binaryFlower = BinaryFlower3D{};
+	binaryFlower.yBinaryColumn.clear();
+	binaryFlower.xBinaryColumn.clear();
+	binaryFlower.zBinaryColumn.clear();
 	columnsFaceMask.clear();
 	branchEndPoints.Empty();
-	TreeLocationData.ObjectPosition = FVector::ZeroVector; 
-	TreeLocationData.ObjectWorldCoords = FIntPoint(0, 0); 
+	FlowerLocationData.ObjectPosition = FVector::ZeroVector; 
+	FlowerLocationData.ObjectWorldCoords = FIntPoint(0, 0); 
 	vertexCount = 0;
 
 	return TemporaryMeshData;

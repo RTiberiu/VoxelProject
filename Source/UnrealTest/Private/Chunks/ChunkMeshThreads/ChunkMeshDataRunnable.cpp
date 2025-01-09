@@ -621,16 +621,27 @@ void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, con
 
 	if (isVegetationInsideChunk) {
 		FVoxelObjectLocationData vegetationSpawnPosition;
-		float treeX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
-		float treeZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
-		vegetationSpawnPosition.ObjectPosition = FVector(treeX, treeZ, height * WTSR->UnrealScale);
-		vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
 		if (spawnVegetationChance < WTSR->TreeSpawnChance) {
+			float treeX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
+			float treeZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
+			vegetationSpawnPosition.ObjectPosition = FVector(treeX, treeZ, height * WTSR->UnrealScale);
+			vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
 			CLDR->addTreeSpawnPosition(vegetationSpawnPosition);
 		} else if (spawnVegetationChance < WTSR->FlowerSpawnChance) {
+			float flowerX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->FlowerSize * WTSR->FlowerScale) / 2) + WTSR->UnrealScale / 2) - WTSR->FlowerScale / 2;
+			float flowerZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->FlowerSize * WTSR->FlowerScale) / 2) + WTSR->UnrealScale / 2) - WTSR->FlowerScale / 2;
+			vegetationSpawnPosition.ObjectPosition = FVector(flowerX, flowerZ, height * WTSR->UnrealScale);
+			vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
 			CLDR->addFlowerSpawnPosition(vegetationSpawnPosition);
 		} else if (spawnVegetationChance < WTSR->GrassSpawnChance) {
+			float grassX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->GrassSize * WTSR->GrassScale) / 2) + WTSR->UnrealScale / 2) - WTSR->GrassScale / 2;
+			float grassZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->GrassSize * WTSR->GrassScale) / 2) + WTSR->UnrealScale / 2) - WTSR->GrassScale / 2;
+			vegetationSpawnPosition.ObjectPosition = FVector(grassX, grassZ, height * WTSR->UnrealScale);
+			vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
 			CLDR->addGrassSpawnPosition(vegetationSpawnPosition);
 		}
 	}

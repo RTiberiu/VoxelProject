@@ -13,6 +13,8 @@
 #include "CoreMinimal.h"
 #include <Chunks/SingleChunk/BinaryChunk.h>
 #include <Chunks/Vegetation/Trees/Tree.h>
+#include <Chunks/Vegetation/Grass/Grass.h>
+#include <Chunks/Vegetation/Flowers/Flower.h>
 #include "WorldTerrainSettings.generated.h"
 
 class FastNoiseLite;
@@ -104,7 +106,7 @@ public:
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
 	const float TreeSpawnChance{ 0.002f };
 	const float FlowerSpawnChance{ 0.04f };
-	const float GrassSpawnChance{ 0.04f };
+	const float GrassSpawnChance{ 0.08f };
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };
@@ -121,11 +123,31 @@ public:
 	const uint16_t MinTreeTrunkWidth{ 1 };
 
 	// Flowers settings
-	const uint8_t FlowerVariations{ 10 };
+	int FlowerCount{ 0 };
+	const uint8_t FlowerVariations{ 30 };
+	const uint8_t FlowerScale{ 15 }; // this changes the voxel size (100 is 1m)
+	const uint8_t FlowerSizePadding{ 16 };
+	const uint8_t FlowerSize{ 14 };
+	const uint16_t FlowerHeight{ 14 }; // 1 bits
+	const uint8_t FlowerIntsPerHeight{ static_cast<uint8_t>(FlowerHeight / FlowerSize) };
 
+	TArray<FColor> FlowerColorArray = {
+		FColor(3, 9, 28), FColor(8, 15, 79), FColor(17, 13, 130), FColor(45, 18, 181), FColor(86, 23, 232), FColor(145, 74, 237), FColor(191, 125, 242), FColor(226, 176, 247)
+	};
 
 	// Grass settings
-	const uint8_t GrassVariations{ 10 };
+	int GrassCount{ 0 };
+	const uint8_t GrassVariations{ 30 };
+	const uint8_t GrassScale{ 7 }; // this changes the voxel size (100 is 1m)
+	const uint8_t GrassSizePadding{ 8 };
+	const uint8_t GrassSize{ 6 };
+	const uint16_t GrassHeight{ 12 }; // 2 bits
+	const uint8_t GrassIntsPerHeight{ static_cast<uint8_t>(GrassHeight / GrassSize) };
+
+	TArray<FColor> GrassBladesColorArray = {
+		FColor(3, 9, 28), FColor(8, 15, 79), FColor(17, 13, 130), FColor(45, 18, 181), FColor(86, 23, 232), FColor(145, 74, 237), FColor(191, 125, 242), FColor(226, 176, 247)
+	};
+
 
 
 	// TODO I might want to move this to VegetationMeshData.cpp eventually
@@ -139,8 +161,12 @@ public:
 	FVoxelObjectMeshData* GetRandomFlowerMeshData();
 
 	void AddSpawnedTrees(const FIntPoint& TreeWorldCoordinates, ATree* TreeActor);
+	void AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, AGrass* GrassActor);
+	void AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, AFlower* FlowerActor);
 	const TMap<FIntPoint, TArray<ATree*>>& GetSpawnedTreesMap() const;
 	TArray<ATree*> GetAndRemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
+	TArray<AGrass*> GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates);
+	TArray<AFlower*> GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates);
 	void RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
 
 	void AddChunkToRemoveCollision(ABinaryChunk* actor);
@@ -173,6 +199,8 @@ private:
 	FairSemaphore* PlayerPositionSemaphore;
 	FairSemaphore* ChunkMapSemaphore;
 	FairSemaphore* TreeMapSemaphore;
+	FairSemaphore* GrassMapSemaphore;
+	FairSemaphore* FlowerMapSemaphore;
 	FairSemaphore* DrawDistanceSemaphore;
 	FairSemaphore* AddCollisionTreesSemaphore;
 	FairSemaphore* RemoveCollisionTreesSemaphore;
@@ -182,8 +210,10 @@ private:
 	// Map to store spawned chunks with 2D coordinates as keys
 	TMap<FIntPoint, AActor*> SpawnedChunksMap;
 
-	// Array to store spawned trees
+	// Array to store spawned trees, grass, and flowers
 	TMap<FIntPoint, TArray<ATree*>> SpawnedTreesMap;
+	TMap<FIntPoint, TArray<AGrass*>> SpawnedGrassMap;
+	TMap<FIntPoint, TArray<AFlower*>> SpawnedFlowerMap;
 
 	// Arrays to update collision for actors (chunks and trees)
 	TArray<ABinaryChunk*> RemoveCollisionChunks;

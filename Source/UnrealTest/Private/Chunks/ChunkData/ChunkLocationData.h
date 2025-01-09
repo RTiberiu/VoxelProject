@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "..\Vegetation\Trees\Tree.h"
+#include "..\Vegetation\Grass\Grass.h"
+#include "..\Vegetation\Flowers\Flower.h"
 #include "..\DataStructures\VoxelObjectMeshData.h"
 #include "..\DataStructures\VoxelObjectLocationData.h"
 #include "Containers/Queue.h"
@@ -36,23 +38,25 @@ public:
     void emptyPositionQueues();
 
     TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
-    bool getGrassSpawnPosition(FVoxelObjectLocationData& OutLocation);
-    bool getFlowerSpawnPosition(FVoxelObjectLocationData& OutLocation);
+    TArray<FVoxelObjectLocationData> getGrassSpawnPosition();
+    TArray<FVoxelObjectLocationData> getFlowerSpawnPosition();
 
     void addTreeSpawnPosition(const FVoxelObjectLocationData position);
     void addGrassSpawnPosition(const FVoxelObjectLocationData position);
     void addFlowerSpawnPosition(const FVoxelObjectLocationData position);
 
-    bool isTreeWaitingToBeSpawned(const TArray<FIntPoint>& treeRadiusPoints);
-    bool isGrassWaitingToBeSpawned();
-    bool isFlowerWaitingToBeSpawned();
-
     void RemoveTreeSpawnPosition(const FIntPoint& point);
+    void RemoveGrassSpawnPosition(const FIntPoint& point);
+    void RemoveFlowerSpawnPosition(const FIntPoint& point);
 
-    bool isTreeWaitingToBeDestroyed();
+    bool AddUnspawnedTreeToDestroy(ATree* InTreeToDestroy);
+    bool GetUnspawnedTreeToDestroy(ATree* InTreeToDestroy);
 
-    bool AddUnspawnedTreeToDestroy(ATree* treeToDestroy);
-    bool GetUnspawnedTreeToDestroy(ATree* treeToDestroy);
+    bool AddUnspawnedGrassToDestroy(AGrass* InGrassToDestroy);
+    bool GetUnspawnedGrassToDestroy(AGrass* InGrassToDestroy);
+
+    bool AddUnspawnedFlowerToDestroy(AFlower* InFlowerToDestroy);
+    bool GetUnspawnedFlowerToDestroy(AFlower* InFlowerToDestroy);
 
 private:
     // Queue for storing chunks position that need to be spawned
@@ -64,6 +68,8 @@ private:
     FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
 
     TQueue<ATree*> unspawnedTreesToDestroy;
+    TQueue<AGrass*> unspawnedGrassToDestroy;
+    TQueue<AFlower*> unspawnedFlowerToDestroy;
 
     TQueue<FIntPoint> treesToDestroy;
     TQueue<FIntPoint> grassToDestroy;
@@ -76,12 +82,12 @@ private:
     // Queue for storing vegetation spawn points data
     FairSemaphore* TreesToSpawnSemaphore;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>> treesSpawnPositions;
-    TMap<FIntPoint, TArray<FVoxelObjectLocationData>> usedTreesSpawnPositions;
 
+    FairSemaphore* GrassToSpawnSemaphore;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>> grassSpawnPositions;
 
-    TQueue<FVoxelObjectLocationData> grassSpawnPositions;
-    TQueue<FVoxelObjectLocationData> flowersSpawnPositions;
-
+    FairSemaphore* FlowersToSpawnSemaphore;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>> flowersSpawnPositions;
 
     FairSemaphore* MeshDataSemaphore;
 };

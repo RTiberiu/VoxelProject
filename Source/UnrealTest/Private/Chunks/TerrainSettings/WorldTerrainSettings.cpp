@@ -11,6 +11,8 @@ UWorldTerrainSettings::UWorldTerrainSettings() :
 	PlayerPositionSemaphore(new FairSemaphore(1)),
 	ChunkMapSemaphore(new FairSemaphore(1)),
 	TreeMapSemaphore(new FairSemaphore(1)),
+	GrassMapSemaphore(new FairSemaphore(1)),
+	FlowerMapSemaphore(new FairSemaphore(1)),
 	DrawDistanceSemaphore(new FairSemaphore(1)),
 	AddCollisionTreesSemaphore(new FairSemaphore(1)),
 	RemoveCollisionTreesSemaphore(new FairSemaphore(1)),
@@ -26,6 +28,8 @@ UWorldTerrainSettings::~UWorldTerrainSettings() {
 	delete PlayerPositionSemaphore;
 	delete ChunkMapSemaphore;
 	delete TreeMapSemaphore;
+	delete GrassMapSemaphore;
+	delete FlowerMapSemaphore;
 	delete DrawDistanceSemaphore;
 
 	delete AddCollisionTreesSemaphore;
@@ -274,6 +278,34 @@ void UWorldTerrainSettings::AddSpawnedTrees(const FIntPoint& TreeWorldCoordinate
 	TreeMapSemaphore->Release();
 }
 
+void UWorldTerrainSettings::AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, AGrass* GrassActor) {
+	GrassMapSemaphore->Acquire();
+
+	// If it exists, add the new grass to the existing array
+	if (SpawnedGrassMap.Contains(GrassWorldCoordinates)) {
+		SpawnedGrassMap[GrassWorldCoordinates].Add(GrassActor);
+	} else {
+		// If not, create a new array with the new grass
+		SpawnedGrassMap.Add(GrassWorldCoordinates, TArray<AGrass*>({ GrassActor }));
+	}
+
+	GrassMapSemaphore->Release();
+}
+
+void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, AFlower* FlowerActor) {
+	FlowerMapSemaphore->Acquire();
+
+	// If it exists, add the new flower to the existing array
+	if (SpawnedFlowerMap.Contains(FlowerWorldCoordinates)) {
+		SpawnedFlowerMap[FlowerWorldCoordinates].Add(FlowerActor);
+	} else {
+		// If not, create a new array with the new flower
+		SpawnedFlowerMap.Add(FlowerWorldCoordinates, TArray<AFlower*>({ FlowerActor }));
+	}
+
+	FlowerMapSemaphore->Release();
+}
+
 const TMap<FIntPoint, TArray<ATree*>>& UWorldTerrainSettings::GetSpawnedTreesMap() const {
 	return SpawnedTreesMap;
 }
@@ -294,6 +326,40 @@ TArray<ATree*> UWorldTerrainSettings::GetAndRemoveTreeFromMap(const FIntPoint& T
 
 	TreeMapSemaphore->Release();
 	return RemovedTrees;
+}
+
+TArray<AGrass*> UWorldTerrainSettings::GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates) {
+	TArray<AGrass*> RemovedGrass;  // Array to hold the remaining grass at the location
+
+	GrassMapSemaphore->Acquire();
+
+	// Check if the map contains the coordinates
+	if (SpawnedGrassMap.Contains(GrassWorldCoordinates)) {
+		// Get and remove the array of grass at this location if it's not empty
+		if (!SpawnedGrassMap[GrassWorldCoordinates].IsEmpty()) {
+			RemovedGrass = SpawnedGrassMap.FindAndRemoveChecked(GrassWorldCoordinates);
+		}
+	}
+
+	GrassMapSemaphore->Release();
+	return RemovedGrass;
+}
+
+TArray<AFlower*> UWorldTerrainSettings::GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates) {
+	TArray<AFlower*> RemovedFlower;  // Array to hold the remaining flower at the location
+
+	FlowerMapSemaphore->Acquire();
+
+	// Check if the map contains the coordinates
+	if (SpawnedFlowerMap.Contains(FlowerWorldCoordinates)) {
+		// Get and remove the array of flower at this location if it's not empty
+		if (!SpawnedFlowerMap[FlowerWorldCoordinates].IsEmpty()) {
+			RemovedFlower = SpawnedFlowerMap.FindAndRemoveChecked(FlowerWorldCoordinates);
+		}
+	}
+
+	FlowerMapSemaphore->Release();
+	return RemovedFlower;
 }
 
 void UWorldTerrainSettings::RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates) {

@@ -22,6 +22,8 @@ AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThre
 
 	// Initializing Tree with the Tree class
 	Tree = ATree::StaticClass();
+	Grass = AGrass::StaticClass();
+	Flower = AFlower::StaticClass();
 }
 
 void AChunkWorld::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -63,8 +65,6 @@ void AChunkWorld::spawnInitialWorld() {
 		for (int x = -currentSpiralRing; x < currentSpiralRing; x++) {
 			FString rowString; // TESTING
 			for (int z = -currentSpiralRing; z < currentSpiralRing; z++) {
-				/*for (int x = 0; x < 1; x++) {
-					for (int z = 0; z < 1; z++) {*/
 				std::pair<int, int> currentPair = { x, z };
 
 				if (avoidPosition.find(currentPair) != avoidPosition.end()) {
@@ -98,7 +98,7 @@ void AChunkWorld::generateTreeMeshVariations() {
 	TreeMeshGenerator->SetWorldTerrainSettings(WTSR);
 
 	for (int treeIndex = 0; treeIndex < WTSR->TreeVariations; treeIndex++) {
-		FVoxelObjectMeshData treeMeshData = TreeMeshGenerator->GetMeshTreeMeshData();
+		FVoxelObjectMeshData treeMeshData = TreeMeshGenerator->GetTreeMeshData();
 		WTSR->AddTreeMeshData(treeMeshData);
 	}
 
@@ -110,7 +110,13 @@ void AChunkWorld::generateTreeMeshVariations() {
 void AChunkWorld::generateGrassMeshVariations() {
 	Time start = std::chrono::high_resolution_clock::now();
 
+	UGrassMeshGenerator* GrassMeshGenerator = NewObject<UGrassMeshGenerator>();
+	GrassMeshGenerator->SetWorldTerrainSettings(WTSR);
 
+	for (int grassIndex = 0; grassIndex < WTSR->GrassVariations; grassIndex++) {
+		FVoxelObjectMeshData grassMeshData = GrassMeshGenerator->GetGrassMeshData();
+		WTSR->AddGrassMeshData(grassMeshData);
+	}
 
 	Time end = std::chrono::high_resolution_clock::now();
 	printExecutionTime(start, end, std::format("Generated {} grass variations.", WTSR->GrassVariations).c_str());
@@ -119,8 +125,13 @@ void AChunkWorld::generateGrassMeshVariations() {
 void AChunkWorld::generateFlowerMeshVariations() {
 	Time start = std::chrono::high_resolution_clock::now();
 
+	UFlowerMeshGenerator* FlowerMeshGenerator = NewObject<UFlowerMeshGenerator>();
+	FlowerMeshGenerator->SetWorldTerrainSettings(WTSR);
 
-
+	for (int grassIndex = 0; grassIndex < WTSR->GrassVariations; grassIndex++) {
+		FVoxelObjectMeshData flowerMeshData = FlowerMeshGenerator->GetFlowerMeshData();
+		WTSR->AddFlowerMeshData(flowerMeshData);
+	}
 
 	Time end = std::chrono::high_resolution_clock::now();
 	printExecutionTime(start, end, std::format("Generated {} flower variations.", WTSR->FlowerVariations).c_str());
@@ -179,6 +190,189 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 		WTSR->AddSpawnedTrees(ChunkLocationData.ObjectWorldCoords, SpawnedTreeActor);
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Tree Actor!"));
+	}
+}
+
+void AChunkWorld::SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
+	AGrass* SpawnedActor = GetWorld()->SpawnActorDeferred<AGrass>(Grass, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+	if (SpawnedActor) {
+		// Add references to BinaryChunk and pass the computed mesh data
+		SpawnedActor->SetWorldTerrainSettings(WTSR);
+		SpawnedActor->SetPerlinNoiseSettings(PNSR);
+		SpawnedActor->SetGrassMeshData(WTSR->GetRandomGrassMeshData());
+		SpawnedActor->SetGrassWorldLocation(ChunkLocationData.ObjectWorldCoords);
+
+		// Finish spawning the grass actor
+		UGameplayStatics::FinishSpawningActor(SpawnedActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
+
+		// Adding the tree actor to a map so I can update the collision and remove it later on
+		WTSR->AddSpawnedGrass(ChunkLocationData.ObjectWorldCoords, SpawnedActor);
+	} else {
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Grass Actor!"));
+	}
+}
+
+void AChunkWorld::SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
+	AFlower* SpawnedActor = GetWorld()->SpawnActorDeferred<AFlower>(Flower, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+	// Spawn the flower actor deferred
+	if (SpawnedActor) {
+		// Add references to BinaryChunk and pass the computed mesh data
+		SpawnedActor->SetWorldTerrainSettings(WTSR);
+		SpawnedActor->SetPerlinNoiseSettings(PNSR);
+		SpawnedActor->SetFlowerMeshData(WTSR->GetRandomFlowerMeshData());
+		SpawnedActor->SetFlowerWorldLocation(ChunkLocationData.ObjectWorldCoords);
+
+		// Finish spawning the flower actor
+		UGameplayStatics::FinishSpawningActor(SpawnedActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
+
+		// Adding the tree actor to a map so I can update the collision and remove it later on
+		WTSR->AddSpawnedFlower(ChunkLocationData.ObjectWorldCoords, SpawnedActor);
+	} else {
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Flower Actor!"));
+	}
+}
+
+// Remove the vegetation (tree, grass, flowers) spawn points, and add the actor pointers
+// to a local cache, to be removed across multiple frames in Tick().
+void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyPosition) {
+	// Remove remaining trees to spawn position at current chunk destroyed
+	CLDR->RemoveTreeSpawnPosition(destroyPosition);
+
+	// Remove trees to spawn in the ChunkWorld cache
+	TreePositionsToSpawn.RemoveAll([&](const FVoxelObjectLocationData& Item) {
+		return Item.ObjectWorldCoords == destroyPosition;
+		});
+
+	// Add spawned trees to a remove list to remove over multiple frames
+	TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(destroyPosition);
+	TreeActorsToRemove.Append(treesToRemove);
+
+	// Remove remaining grass to spawn position at current chunk destroyed
+	CLDR->RemoveGrassSpawnPosition(destroyPosition);
+
+	// Remove grass to spawn in the ChunkWorld cache
+	GrassPositionsToSpawn.RemoveAll([&](const FVoxelObjectLocationData& Item) {
+		return Item.ObjectWorldCoords == destroyPosition;
+		});
+
+	// Add spawned grass to a remove list to remove over multiple frames
+	TArray<AGrass*> grassToRemove = WTSR->GetAndRemoveGrassFromMap(destroyPosition);
+	GrassActorsToRemove.Append(grassToRemove);
+
+	// Remove remaining flower to spawn position at current chunk destroyed
+	CLDR->RemoveFlowerSpawnPosition(destroyPosition);
+
+	// Remove flower to spawn in the ChunkWorld cache
+	FlowerPositionsToSpawn.RemoveAll([&](const FVoxelObjectLocationData& Item) {
+		return Item.ObjectWorldCoords == destroyPosition;
+		});
+
+	// Add spawned flower to a remove list to remove over multiple frames
+	TArray<AFlower*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(destroyPosition);
+	FlowerActorsToRemove.Append(flowerToRemove);
+}
+
+void AChunkWorld::DestroyTreeActors() {
+	// Remove tree actors
+	int removedTreeCounter = 0;
+	for (int32 treeIndex = 0; treeIndex < TreeActorsToRemove.Num();) {
+		if (removedTreeCounter >= treesToRemovePerFrame) {
+			break;
+		}
+
+		ATree* treeToRemove = TreeActorsToRemove[treeIndex];
+		if (treeToRemove) {
+			treeToRemove->Destroy();
+			WTSR->TreeCount--;
+		} else {
+			CLDR->AddUnspawnedTreeToDestroy(treeToRemove);
+		}
+
+		TreeActorsToRemove.RemoveAt(treeIndex);
+		removedTreeCounter++;
+	}
+
+	// Check for any previously unspawned trees that could be now destroyed 
+	ATree* unspawnedTree = nullptr;
+	CLDR->GetUnspawnedTreeToDestroy(unspawnedTree);
+	if (unspawnedTree) {
+		// Destroy if it's valid and part of the world
+		if (IsValid(unspawnedTree) && unspawnedTree->IsActorInitialized()) {
+			unspawnedTree->Destroy();
+		} else {
+			// Add back to the list and wait for the tree to be spawned.
+			CLDR->AddUnspawnedTreeToDestroy(unspawnedTree);
+		}
+	}
+}
+
+void AChunkWorld::DestroyGrassActors() {
+	// Remove grass actors
+	int removedGrassCounter = 0;
+	for (int32 grassIndex = 0; grassIndex < GrassActorsToRemove.Num();) {
+		if (removedGrassCounter >= grassToRemovePerFrame) {
+			break;
+		}
+
+		AGrass* grassToRemove = GrassActorsToRemove[grassIndex];
+		if (grassToRemove) {
+			grassToRemove->Destroy();
+			WTSR->GrassCount--;
+		} else {
+			CLDR->AddUnspawnedGrassToDestroy(grassToRemove);
+		}
+
+		GrassActorsToRemove.RemoveAt(grassIndex);
+		removedGrassCounter++;
+	}
+
+	// Check for any previously unspawned grass that could be now destroyed 
+	AGrass* unspawnedGrass = nullptr;
+	CLDR->AddUnspawnedGrassToDestroy(unspawnedGrass);
+	if (unspawnedGrass) {
+		// Destroy if it's valid and part of the world
+		if (IsValid(unspawnedGrass) && unspawnedGrass->IsActorInitialized()) {
+			unspawnedGrass->Destroy();
+		} else {
+			// Add back to the list and wait for the grass to be spawned.
+			CLDR->AddUnspawnedGrassToDestroy(unspawnedGrass);
+		}
+	}
+}
+
+void AChunkWorld::DestroyFlowerActors() {
+	// Remove flower actors
+	int removedFlowerCounter = 0;
+	for (int32 flowerIndex = 0; flowerIndex < FlowerActorsToRemove.Num();) {
+		if (removedFlowerCounter >= flowerToRemovePerFrame) {
+			break;
+		}
+
+		AFlower* flowerToRemove = FlowerActorsToRemove[flowerIndex];
+		if (flowerToRemove) {
+			flowerToRemove->Destroy();
+			WTSR->FlowerCount--;
+		} else {
+			CLDR->AddUnspawnedFlowerToDestroy(flowerToRemove);
+		}
+
+		FlowerActorsToRemove.RemoveAt(flowerIndex);
+		removedFlowerCounter++;
+	}
+
+	// Check for any previously unspawned flower that could be now destroyed 
+	AFlower* unspawnedFlower = nullptr;
+	CLDR->AddUnspawnedFlowerToDestroy(unspawnedFlower);
+	if (unspawnedFlower) {
+		// Destroy if it's valid and part of the world
+		if (IsValid(unspawnedFlower) && unspawnedFlower->IsActorInitialized()) {
+			unspawnedFlower->Destroy();
+		} else {
+			// Add back to the list and wait for the flower to be spawned.
+			CLDR->AddUnspawnedFlowerToDestroy(unspawnedFlower);
+		}
 	}
 }
 
@@ -301,7 +495,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		isMeshTaskRunning.AtomicSet(false);
 	}
 
-	// Append positions waiting to be spawned
+	// Append tree positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositions();
 	TreePositionsToSpawn.Append(treeSpawnPositions);
 
@@ -324,13 +518,52 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		spawnedTreeCounter++;
 	}
 
-	if (CLDR->isGrassWaitingToBeSpawned()) {
+	// Append grass positions waiting to be spawned
+	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPosition();
+	GrassPositionsToSpawn.Append(grassSpawnPositions);
 
+	// Spawn a few trees in the current frame
+	int spawnedGrassCounter = 0;
+	for (int32 positionIndex = 0; positionIndex < GrassPositionsToSpawn.Num();) {
+		if (spawnedGrassCounter >= grassToSpawnPerFrame) {
+			break;
+		}
+
+		SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
+		WTSR->GrassCount++;
+
+		// Print the tree count every 50
+		if (WTSR->GrassCount % 50 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("Grass count: %d"), WTSR->GrassCount);
+		}
+
+		GrassPositionsToSpawn.RemoveAt(positionIndex);
+		spawnedGrassCounter++;
 	}
 
-	if (CLDR->isFlowerWaitingToBeSpawned()) {
+	// Append flower positions waiting to be spawned
+	TArray<FVoxelObjectLocationData> flowerSpawnPositions = CLDR->getFlowerSpawnPosition();
+	FlowerPositionsToSpawn.Append(flowerSpawnPositions);
 
+	// Spawn a few flowers in the current frame
+	int spawnedFlowerCounter = 0;
+	for (int32 positionIndex = 0; positionIndex < FlowerPositionsToSpawn.Num();) {
+		if (spawnedFlowerCounter >= flowerToSpawnPerFrame) {
+			break;
+		}
+
+		// SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
+		WTSR->FlowerCount++;
+
+		// Print the tree count every 50
+		/*if (WTSR->FlowerCount % 50 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("Flower count: %d"), WTSR->FlowerCount);
+		}*/
+
+		FlowerPositionsToSpawn.RemoveAt(positionIndex);
+		spawnedFlowerCounter++;
 	}
+
 
 	// Spawn chunk if there is a calculated mesh data waiting
 	if (CLDR->isMeshWaitingToBeSpawned()) {
@@ -387,56 +620,20 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		if (chunkToRemove) {
 			chunkToRemove->Destroy();
 
-			// Remove remaining trees to spawn position at current chunk destroyed
-			CLDR->RemoveTreeSpawnPosition(chunkToDestroyPosition);
-
-			// Remove trees to spawn in the ChunkWorld cache
-			TreePositionsToSpawn.RemoveAll([&](const FVoxelObjectLocationData& Item) {
-				return Item.ObjectWorldCoords == chunkToDestroyPosition;
-				});
-
-			// Add spawned trees to a remove list to remove over multiple frames
-			TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(chunkToDestroyPosition);
-			TreeActorsToRemove.Append(treesToRemove);
-
+			// Remove remaining vegetation spawn points for the destroyed chunk location
+			// and add the aactor pointers to a local cache to be removed across multiple frames
+			RemoveVegetationSpawnPointsAndActors(chunkToDestroyPosition);
 		} else {
 			// Add the chunk position back because the chunk is not yet spawned
 			CLDR->addChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back. I should use a TMap instead and remove the entry of that object instead, preventing it from spawning in the first place.
 		}
 	}
 
-	// Remove tree actors
-	int removedTreeCounter = 0;
-	for (int32 treeIndex = 0; treeIndex < TreeActorsToRemove.Num();) {
-		if (removedTreeCounter >= treesToRemovePerFrame) {
-			break;
-		}
-
-		ATree* treeToRemove = TreeActorsToRemove[treeIndex];
-		if (treeToRemove) {
-			treeToRemove->Destroy();
-			WTSR->TreeCount--;
-		} else {
-			CLDR->AddUnspawnedTreeToDestroy(treeToRemove);
-		}
-
-		TreeActorsToRemove.RemoveAt(treeIndex);
-		removedTreeCounter++;
-	}
-
-	// Check for any previously unspawned trees that could be now destroyed 
-	ATree* unspawnedTree = nullptr;
-	CLDR->GetUnspawnedTreeToDestroy(unspawnedTree);
-	if (unspawnedTree) {
-		// Destroy if it's valid and part of the world
-		if (IsValid(unspawnedTree) && unspawnedTree->IsActorInitialized()) {
-			unspawnedTree->Destroy();
-		} else {
-			// Add back to the list and wait for the tree to be spawned.
-			CLDR->AddUnspawnedTreeToDestroy(unspawnedTree);
-		}
-	}
-
+	// Destroy a few vegetation aactors
+	DestroyTreeActors();
+	DestroyGrassActors();
+	DestroyFlowerActors();
+	
 	// Enabling and disabling collision for chunks and trees
 	ATree* removeCollisionTree = WTSR->GetTreeToRemoveCollision();
 	ATree* enableCollisionTree = WTSR->GetTreeToEnableCollision();

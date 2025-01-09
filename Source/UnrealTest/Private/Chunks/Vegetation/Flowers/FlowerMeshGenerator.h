@@ -8,46 +8,46 @@
 #include <chrono>
 #include <random>
 
-#include "TreeMeshGenerator.generated.h"
+#include "FlowerMeshGenerator.generated.h"
 
 class UProceduralMeshComponent;
 class UWorldTerrainSettings;
 
 UCLASS()
-class  UTreeMeshGenerator : public UObject {
+class  UFlowerMeshGenerator : public UObject {
     GENERATED_BODY()
 
-	struct BinaryTree3D {
-		std::vector<uint32_t> yBinaryColumn;
-		std::vector<uint32_t> xBinaryColumn;
-		std::vector<uint32_t> zBinaryColumn;
+	struct BinaryFlower3D {
+		std::vector<uint16_t> yBinaryColumn;
+		std::vector<uint16_t> xBinaryColumn;
+		std::vector<uint16_t> zBinaryColumn;
 	};
 
 public:
-    UTreeMeshGenerator();
+    UFlowerMeshGenerator();
 
-    ~UTreeMeshGenerator();
+    ~UFlowerMeshGenerator();
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 
-	FVoxelObjectMeshData GetTreeMeshData();
+	FVoxelObjectMeshData GetFlowerMeshData();
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
 
-	FVoxelObjectLocationData TreeLocationData;
+	FVoxelObjectLocationData FlowerLocationData;
 
-	BinaryTree3D binaryTree = BinaryTree3D{};
+	BinaryFlower3D binaryFlower = BinaryFlower3D{};
 
-	std::vector<uint32_t> columnsFaceMask;
+	std::vector<uint16_t> columnsFaceMask;
 
 	FVoxelObjectMeshData MeshData; // store vertices, normals, triangles, etc.
 
 	TArray<FVector> branchEndPoints;
 
-	FColor trunkColor;
-	FColor crownColor;
+	FColor stemColor;
+	FColor petalsColor;
 
 	int vertexCount{ 0 };
 
@@ -57,17 +57,17 @@ private:
 
 	void GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& branchX, const int& branchY, const int& branchZ);
 
-	void AddTrunkPoints(TArray<FVector>& Points, float TreeLength, float LastLayerProbability, int MaxBaseThickness);
+	void AddTrunkPoints(TArray<FVector>& Points, float FlowerLength, float LastLayerProbability, int MaxBaseThickness);
 
-	void printBinary(uint32_t value, int groupSize, const std::string& otherData);
+	void printBinary(uint16_t value, int groupSize, const std::string& otherData);
 
-	void createTerrainMeshesData(bool forTreeTrunk);
+	void createTerrainMeshesData(bool forFlowerTrunk);
 
-	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint32_t>>& columnFaceMasks);
+	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint16_t>>& columnFaceMasks);
 
-	void buildBinaryPlanes(const std::vector<uint32_t>& faceMaskColumn, std::vector<uint32_t>& binaryPlane, const int& axis);
+	void buildBinaryPlanes(const std::vector<uint16_t>& faceMaskColumn, std::vector<uint16_t>& binaryPlane, const int& axis);
 
-	void greedyMeshingBinaryPlane(std::vector<uint32_t>& planes, const int& axis, bool forTreeTrunk);
+	void greedyMeshingBinaryPlane(std::vector<uint16_t>& planes, const int& axis, bool forFlowerTrunk);
 
 	void createAllVoxelPositionsFromOriginal(
 		FVector& voxelPosition1,
@@ -76,7 +76,7 @@ private:
 		FVector& voxelPosition4,
 		const int& width,
 		const int& height,
-		const int& axis, bool forTreeTrunk);
+		const int& axis, bool forFlowerTrunk);
 
 	void createQuadAndAddToMeshData(
 		FVector& voxelPosition1,
@@ -84,6 +84,6 @@ private:
 		FVector& voxelPosition3,
 		FVector& voxelPosition4,
 		const int& height, const int& width,
-		const int& axis, bool forTreeTrunk);
+		const int& axis, bool forFlowerTrunk);
 };
 
