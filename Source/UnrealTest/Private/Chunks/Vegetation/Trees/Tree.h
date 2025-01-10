@@ -46,8 +46,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tree Settings", meta = (AllowPrivateAccess = "true"))
 	FIntPoint treeWorldLocation;
 
-
-	TObjectPtr<UProceduralMeshComponent> Mesh;
+	UProceduralMeshComponent* Mesh;
 
 	FVoxelObjectMeshData* MeshData; // store vertices, normals, triangles, etc.
 

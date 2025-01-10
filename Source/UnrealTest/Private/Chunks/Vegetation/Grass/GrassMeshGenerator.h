@@ -18,9 +18,9 @@ class  UGrassMeshGenerator : public UObject {
     GENERATED_BODY()
 
 	struct BinaryGrass3D {
-		std::vector<uint8_t> yBinaryColumn;
-		std::vector<uint8_t> xBinaryColumn;
-		std::vector<uint8_t> zBinaryColumn;
+		std::vector<uint16_t> yBinaryColumn;
+		std::vector<uint16_t> xBinaryColumn;
+		std::vector<uint16_t> zBinaryColumn;
 	};
 
 public:
@@ -30,7 +30,7 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 
-	FVoxelObjectMeshData GetGrassMeshData();
+	FVoxelObjectMeshData GetGrassMeshData(const FColor& InBladeColor);
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
@@ -40,7 +40,7 @@ private:
 
 	BinaryGrass3D binaryGrass = BinaryGrass3D{};
 
-	std::vector<uint8_t> columnsFaceMask;
+	std::vector<uint16_t> columnsFaceMask;
 
 	FVoxelObjectMeshData MeshData; // store vertices, normals, triangles, etc.
 
@@ -52,15 +52,13 @@ private:
 
 	void createBladeBinarySolidColumnsYXZ();
 
-	void createCrownBinarySolidColumnsYXZ();
-
 	void createTerrainMeshesData();
 
-	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint8_t>>& columnFaceMasks);
+	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint16_t>>& columnFaceMasks);
 
-	void buildBinaryPlanes(const std::vector<uint8_t>& faceMaskColumn, std::vector<uint8_t>& binaryPlane, const int& axis);
+	void buildBinaryPlanes(const std::vector<uint16_t>& faceMaskColumn, std::vector<uint16_t>& binaryPlane, const int& axis);
 
-	void greedyMeshingBinaryPlane(std::vector<uint8_t>& planes, const int& axis);
+	void greedyMeshingBinaryPlane(std::vector<uint16_t>& planes, const int& axis);
 
 	void createAllVoxelPositionsFromOriginal(
 		FVector& voxelPosition1,

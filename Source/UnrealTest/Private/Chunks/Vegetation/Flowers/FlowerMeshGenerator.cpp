@@ -18,7 +18,7 @@ void UFlowerMeshGenerator::SetWorldTerrainSettings(UWorldTerrainSettings* InWorl
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }
 
-void UFlowerMeshGenerator::createTrunkBinarySolidColumnsYXZ() {
+void UFlowerMeshGenerator::createStemBinarySolidColumnsYXZ() {
 	const FVector FlowerWorldLocation = FlowerLocationData.ObjectPosition;
 
 	// Set the Flower values to air for all 3 axis (Y, X, Z)
@@ -35,43 +35,57 @@ void UFlowerMeshGenerator::createTrunkBinarySolidColumnsYXZ() {
 	std::mt19937 gen(rd());
 
 	// Define the distribution
-	std::uniform_int_distribution<> FlowerBlades(4, 10);
-	std::uniform_int_distribution<> FlowerHeight(3, WTSR->FlowerHeight);
-	std::uniform_int_distribution<> FlowerPoint(2, WTSR->FlowerSize);
+	std::uniform_int_distribution<> Flowerstems(3, 5);
+	std::uniform_int_distribution<> FlowerHeight(3, WTSR->FlowerHeight - WTSR->MaxFlowerSphere);
 
-	// Get the Flower blade voxels and add them to the binary columns
-	const int TotalFlowerBlades = FlowerBlades(gen);
+	// This keeps it inside the 8x8 to fit a single voxel tile
+	std::uniform_int_distribution<> FlowerPoint(4, WTSR->FlowerSize - 4);
 
-	TArray<FVector> BladePoints;
+	// Get the Flower stem voxels and add them to the binary columns
+	const int TotalFlowerstems = Flowerstems(gen);
 
-	int bladeCounter = 0;
+	TArray<FVector> stemPoints;
+
+	int stemCounter = 0;
 
 	// Add only unique random X and Z coordinates with random height
-	std::set<std::pair<int, int>> uniqueBladePoints;
-	while (bladeCounter < TotalFlowerBlades) {
-
+	std::set<std::pair<int, int>> uniquestemPoints;
+	while (stemCounter < TotalFlowerstems) {
 		const int x = FlowerPoint(gen);
 		const int z = FlowerPoint(gen);
 
-		// Continue only if x and z weren't used before
-		if (uniqueBladePoints.emplace(x, z).second) {
-			const int FlowerBladeHeight = FlowerHeight(gen);
-
-			// Create all the points for the Flower Blade
-			for (int height = 0; height < FlowerBladeHeight; height++) {
-				FVector BladePoint(x, z, height);
-
-				BladePoints.Add(BladePoint);
-			}
-
-			bladeCounter++;
+		// Check for direct neighbors to avoid stem touching
+		if (uniquestemPoints.count({ x + 1, z }) || // Right
+			uniquestemPoints.count({ x - 1, z }) || // Left
+			uniquestemPoints.count({ x, z + 1 }) || // Above
+			uniquestemPoints.count({ x, z - 1 })) { // Below
+			continue;
 		}
+
+		// Add this point to the set
+		uniquestemPoints.emplace(x, z);
+
+		// Generate Flower stem points for this coordinate
+		const int FlowerstemHeight = FlowerHeight(gen);
+
+		for (int height = 0; height < FlowerstemHeight; height++) {
+			FVector stemPoint(x, z, height);
+			stemPoints.Add(stemPoint);
+
+			// Add final stem point
+			if (height == FlowerstemHeight - 1) {
+				stemEndPoints.Add(stemPoint);
+			}
+		}
+
+		stemCounter++;
 	}
 
-	for (int point = 0; point < BladePoints.Num(); point++) {
-		int x = BladePoints[point].X;
-		int z = BladePoints[point].Y;
-		int height = BladePoints[point].Z;
+
+	for (int point = 0; point < stemPoints.Num(); point++) {
+		int x = stemPoints[point].X;
+		int z = stemPoints[point].Y;
+		int height = stemPoints[point].Z;
 		int localFlowerChunkHeight = (height % WTSR->FlowerHeight);
 		int bitIndex = FMath::FloorToInt(height / (float)WTSR->FlowerSizePadding);
 
@@ -96,7 +110,7 @@ void UFlowerMeshGenerator::createTrunkBinarySolidColumnsYXZ() {
 	}
 }
 
-void UFlowerMeshGenerator::createCrownBinarySolidColumnsYXZ() {
+void UFlowerMeshGenerator::createPetalsBinarySolidColumnsYXZ() {
 	const FVector FlowerWorldLocation = FlowerLocationData.ObjectPosition;
 
 	// Set the Flower values to air for all 3 axis (Y, X, Z)
@@ -107,9 +121,9 @@ void UFlowerMeshGenerator::createCrownBinarySolidColumnsYXZ() {
 
 	TArray<FVector> CrownPoints;
 
-	// Generate crown at the end of branch
-	for (const FVector& endBranchPoint : branchEndPoints) {
-		GenerateSpherePoints(CrownPoints, endBranchPoint.X, endBranchPoint.Y, endBranchPoint.Z);
+	// Generate crown at the end of Stem
+	for (const FVector& endStemPoint : stemEndPoints) {
+		GenerateSpherePoints(CrownPoints, endStemPoint.X, endStemPoint.Y, endStemPoint.Z);
 	}
 
 	for (int point = 0; point < CrownPoints.Num(); point++) {
@@ -140,54 +154,82 @@ void UFlowerMeshGenerator::createCrownBinarySolidColumnsYXZ() {
 	}
 }
 
+//void UFlowerMeshGenerator::GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& endX, const int& endZ, const int& endY) {
+//	// Calculate the maximum possible radius based on the boundaries
+//	int MaxXRadius = FMath::Min(2, WTSR->MaxFlowerSphere);  // Distance to nearest X boundary
+//	int MaxZRadius = FMath::Min(2, WTSR->MaxFlowerSphere);  // Distance to nearest Z boundary
+//	int MaxYRadius = FMath::Min(2, WTSR->MaxFlowerSphere); // Distance to nearest Y boundary
+//
+//	// The radius is the smallest distance to any of the boundaries
+//	int SphereRadius = FMath::Min(MaxXRadius, FMath::Min(MaxZRadius, MaxYRadius));
+//
+//	// Number of steps for latitude and longitude
+//	int LatitudeSteps = 300;
+//	int LongitudeSteps = 300;
+//
+//	// Generate points along the sphere surface
+//	for (int LatIndex = 0; LatIndex <= LatitudeSteps; LatIndex++) {
+//		// Latitude angle (Phi) from 0 to PI
+//		float Phi = PI * LatIndex / LatitudeSteps;
+//
+//		for (int LongIndex = 0; LongIndex <= LongitudeSteps; LongIndex++) {
+//			// Longitude angle (Theta) from 0 to 2PI
+//			float Theta = 2.0f * PI * LongIndex / LongitudeSteps;
+//
+//			// Convert spherical coordinates to Cartesian coordinates and apply a 3D noise 
+//			float NoiseValue = FMath::PerlinNoise3D(FVector(Phi, Theta, SphereRadius)) * SphereRadius * 0.1f;
+//			float X = (SphereRadius + NoiseValue) * FMath::Sin(Phi) * FMath::Cos(Theta);
+//			float Z = (SphereRadius + NoiseValue) * FMath::Sin(Phi) * FMath::Sin(Theta);
+//			float Y = (SphereRadius + NoiseValue) * FMath::Cos(Phi);
+//
+//			// Ensure all values are positive and fit within the Flower chunk
+//			int FinalX = FMath::Clamp(FMath::RoundToInt(X + endX), 0, WTSR->FlowerSize);
+//			int FinalZ = FMath::Clamp(FMath::RoundToInt(Z + endZ), 0, WTSR->FlowerSize);
+//			int FinalY = FMath::Clamp(FMath::RoundToInt(Y + endY), 0, WTSR->FlowerHeight);
+//
+//			CrownPoints.Add(FVector(FinalX, FinalZ, FinalY));
+//		}
+//	}
+//}
+
 void UFlowerMeshGenerator::GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& endX, const int& endZ, const int& endY) {
-	// Calculate the maximum possible radius based on the boundaries
-	int MaxXRadius = FMath::Min(endX - 2, WTSR->FlowerSize - endX - 2);  // Distance to nearest X boundary
-	int MaxZRadius = FMath::Min(endZ - 2, WTSR->FlowerSize - endZ - 2);  // Distance to nearest Z boundary
-	int MaxYRadius = FMath::Min(endY - 2, WTSR->FlowerHeight - endY - 2); // Distance to nearest Y boundary
+	// Define the sphere radius
+	int SphereRadius = WTSR->MaxFlowerSphere;
 
-	// The radius is the smallest distance to any of the boundaries
-	int SphereRadius = FMath::Min(MaxXRadius, FMath::Min(MaxZRadius, MaxYRadius));
+	// Iterate through a bounding cube around the origin point
+	for (int x = -SphereRadius; x <= SphereRadius; x++) {
+		for (int z = -SphereRadius; z <= SphereRadius; z++) {
+			for (int y = -SphereRadius; y <= SphereRadius; y++) {
+				// Normalize the distance using an elliptical equation to make it more spherical
+				float NormalizedDistance = (x * x) / (SphereRadius * SphereRadius) +
+					(z * z) / (SphereRadius * SphereRadius) +
+					(y * y) / (SphereRadius * SphereRadius);
 
-	// Number of steps for latitude and longitude
-	int LatitudeSteps = 300;
-	int LongitudeSteps = 300;
+				// Check if the point lies within the spherical boundary
+				if (NormalizedDistance <= 1.0f) {
+					// Convert local coordinates to global coordinates
+					int FinalX = FMath::Clamp(endX + x, 0, WTSR->FlowerSize);
+					int FinalZ = FMath::Clamp(endZ + z, 0, WTSR->FlowerSize);
+					int FinalY = FMath::Clamp(endY + y, 0, WTSR->FlowerHeight);
 
-	// Generate points along the sphere surface
-	for (int LatIndex = 0; LatIndex <= LatitudeSteps; LatIndex++) {
-		// Latitude angle (Phi) from 0 to PI
-		float Phi = PI * LatIndex / LatitudeSteps;
-
-		for (int LongIndex = 0; LongIndex <= LongitudeSteps; LongIndex++) {
-			// Longitude angle (Theta) from 0 to 2PI
-			float Theta = 2.0f * PI * LongIndex / LongitudeSteps;
-
-			// Convert spherical coordinates to Cartesian coordinates and apply a 3D noise 
-			float NoiseValue = FMath::PerlinNoise3D(FVector(Phi, Theta, SphereRadius)) * SphereRadius * 0.1f;
-			float X = (SphereRadius + NoiseValue) * FMath::Sin(Phi) * FMath::Cos(Theta);
-			float Z = (SphereRadius + NoiseValue) * FMath::Sin(Phi) * FMath::Sin(Theta);
-			float Y = (SphereRadius + NoiseValue) * FMath::Cos(Phi);
-
-			// Ensure all values are positive and fit within the Flower chunk
-			int FinalX = FMath::Clamp(FMath::RoundToInt(X + endX), 0, WTSR->FlowerSize);
-			int FinalZ = FMath::Clamp(FMath::RoundToInt(Z + endZ), 0, WTSR->FlowerSize);
-			int FinalY = FMath::Clamp(FMath::RoundToInt(Y + endY), 0, WTSR->FlowerHeight);
-
-			CrownPoints.Add(FVector(FinalX, FinalZ, FinalY));
+					// Add the point to the array
+					CrownPoints.Add(FVector(FinalX, FinalZ, FinalY));
+				}
+			}
 		}
 	}
 }
 
-void UFlowerMeshGenerator::AddTrunkPoints(TArray<FVector>& Points, float FlowerLength, float LastLayerProbability, int MaxBaseThickness) {
+void UFlowerMeshGenerator::AddStemPoints(TArray<FVector>& Points, float FlowerLength, float LastLayerProbability, int MaxBaseThickness) {
 	int initialLength = Points.Num();
 
 	for (int point = 0; point < initialLength; point++) {
-		// The trunk should be thicker at the bottom
+		// The Stem should be thicker at the bottom
 		int Thickness = FMath::Max(2, static_cast<int>(MaxBaseThickness * FMath::Sqrt(1 - (Points[point].Z - 1) / FlowerLength)));
 
-		// Add points for the trunk
+		// Add points for the Stem
 		for (int ThicknessPoint = 1; ThicknessPoint < Thickness; ThicknessPoint++) {
-			// Add points to all the sides of the trunk
+			// Add points to all the sides of the Stem
 			for (int IncrementalThickness = -ThicknessPoint; IncrementalThickness <= ThicknessPoint; ++IncrementalThickness) {
 				if (ThicknessPoint == Thickness - 1) {
 					// Apply a random chance for the last layer
@@ -248,7 +290,7 @@ void UFlowerMeshGenerator::printBinary(uint16_t value, int groupSize, const std:
 
 }
 
-void UFlowerMeshGenerator::createTerrainMeshesData(bool forFlowerTrunk) {
+void UFlowerMeshGenerator::createTerrainMeshesData(bool forFlowerStem) {
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint16_t>> columnFaceMasks{
@@ -278,7 +320,7 @@ void UFlowerMeshGenerator::createTerrainMeshesData(bool forFlowerTrunk) {
 		buildBinaryPlanes(columnFaceMasks[axis], binaryPlanes[axis], axis);
 
 		// Greedy mesh each plane and create planes
-		greedyMeshingBinaryPlane(binaryPlanes[axis], axis, forFlowerTrunk);
+		greedyMeshingBinaryPlane(binaryPlanes[axis], axis, forFlowerStem);
 	}
 }
 
@@ -402,7 +444,7 @@ void UFlowerMeshGenerator::buildBinaryPlanes(const std::vector<uint16_t>& faceMa
 	}
 }
 
-void UFlowerMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint16_t>& planes, const int& axis, bool forFlowerTrunk) {
+void UFlowerMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint16_t>& planes, const int& axis, bool forFlowerStem) {
 	for (int row = 0; row < planes.size(); row++) {
 
 		// Removing padding by skipping the first and last row in the plane
@@ -503,15 +545,15 @@ void UFlowerMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint16_t>& plane
 			voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
 
 			// Modify the original voxel position and create the remaining three quad position
-			createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forFlowerTrunk);
+			createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forFlowerStem);
 
 			// Create the quads
-			createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forFlowerTrunk);
+			createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis, forFlowerStem);
 		}
 	}
 }
 
-void UFlowerMeshGenerator::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& width, const int& height, const int& axis, bool forFlowerTrunk) {
+void UFlowerMeshGenerator::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& width, const int& height, const int& axis, bool forFlowerStem) {
 	// Get position modifiers depending on the current axis
 	// This values are used to create the 4 quad positions
 	FVector widthPositionModifier = { 0, 0, 0 };
@@ -587,7 +629,7 @@ void UFlowerMeshGenerator::createAllVoxelPositionsFromOriginal(FVector& voxelPos
 	}
 }
 
-void UFlowerMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& height, const int& width, const int& axis, bool forFlowerTrunk) {
+void UFlowerMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& height, const int& width, const int& axis, bool forFlowerStem) {
 	FVector Normal;
 	if (axis == 0 || axis == 3 || axis == 5) {
 		// Calculate the normals for counter clockwise vectors arrangement
@@ -598,7 +640,7 @@ void UFlowerMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, F
 	}
 
 	FColor layerColor;
-	if (forFlowerTrunk) {
+	if (forFlowerStem) {
 		layerColor = stemColor;
 	} else {
 		voxelPosition1 = voxelPosition1 + 0.001f;
@@ -644,17 +686,17 @@ void UFlowerMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, F
 		});
 }
 
-FVoxelObjectMeshData UFlowerMeshGenerator::GetFlowerMeshData() {
+FVoxelObjectMeshData UFlowerMeshGenerator::GetFlowerMeshData(const FColor& InStemColor, const FColor& InPetalsColor) {
 
-	// Select trunk and crown colors
-	stemColor = WTSR->FlowerColorArray[FMath::RandRange(0, WTSR->FlowerColorArray.Num() - 1)];
-	petalsColor = WTSR->FlowerColorArray[FMath::RandRange(0, WTSR->FlowerColorArray.Num() - 1)];
+	// Select Stem and crown colors
+	stemColor = InStemColor;
+	petalsColor = InPetalsColor;
 
-	/*createTrunkBinarySolidColumnsYXZ();
+	createStemBinarySolidColumnsYXZ();
 	createTerrainMeshesData(true);
 
-	createCrownBinarySolidColumnsYXZ();
-	createTerrainMeshesData(false);*/
+	createPetalsBinarySolidColumnsYXZ();
+	createTerrainMeshesData(false);
 
 	FVoxelObjectMeshData TemporaryMeshData = MeshData;
 
@@ -669,7 +711,7 @@ FVoxelObjectMeshData UFlowerMeshGenerator::GetFlowerMeshData() {
 	binaryFlower.xBinaryColumn.clear();
 	binaryFlower.zBinaryColumn.clear();
 	columnsFaceMask.clear();
-	branchEndPoints.Empty();
+	stemEndPoints.Empty();
 	FlowerLocationData.ObjectPosition = FVector::ZeroVector; 
 	FlowerLocationData.ObjectWorldCoords = FIntPoint(0, 0); 
 	vertexCount = 0;

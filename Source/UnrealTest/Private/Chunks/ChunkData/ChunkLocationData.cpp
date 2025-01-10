@@ -217,18 +217,18 @@ bool UChunkLocationData::GetUnspawnedTreeToDestroy(ATree* InTreeToDestroy) {
 	return unspawnedTreesToDestroy.Dequeue(InTreeToDestroy);
 }
 
-bool UChunkLocationData::AddUnspawnedGrassToDestroy(AGrass* InGrassToDestroy) {
+bool UChunkLocationData::AddUnspawnedGrassToDestroy(UProceduralMeshComponent* InGrassToDestroy) {
 	return unspawnedGrassToDestroy.Enqueue(InGrassToDestroy);
 }
 
-bool UChunkLocationData::GetUnspawnedGrassToDestroy(AGrass* InGrassToDestroy) {
+bool UChunkLocationData::GetUnspawnedGrassToDestroy(UProceduralMeshComponent* InGrassToDestroy) {
 	return unspawnedGrassToDestroy.Dequeue(InGrassToDestroy);
 }
 
-bool UChunkLocationData::AddUnspawnedFlowerToDestroy(AFlower* InFlowerToDestroy) {
+bool UChunkLocationData::AddUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy) {
 	return unspawnedFlowerToDestroy.Enqueue(InFlowerToDestroy);
 }
 
-bool UChunkLocationData::GetUnspawnedFlowerToDestroy(AFlower* InFlowerToDestroy) {
+bool UChunkLocationData::GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy) {
 	return unspawnedFlowerToDestroy.Dequeue(InFlowerToDestroy);
 }

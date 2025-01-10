@@ -678,11 +678,9 @@ void UTreeMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FVe
 		});
 }
 
-FVoxelObjectMeshData UTreeMeshGenerator::GetTreeMeshData() {
-
-	// Select trunk and crown colors
-	trunkColor = WTSR->TreeTrunkColorArray[FMath::RandRange(0, WTSR->TreeTrunkColorArray.Num() - 1)];
-	crownColor = WTSR->TreeCrownColorArray[FMath::RandRange(0, WTSR->TreeCrownColorArray.Num() - 1)];
+FVoxelObjectMeshData UTreeMeshGenerator::GetTreeMeshData(const FColor& InTrunkColor, const FColor& InCrownColor) {
+	trunkColor = InTrunkColor;
+	crownColor = InCrownColor;
 
 	createTrunkBinarySolidColumnsYXZ();
 	createTerrainMeshesData(true);

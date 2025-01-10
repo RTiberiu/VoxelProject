@@ -630,6 +630,10 @@ void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, con
 
 			CLDR->addTreeSpawnPosition(vegetationSpawnPosition);
 		} else if (spawnVegetationChance < WTSR->FlowerSpawnChance) {
+			// Reduce the flower spawn levels by 2 
+			bool isOnReducedGrassLevel = colorIndex > WTSR->GrassColorEndIndex - 2;
+			if (isOnReducedGrassLevel) return;
+
 			float flowerX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->FlowerSize * WTSR->FlowerScale) / 2) + WTSR->UnrealScale / 2) - WTSR->FlowerScale / 2;
 			float flowerZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->FlowerSize * WTSR->FlowerScale) / 2) + WTSR->UnrealScale / 2) - WTSR->FlowerScale / 2;
 			vegetationSpawnPosition.ObjectPosition = FVector(flowerX, flowerZ, height * WTSR->UnrealScale);
@@ -637,6 +641,10 @@ void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, con
 
 			CLDR->addFlowerSpawnPosition(vegetationSpawnPosition);
 		} else if (spawnVegetationChance < WTSR->GrassSpawnChance) {
+			// Reduce the grass spawn levels by 2 
+			bool isOnReducedGrassLevel = colorIndex > WTSR->GrassColorEndIndex - 2;
+			if (isOnReducedGrassLevel) return;
+
 			float grassX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->GrassSize * WTSR->GrassScale) / 2) + WTSR->UnrealScale / 2) - WTSR->GrassScale / 2;
 			float grassZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->GrassSize * WTSR->GrassScale) / 2) + WTSR->UnrealScale / 2) - WTSR->GrassScale / 2;
 			vegetationSpawnPosition.ObjectPosition = FVector(grassX, grassZ, height * WTSR->UnrealScale);

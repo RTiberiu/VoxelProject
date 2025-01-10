@@ -52,7 +52,7 @@ private:
 	// Create chrono type alias
 	using Time = std::chrono::high_resolution_clock::time_point;
 
-	TObjectPtr<UProceduralMeshComponent> Mesh;
+	UProceduralMeshComponent* Mesh;
 
 	void spawnTerrainChunkMeshes();
 

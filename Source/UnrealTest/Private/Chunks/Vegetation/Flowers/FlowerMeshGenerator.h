@@ -30,7 +30,7 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 
-	FVoxelObjectMeshData GetFlowerMeshData();
+	FVoxelObjectMeshData GetFlowerMeshData(const FColor& InStemColor, const FColor& InPetalsColor);
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
@@ -44,30 +44,30 @@ private:
 
 	FVoxelObjectMeshData MeshData; // store vertices, normals, triangles, etc.
 
-	TArray<FVector> branchEndPoints;
+	TArray<FVector> stemEndPoints;
 
 	FColor stemColor;
 	FColor petalsColor;
 
 	int vertexCount{ 0 };
 
-	void createTrunkBinarySolidColumnsYXZ();
+	void createStemBinarySolidColumnsYXZ();
 
-	void createCrownBinarySolidColumnsYXZ();
+	void createPetalsBinarySolidColumnsYXZ();
 
 	void GenerateSpherePoints(TArray<FVector>& CrownPoints, const int& branchX, const int& branchY, const int& branchZ);
 
-	void AddTrunkPoints(TArray<FVector>& Points, float FlowerLength, float LastLayerProbability, int MaxBaseThickness);
+	void AddStemPoints(TArray<FVector>& Points, float FlowerLength, float LastLayerProbability, int MaxBaseThickness);
 
 	void printBinary(uint16_t value, int groupSize, const std::string& otherData);
 
-	void createTerrainMeshesData(bool forFlowerTrunk);
+	void createTerrainMeshesData(bool forFlowerStem);
 
 	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint16_t>>& columnFaceMasks);
 
 	void buildBinaryPlanes(const std::vector<uint16_t>& faceMaskColumn, std::vector<uint16_t>& binaryPlane, const int& axis);
 
-	void greedyMeshingBinaryPlane(std::vector<uint16_t>& planes, const int& axis, bool forFlowerTrunk);
+	void greedyMeshingBinaryPlane(std::vector<uint16_t>& planes, const int& axis, bool forFlowerStem);
 
 	void createAllVoxelPositionsFromOriginal(
 		FVector& voxelPosition1,
@@ -76,7 +76,7 @@ private:
 		FVector& voxelPosition4,
 		const int& width,
 		const int& height,
-		const int& axis, bool forFlowerTrunk);
+		const int& axis, bool forFlowerStem);
 
 	void createQuadAndAddToMeshData(
 		FVector& voxelPosition1,
@@ -84,6 +84,6 @@ private:
 		FVector& voxelPosition3,
 		FVector& voxelPosition4,
 		const int& height, const int& width,
-		const int& axis, bool forFlowerTrunk);
+		const int& axis, bool forFlowerStem);
 };
 

@@ -13,8 +13,6 @@
 #include "CoreMinimal.h"
 #include <Chunks/SingleChunk/BinaryChunk.h>
 #include <Chunks/Vegetation/Trees/Tree.h>
-#include <Chunks/Vegetation/Grass/Grass.h>
-#include <Chunks/Vegetation/Flowers/Flower.h>
 #include "WorldTerrainSettings.generated.h"
 
 class FastNoiseLite;
@@ -88,32 +86,30 @@ public:
 	};
 
 	const int GrassColorStartIndex = 5;
-	const int GrassColorEndIndex = 9;
+	const int GrassColorEndIndex = 12;
 	const int LayerHeight = 10;
 	const int ColorLayers = 20;
 
 	TArray<FColor> TreeTrunkColorArray = {
-		FColor(46, 35, 77), FColor(47, 36, 76), FColor(47, 38, 75), FColor(48, 39, 73), FColor(49, 40, 72), FColor(49, 41, 71), FColor(50, 42, 70), FColor(50, 43, 69)
+		FColor(54, 28, 23), FColor(58, 30, 24), FColor(61, 32, 26), FColor(65, 34, 27), FColor(68, 36, 29), FColor(72, 38, 30), FColor(76, 40, 32), FColor(79, 42, 33), FColor(83, 43, 35), FColor(86, 45, 36)
 	};
 
 	TArray<FColor> TreeCrownColorArray = {
-		FColor(151, 89, 142), FColor(156, 94, 147), FColor(160, 100, 151), FColor(163, 108, 154), FColor(165, 115, 158),
-		FColor(185, 116, 150), FColor(187, 129, 158), FColor(190, 142, 166), FColor(193, 154, 173), FColor(197, 166, 181),
-		FColor(221, 156, 156), FColor(224, 163, 163), FColor(228, 170, 170), FColor(231, 177, 177), FColor(233, 185, 185)
+		FColor(30, 72, 65), FColor(22, 80, 77), FColor(15, 81, 87), FColor(20, 89, 103), FColor(25, 95, 118), FColor(43, 102, 136), FColor(65, 107, 149), FColor(80, 100, 165), FColor(106, 104, 177), FColor(135, 101, 174), FColor(151, 103, 173), FColor(167, 103, 173)
 	};
 
 	// Vegetation settings
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
-	const float TreeSpawnChance{ 0.002f };
+	const float TreeSpawnChance{ 0.0014f };
 	const float FlowerSpawnChance{ 0.04f };
-	const float GrassSpawnChance{ 0.08f };
+	const float GrassSpawnChance{ 0.18f };
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };
 	const int TreeSpawnRadius{ DrawDistance / 2};
 	const int TreeChunkRadius{ UnrealScale * TreeSpawnRadius * chunkSizePadding };
 	int TreeCount{ 0 };
-	const uint8_t TreeScale{ 15 }; // this changes the voxel size (100 is 1m)
+	const uint8_t TreeScale{ 15 };
 	const uint8_t TreeCountMax{ 40 };
 	const uint16_t TreeHeight{ 60 }; // 5 bits
 	const uint8_t TreeSize{ 30 }; 
@@ -124,31 +120,38 @@ public:
 
 	// Flowers settings
 	int FlowerCount{ 0 };
-	const uint8_t FlowerVariations{ 30 };
-	const uint8_t FlowerScale{ 15 }; // this changes the voxel size (100 is 1m)
+	const uint8_t FlowerVariations{ 40 };
+	const uint8_t FlowerScale{ 7 };
 	const uint8_t FlowerSizePadding{ 16 };
 	const uint8_t FlowerSize{ 14 };
+	const int MaxFlowerSphere{ 2 };
 	const uint16_t FlowerHeight{ 14 }; // 1 bits
 	const uint8_t FlowerIntsPerHeight{ static_cast<uint8_t>(FlowerHeight / FlowerSize) };
 
-	TArray<FColor> FlowerColorArray = {
-		FColor(3, 9, 28), FColor(8, 15, 79), FColor(17, 13, 130), FColor(45, 18, 181), FColor(86, 23, 232), FColor(145, 74, 237), FColor(191, 125, 242), FColor(226, 176, 247)
+	TArray<FColor> FlowerStemColorArray = {
+		FColor(98, 117, 67), FColor(84, 108, 61), FColor(71, 99, 54), FColor(58, 90, 48), FColor(46, 80, 42)
+	};
+
+	TArray<FColor> FlowerPetalColorArray = {
+		FColor(74, 86, 125), FColor(74, 80, 130), FColor(77, 75, 134),
+		FColor(86, 76, 138), FColor(96, 77, 143), FColor(108, 77, 147),
+		FColor(120, 78, 151), FColor(133, 79, 156), FColor(147, 79, 161),
+		FColor(162, 80, 165), FColor(170, 80, 161), FColor(175, 80, 153),
+		FColor(178, 83, 143), FColor(180, 85, 133), FColor(183, 87, 122),
+		FColor(186, 90, 112), FColor(188, 92, 102), FColor(191, 96, 95),
+		FColor(194, 112, 100)
 	};
 
 	// Grass settings
 	int GrassCount{ 0 };
-	const uint8_t GrassVariations{ 30 };
-	const uint8_t GrassScale{ 7 }; // this changes the voxel size (100 is 1m)
-	const uint8_t GrassSizePadding{ 8 };
-	const uint8_t GrassSize{ 6 };
-	const uint16_t GrassHeight{ 12 }; // 2 bits
+	const uint8_t GrassVariations{ 40 };
+	const uint8_t GrassScale{ 7 };
+	const uint8_t GrassSizePadding{ 16 };
+	const uint8_t GrassSize{ 14 };
+	const uint16_t GrassHeight{ 14 }; // 2 bits
 	const uint8_t GrassIntsPerHeight{ static_cast<uint8_t>(GrassHeight / GrassSize) };
 
-	TArray<FColor> GrassBladesColorArray = {
-		FColor(3, 9, 28), FColor(8, 15, 79), FColor(17, 13, 130), FColor(45, 18, 181), FColor(86, 23, 232), FColor(145, 74, 237), FColor(191, 125, 242), FColor(226, 176, 247)
-	};
-
-
+	TArray<FColor> GrassBladesColorArray = { FColor(98, 117, 67), FColor(84, 108, 61), FColor(71, 99, 54), FColor(58, 90, 48), FColor(46, 80, 42) };
 
 	// TODO I might want to move this to VegetationMeshData.cpp eventually
 	// Vegetation interacting methods 
@@ -161,12 +164,12 @@ public:
 	FVoxelObjectMeshData* GetRandomFlowerMeshData();
 
 	void AddSpawnedTrees(const FIntPoint& TreeWorldCoordinates, ATree* TreeActor);
-	void AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, AGrass* GrassActor);
-	void AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, AFlower* FlowerActor);
+	void AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, UProceduralMeshComponent* GrassActor);
+	void AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, UProceduralMeshComponent* FlowerActor);
 	const TMap<FIntPoint, TArray<ATree*>>& GetSpawnedTreesMap() const;
 	TArray<ATree*> GetAndRemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
-	TArray<AGrass*> GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates);
-	TArray<AFlower*> GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates);
+	TArray<UProceduralMeshComponent*> GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates);
+	TArray<UProceduralMeshComponent*> GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates);
 	void RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
 
 	void AddChunkToRemoveCollision(ABinaryChunk* actor);
@@ -212,8 +215,8 @@ private:
 
 	// Array to store spawned trees, grass, and flowers
 	TMap<FIntPoint, TArray<ATree*>> SpawnedTreesMap;
-	TMap<FIntPoint, TArray<AGrass*>> SpawnedGrassMap;
-	TMap<FIntPoint, TArray<AFlower*>> SpawnedFlowerMap;
+	TMap<FIntPoint, TArray<UProceduralMeshComponent*>> SpawnedGrassMap;
+	TMap<FIntPoint, TArray<UProceduralMeshComponent*>> SpawnedFlowerMap;
 
 	// Arrays to update collision for actors (chunks and trees)
 	TArray<ABinaryChunk*> RemoveCollisionChunks;

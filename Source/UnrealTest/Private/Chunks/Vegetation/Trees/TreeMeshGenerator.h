@@ -30,7 +30,7 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 
-	FVoxelObjectMeshData GetTreeMeshData();
+	FVoxelObjectMeshData GetTreeMeshData(const FColor& trunkColor, const FColor& crownColor);
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;

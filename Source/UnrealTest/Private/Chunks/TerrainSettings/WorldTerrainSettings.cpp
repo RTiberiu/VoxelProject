@@ -278,7 +278,7 @@ void UWorldTerrainSettings::AddSpawnedTrees(const FIntPoint& TreeWorldCoordinate
 	TreeMapSemaphore->Release();
 }
 
-void UWorldTerrainSettings::AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, AGrass* GrassActor) {
+void UWorldTerrainSettings::AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, UProceduralMeshComponent* GrassActor) {
 	GrassMapSemaphore->Acquire();
 
 	// If it exists, add the new grass to the existing array
@@ -286,13 +286,13 @@ void UWorldTerrainSettings::AddSpawnedGrass(const FIntPoint& GrassWorldCoordinat
 		SpawnedGrassMap[GrassWorldCoordinates].Add(GrassActor);
 	} else {
 		// If not, create a new array with the new grass
-		SpawnedGrassMap.Add(GrassWorldCoordinates, TArray<AGrass*>({ GrassActor }));
+		SpawnedGrassMap.Add(GrassWorldCoordinates, TArray<UProceduralMeshComponent*>({ GrassActor }));
 	}
 
 	GrassMapSemaphore->Release();
 }
 
-void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, AFlower* FlowerActor) {
+void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, UProceduralMeshComponent* FlowerActor) {
 	FlowerMapSemaphore->Acquire();
 
 	// If it exists, add the new flower to the existing array
@@ -300,7 +300,7 @@ void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordin
 		SpawnedFlowerMap[FlowerWorldCoordinates].Add(FlowerActor);
 	} else {
 		// If not, create a new array with the new flower
-		SpawnedFlowerMap.Add(FlowerWorldCoordinates, TArray<AFlower*>({ FlowerActor }));
+		SpawnedFlowerMap.Add(FlowerWorldCoordinates, TArray<UProceduralMeshComponent*>({ FlowerActor }));
 	}
 
 	FlowerMapSemaphore->Release();
@@ -328,8 +328,8 @@ TArray<ATree*> UWorldTerrainSettings::GetAndRemoveTreeFromMap(const FIntPoint& T
 	return RemovedTrees;
 }
 
-TArray<AGrass*> UWorldTerrainSettings::GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates) {
-	TArray<AGrass*> RemovedGrass;  // Array to hold the remaining grass at the location
+TArray<UProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates) {
+	TArray<UProceduralMeshComponent*> RemovedGrass;  // Array to hold the remaining grass at the location
 
 	GrassMapSemaphore->Acquire();
 
@@ -345,8 +345,8 @@ TArray<AGrass*> UWorldTerrainSettings::GetAndRemoveGrassFromMap(const FIntPoint&
 	return RemovedGrass;
 }
 
-TArray<AFlower*> UWorldTerrainSettings::GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates) {
-	TArray<AFlower*> RemovedFlower;  // Array to hold the remaining flower at the location
+TArray<UProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates) {
+	TArray<UProceduralMeshComponent*> RemovedFlower;  // Array to hold the remaining flower at the location
 
 	FlowerMapSemaphore->Acquire();
 

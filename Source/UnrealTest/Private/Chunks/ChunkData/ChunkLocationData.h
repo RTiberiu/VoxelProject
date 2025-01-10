@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "..\Vegetation\Trees\Tree.h"
-#include "..\Vegetation\Grass\Grass.h"
-#include "..\Vegetation\Flowers\Flower.h"
 #include "..\DataStructures\VoxelObjectMeshData.h"
 #include "..\DataStructures\VoxelObjectLocationData.h"
 #include "Containers/Queue.h"
@@ -52,11 +50,11 @@ public:
     bool AddUnspawnedTreeToDestroy(ATree* InTreeToDestroy);
     bool GetUnspawnedTreeToDestroy(ATree* InTreeToDestroy);
 
-    bool AddUnspawnedGrassToDestroy(AGrass* InGrassToDestroy);
-    bool GetUnspawnedGrassToDestroy(AGrass* InGrassToDestroy);
+    bool AddUnspawnedGrassToDestroy(UProceduralMeshComponent* InGrassToDestroy);
+    bool GetUnspawnedGrassToDestroy(UProceduralMeshComponent* InGrassToDestroy);
 
-    bool AddUnspawnedFlowerToDestroy(AFlower* InFlowerToDestroy);
-    bool GetUnspawnedFlowerToDestroy(AFlower* InFlowerToDestroy);
+    bool AddUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
+    bool GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
 
 private:
     // Queue for storing chunks position that need to be spawned
@@ -68,8 +66,8 @@ private:
     FairSemaphore* ChunksToDestroySemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
 
     TQueue<ATree*> unspawnedTreesToDestroy;
-    TQueue<AGrass*> unspawnedGrassToDestroy;
-    TQueue<AFlower*> unspawnedFlowerToDestroy;
+    TQueue<UProceduralMeshComponent*> unspawnedGrassToDestroy;
+    TQueue<UProceduralMeshComponent*> unspawnedFlowerToDestroy;
 
     TQueue<FIntPoint> treesToDestroy;
     TQueue<FIntPoint> grassToDestroy;

@@ -23,9 +23,9 @@ void UGrassMeshGenerator::createBladeBinarySolidColumnsYXZ() {
 
 	// Set the Grass values to air for all 3 axis (Y, X, Z)
 	const int GrassDimensions{ WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight };
-	binaryGrass.yBinaryColumn = std::vector<uint8_t>(GrassDimensions, 0);
-	binaryGrass.xBinaryColumn = std::vector<uint8_t>(GrassDimensions, 0);
-	binaryGrass.zBinaryColumn = std::vector<uint8_t>(GrassDimensions, 0);
+	binaryGrass.yBinaryColumn = std::vector<uint16_t>(GrassDimensions, 0);
+	binaryGrass.xBinaryColumn = std::vector<uint16_t>(GrassDimensions, 0);
+	binaryGrass.zBinaryColumn = std::vector<uint16_t>(GrassDimensions, 0);
 
 	const int halfGrassChunk = WTSR->GrassSize / 2;
 
@@ -35,9 +35,11 @@ void UGrassMeshGenerator::createBladeBinarySolidColumnsYXZ() {
 	std::mt19937 gen(rd());
 
 	// Define the distribution
-	std::uniform_int_distribution<> GrassBlades(5, 15);
+	std::uniform_int_distribution<> GrassBlades(5, 12);
 	std::uniform_int_distribution<> GrassHeight(3, WTSR->GrassHeight);
-	std::uniform_int_distribution<> GrassPoint(1, WTSR->GrassSize);
+	
+	// This keeps it inside the 8x8 to fit a single voxel tile
+	std::uniform_int_distribution<> GrassPoint(4, WTSR->GrassSize - 4); 
 
 	// Get the Grass blade voxels and add them to the binary columns
 	const int TotalGrassBlades = GrassBlades(gen);
@@ -47,25 +49,31 @@ void UGrassMeshGenerator::createBladeBinarySolidColumnsYXZ() {
 	int bladeCounter = 0;
 
 	// Add only unique random X and Z coordinates with random height
-	std::set<std::pair<int, int>> uniqueBladePoints; 
+	std::set<std::pair<int, int>> uniqueBladePoints;
 	while (bladeCounter < TotalGrassBlades) {
-
 		const int x = GrassPoint(gen);
 		const int z = GrassPoint(gen);
 
-		// Continue only if x and z weren't used before
-		if (uniqueBladePoints.emplace(x, z).second) {
-			const int GrassBladeHeight = GrassHeight(gen);
-
-			// Create all the points for the Grass Blade
-			for (int height = 0; height < GrassBladeHeight; height++) {
-				FVector BladePoint(x, z, height);
-
-				BladePoints.Add(BladePoint);
-			}
-
-			bladeCounter++;
+		// Check for direct neighbors to avoid blade touching
+		if (uniqueBladePoints.count({ x + 1, z }) || // Right
+			uniqueBladePoints.count({ x - 1, z }) || // Left
+			uniqueBladePoints.count({ x, z + 1 }) || // Above
+			uniqueBladePoints.count({ x, z - 1 })) { // Below
+			continue; 
 		}
+
+		// Add this point to the set
+		uniqueBladePoints.emplace(x, z);
+
+		// Generate grass blade points for this coordinate
+		const int GrassBladeHeight = GrassHeight(gen);
+
+		for (int height = 0; height < GrassBladeHeight; height++) {
+			FVector BladePoint(x, z, height);
+			BladePoints.Add(BladePoint);
+		}
+
+		bladeCounter++;
 	}
 
 	for (int point = 0; point < BladePoints.Num(); point++) {
@@ -81,7 +89,7 @@ void UGrassMeshGenerator::createBladeBinarySolidColumnsYXZ() {
 		// Add blocks height data (Y) to the current X and Z
 		binaryGrass.yBinaryColumn[yIndex] |= (1U << localGrassChunkHeight);
 
-		const uint8_t currentYCol = binaryGrass.yBinaryColumn[yIndex];
+		const uint16_t currentYCol = binaryGrass.yBinaryColumn[yIndex];
 
 		// Next Y index (column) means the same X index (column), but a change in Y bit index
 		const int xIndex{ (height * WTSR->GrassSizePadding) + x }; 
@@ -96,68 +104,29 @@ void UGrassMeshGenerator::createBladeBinarySolidColumnsYXZ() {
 	}
 }
 
-void UGrassMeshGenerator::createCrownBinarySolidColumnsYXZ() {
-	const FVector GrassWorldLocation = GrassLocationData.ObjectPosition;
-
-	// Set the Grass values to air for all 3 axis (Y, X, Z)
-	const int GrassDimensions{ WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight };
-	binaryGrass.yBinaryColumn = std::vector<uint8_t>(GrassDimensions, 0);
-	binaryGrass.xBinaryColumn = std::vector<uint8_t>(GrassDimensions, 0);
-	binaryGrass.zBinaryColumn = std::vector<uint8_t>(GrassDimensions, 0);
-
-	TArray<FVector> CrownPoints;
-
-	for (int point = 0; point < CrownPoints.Num(); point++) {
-		int x = CrownPoints[point].X;
-		int z = CrownPoints[point].Y;
-		int height = CrownPoints[point].Z;
-		int localGrassChunkHeight = (height % WTSR->GrassHeight);
-		int bitIndex = FMath::FloorToInt(height / (float)WTSR->GrassSizePadding);
-
-		// Get index of y 
-		const int yIndex{ (x * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight) + (z * WTSR->GrassIntsPerHeight) + bitIndex };
-
-		// Add blocks height data (Y) to the current X and Z
-		binaryGrass.yBinaryColumn[yIndex] |= (1U << localGrassChunkHeight);
-
-		const uint8_t currentYCol = binaryGrass.yBinaryColumn[yIndex];
-
-		// Next Y index (column) means the same X index (column), but a change in Y bit index
-		const int xIndex{ (height * WTSR->GrassSizePadding) + x };
-
-		binaryGrass.xBinaryColumn[xIndex] |= (1U << z);
-
-		// Next Y index (column) means the next Z index (column), but the same Y bit index
-		const int zIndex{ (height * WTSR->GrassSizePadding) + z };
-
-		// Assign to actual bit the change
-		binaryGrass.zBinaryColumn[zIndex] |= (1U << x);
-	}
-}
-
 void UGrassMeshGenerator::createTerrainMeshesData() {
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
-	std::vector<std::vector<uint8_t>> columnFaceMasks{
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Y ascending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Y descending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // X ascending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // X descending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Z ascending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Z descending
+	std::vector<std::vector<uint16_t>> columnFaceMasks{
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Y ascending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Y descending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // X ascending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // X descending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Z ascending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Z descending
 	};
 
 	// Face cull the binary columns on the 3 axis, ascending and descending
 	faceCullingBinaryColumnsYXZ(columnFaceMasks);
 
 	// Storing planes for all axis, ascending and descending
-	std::vector<std::vector<uint8_t>> binaryPlanes{
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Y ascending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Y descending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // X ascending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // X descending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Z ascending
-		std::vector<uint8_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Z descending
+	std::vector<std::vector<uint16_t>> binaryPlanes{
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Y ascending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Y descending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // X ascending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // X descending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Z ascending
+		std::vector<uint16_t>(WTSR->GrassSizePadding * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight), // Z descending
 	};
 
 	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending 
@@ -169,7 +138,7 @@ void UGrassMeshGenerator::createTerrainMeshesData() {
 	}
 }
 
-void UGrassMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint8_t>>& columnFaceMasks) {
+void UGrassMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint16_t>>& columnFaceMasks) {
 	// Face culling for all the 3 axis (Y, X, Z)
 	for (int axis = 0; axis < 3; axis++) {
 		for (int x = 0; x < WTSR->GrassSizePadding; x++) {
@@ -177,7 +146,7 @@ void UGrassMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<ui
 				for (int bitIndex = 0; bitIndex < WTSR->GrassIntsPerHeight; bitIndex++) {
 					const int columnIndex{ (x * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight) + (z * WTSR->GrassIntsPerHeight) + bitIndex };
 
-					uint8_t column = 0;
+					uint16_t column = 0;
 					switch (axis) {
 					case 0:
 						column = binaryGrass.yBinaryColumn[columnIndex];
@@ -193,7 +162,7 @@ void UGrassMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<ui
 					// If is the Y axis and not the last bitIndex
 					if (axis == 0 && bitIndex < WTSR->GrassIntsPerHeight - 1) {
 						const bool isAboveSolid = binaryGrass.yBinaryColumn[columnIndex + 1] != 0;
-						const bool columnAllSolid = column == std::numeric_limits<uint8_t>::max();
+						const bool columnAllSolid = column == std::numeric_limits<uint16_t>::max();
 
 						// Skip creating face between height chunks if there's more solid blocks above 
 						if (isAboveSolid && columnAllSolid) {
@@ -213,7 +182,7 @@ void UGrassMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<ui
 							const bool isFaceMaskSolid = columnFaceMasks[axis * 2 + 1][columnIndex] != 0;
 
 							// Check if the leftmost bit is 1
-							const uint8_t leftmostBitMask = 1U << 7;
+							const uint16_t leftmostBitMask = 1U << 15;
 							const bool isLeftmostBitSet = (binaryGrass.yBinaryColumn[columnIndex - 1] & leftmostBitMask) != 0;
 
 							// Remove bottom face if there are solid blocks beneath chunk
@@ -233,19 +202,19 @@ void UGrassMeshGenerator::faceCullingBinaryColumnsYXZ(std::vector<std::vector<ui
 	}
 }
 
-void UGrassMeshGenerator::buildBinaryPlanes(const std::vector<uint8_t>& faceMaskColumn, std::vector<uint8_t>& binaryPlane, const int& axis) {
+void UGrassMeshGenerator::buildBinaryPlanes(const std::vector<uint16_t>& faceMaskColumn, std::vector<uint16_t>& binaryPlane, const int& axis) {
 	for (int x = 0; x < WTSR->GrassSizePadding; x++) {
 		for (int z = 0; z < WTSR->GrassSizePadding; z++) {
 			for (int bitIndex = 0; bitIndex < WTSR->GrassIntsPerHeight; bitIndex++) {
 
-				const int columnIndex{ (x * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight) + (z * WTSR->GrassIntsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
+				const int columnIndex{ (x * WTSR->GrassSizePadding * WTSR->GrassIntsPerHeight) + (z * WTSR->GrassIntsPerHeight) + bitIndex };
 
-				uint8_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
+				uint16_t column = faceMaskColumn[columnIndex]; 
 
 				// Remove padding only for X and Z axis 
 				if (axis != 0 && axis != 1) {
 					// Remove the leftmost bit and the rightmost bit and replace them with 0
-					column = (column & ~(1U << 7)) & ~1U;
+					column = (column & ~(1U << 15)) & ~1U;
 				}
 
 				while (column != 0) {
@@ -278,7 +247,7 @@ void UGrassMeshGenerator::buildBinaryPlanes(const std::vector<uint8_t>& faceMask
 					}
 
 					// Remove the padding from the plane
-					binaryPlane[planeIndex] = (binaryPlane[planeIndex] & ~(1U << 7)) & ~1U;
+					binaryPlane[planeIndex] = (binaryPlane[planeIndex] & ~(1U << 15)) & ~1U;
 
 					// Clear the position 
 					column &= column - 1;
@@ -289,7 +258,7 @@ void UGrassMeshGenerator::buildBinaryPlanes(const std::vector<uint8_t>& faceMask
 	}
 }
 
-void UGrassMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint8_t>& planes, const int& axis) {
+void UGrassMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint16_t>& planes, const int& axis) {
 	for (int row = 0; row < planes.size(); row++) {
 
 		// Removing padding by skipping the first and last row in the plane
@@ -303,7 +272,7 @@ void UGrassMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint8_t>& planes,
 			// Trailing ones are the height of the vertex
 			const int height = std::countr_one(static_cast<unsigned int>(planes[row]) >> y);
 
-			uint8_t heightMask = ((1U << height) - 1) << y;
+			uint16_t heightMask = ((1U << height) - 1) << y;
 
 			// Flip the solid bits used to create the height mask 
 			planes[row] = planes[row] & ~heightMask;
@@ -324,7 +293,7 @@ void UGrassMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint8_t>& planes,
 					const int planesIndex = row + width;
 
 					// Get the bits spanning height for the next row
-					const uint8_t nextRowHeight = planes[planesIndex] & heightMask;
+					const uint16_t nextRowHeight = planes[planesIndex] & heightMask;
 
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
@@ -349,7 +318,7 @@ void UGrassMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint8_t>& planes,
 					const int planesIndex = row + (width * WTSR->GrassSizePadding);
 
 					// Get the bits spanning height for the next row
-					const uint8_t nextRowHeight = planes[planesIndex] & heightMask;
+					const uint16_t nextRowHeight = planes[planesIndex] & heightMask;
 
 					if (nextRowHeight != heightMask) {
 						break; // Can't expand horizontally
@@ -385,7 +354,6 @@ void UGrassMeshGenerator::greedyMeshingBinaryPlane(std::vector<uint8_t>& planes,
 				break;
 			}
 
-			// Height increases with each 64 rows for X and Z
 			const double voxelY = row > 0 ? std::floor(static_cast<double>(row / WTSR->GrassSizePadding)) : 0.0;
 			voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
 
@@ -484,8 +452,6 @@ void UGrassMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FV
 		Normal = FVector::CrossProduct(voxelPosition2 - voxelPosition1, voxelPosition4 - voxelPosition1).GetSafeNormal();
 	}
 
-	FColor layerColor = WTSR->GrassBladesColorArray[FMath::RandRange(0, WTSR->GrassBladesColorArray.Num() - 1)];;
-
 	MeshData.Vertices.Append({
 		voxelPosition1 * WTSR->GrassScale,
 		voxelPosition2 * WTSR->GrassScale,
@@ -515,14 +481,15 @@ void UGrassMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FV
 	}
 
 	MeshData.Colors.Append({
-		layerColor,
-		layerColor,
-		layerColor,
-		layerColor
+		BladeColor,
+		BladeColor,
+		BladeColor,
+		BladeColor
 		});
 }
 
-FVoxelObjectMeshData UGrassMeshGenerator::GetGrassMeshData() {
+FVoxelObjectMeshData UGrassMeshGenerator::GetGrassMeshData(const FColor& InBladeColor) {
+	BladeColor = InBladeColor;
 
 	createBladeBinarySolidColumnsYXZ();
 	createTerrainMeshesData();

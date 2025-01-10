@@ -4,9 +4,7 @@
 
 #include "..\Vegetation\Trees\Tree.h"
 #include "..\Vegetation\Trees\TreeMeshGenerator.h"
-#include "..\Vegetation\Grass\Grass.h"
 #include "..\Vegetation\Grass\GrassMeshGenerator.h"
-#include "..\Vegetation\Flowers\Flower.h"
 #include "..\Vegetation\Flowers\FlowerMeshGenerator.h"
 #include "..\SingleChunk\BinaryChunk.h"
 #include "..\ChunkMeshThreads\ChunksLocationRunnable.h"
@@ -92,8 +90,6 @@ private:
 
 	void SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
 	void SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
-	TSubclassOf<AActor> Grass;
-	TSubclassOf<AActor> Flower;
 
 	// Helper methods to remove vegetation spawn points and destroy actors
 	void RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyPosition);
@@ -103,24 +99,24 @@ private:
 
 	// Tree actors to be destroyed and settings
 	TArray<ATree*> TreeActorsToRemove;
-	const int treesToRemovePerFrame = 2;
+	const int treesToRemovePerFrame = 1;
 
 	TArray<FVoxelObjectLocationData> TreePositionsToSpawn;
-	const int treesToSpawnPerFrame = 2;
+	const int treesToSpawnPerFrame = 1;
 
 	// Grass actors to be destroyed and settings
-	TArray<AGrass*> GrassActorsToRemove;
-	const int grassToRemovePerFrame = 2;
+	TArray<UProceduralMeshComponent*> GrassActorsToRemove;
+	const int grassToRemovePerFrame = 3;
 
 	TArray<FVoxelObjectLocationData> GrassPositionsToSpawn;
-	const int grassToSpawnPerFrame = 2;
+	const int grassToSpawnPerFrame = 3;
 
 	// Flower actors to be destroyed and settings
-	TArray<AFlower*> FlowerActorsToRemove;
-	const int flowerToRemovePerFrame = 2;
+	TArray<UProceduralMeshComponent*> FlowerActorsToRemove;
+	const int flowerToRemovePerFrame = 3;
 
 	TArray<FVoxelObjectLocationData> FlowerPositionsToSpawn;
-	const int flowerToSpawnPerFrame = 2;
+	const int flowerToSpawnPerFrame = 3;
 
 protected:
 	// Called when the game starts or when spawned
