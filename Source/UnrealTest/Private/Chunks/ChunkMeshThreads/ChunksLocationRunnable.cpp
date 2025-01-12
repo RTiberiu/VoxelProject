@@ -57,12 +57,12 @@ void ChunksLocationRunnable::UpdateChunks() {
 		int newRowX{ 0 };
 		if (PlayerChunkCoords.X > InitialChunkCoords.X) {
 			// Get the first row by adding the draw distance to the player's X
-			UE_LOG(LogTemp, Warning, TEXT("Moved right"));
+			//UE_LOG(LogTemp, Warning, TEXT("Moved right")); // TESTING 
 			lastRowX = PlayerChunkCoords.X - WTSR->DrawDistance - 1;
 			newRowX = PlayerChunkCoords.X + WTSR->DrawDistance - 1;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial X
-			UE_LOG(LogTemp, Warning, TEXT("Moved left"));
+			//UE_LOG(LogTemp, Warning, TEXT("Moved left")); // TESTING 
 			lastRowX = InitialChunkCoords.X + WTSR->DrawDistance - 1;
 			newRowX = InitialChunkCoords.X - WTSR->DrawDistance - 1;
 		}
@@ -99,12 +99,12 @@ void ChunksLocationRunnable::UpdateChunks() {
 		int newTreeRowZ{ 0 };
 		if (PlayerChunkCoords.Y > InitialChunkCoords.Y) {
 			// Get the first row by adding the draw distance to the player's Z
-			UE_LOG(LogTemp, Warning, TEXT("Moved up"));
+			//UE_LOG(LogTemp, Warning, TEXT("Moved up")); // TESTING 
 			lastRowZ = InitialChunkCoords.Y - WTSR->DrawDistance;
 			newRowZ = InitialChunkCoords.Y + WTSR->DrawDistance;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial Z
-			UE_LOG(LogTemp, Warning, TEXT("Moved down"));
+			//UE_LOG(LogTemp, Warning, TEXT("Moved down")); // TESTING 
 			lastRowZ = PlayerChunkCoords.Y + WTSR->DrawDistance;
 			newRowZ = PlayerChunkCoords.Y - WTSR->DrawDistance;
 		}

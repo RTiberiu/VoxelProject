@@ -537,7 +537,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		WTSR->TreeCount++;
 
 		// Print the tree count every 50
-		if (WTSR->TreeCount % 50 == 0) {
+		if (WTSR->TreeCount % 1000 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("Tree count: %d"), WTSR->TreeCount);
 		}
 
@@ -560,7 +560,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		WTSR->GrassCount++;
 
 		// Print the tree count every 50
-		if (WTSR->GrassCount % 50 == 0) {
+		if (WTSR->GrassCount % 1000 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("Grass count: %d"), WTSR->GrassCount);
 		}
 
