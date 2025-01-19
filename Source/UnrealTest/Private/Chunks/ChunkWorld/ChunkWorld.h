@@ -90,7 +90,11 @@ private:
 
 	void SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
 	void SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
+	void SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
 
+	// NPC Settings
+	TSubclassOf<AActor> NPC;
+	
 	// Helper methods to remove vegetation spawn points and destroy actors
 	void RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyPosition);
 	void DestroyTreeActors();
@@ -117,6 +121,14 @@ private:
 
 	TArray<FVoxelObjectLocationData> FlowerPositionsToSpawn;
 	const int flowerToSpawnPerFrame = 3;
+
+	TArray<FVoxelObjectLocationData> NPCPositionsToSpawn;
+	const int npcToSpawnPerFrame = 2;
+
+	// Navmesh
+	void updateNavmeshLocationToPlayer();
+	const int navmeshUpdatePerFrame = 60; //  180;
+	int navmeshUpdateCounter = 0;
 
 protected:
 	// Called when the game starts or when spawned

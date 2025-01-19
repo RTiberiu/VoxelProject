@@ -67,12 +67,15 @@ void ABinaryChunk::UpdateCollision(bool InHasCollision) {
 		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		Mesh->SetCollisionResponseToAllChannels(ECR_Block);
 		Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		Mesh->SetCanEverAffectNavigation(true);
 
 		Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), hasCollision);
 	} else {
 		// If the chunk does not have collision, disable it by updating the mesh
 		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Mesh->UpdateMeshSection(0, meshData.Vertices, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>());
+		Mesh->SetCanEverAffectNavigation(true); // Mesh->SetCanEverAffectNavigation(false);
+
 	}
 }
 
@@ -113,10 +116,14 @@ void ABinaryChunk::spawnTerrainChunkMeshes() {
 	Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), hasCollision);
 
 	// Set up simplified collision
-	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Mesh->SetCollisionResponseToAllChannels(ECR_Block);
-	Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	if (hasCollision) {
+		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Mesh->SetCollisionResponseToAllChannels(ECR_Block);
+		Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		Mesh->SetCanEverAffectNavigation(true);
+	}
 
+	Mesh->SetCanEverAffectNavigation(true); // TESTING 
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
 

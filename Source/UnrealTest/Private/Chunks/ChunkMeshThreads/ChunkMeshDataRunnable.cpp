@@ -622,6 +622,7 @@ void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, con
 	if (isVegetationInsideChunk) {
 		FVoxelObjectLocationData vegetationSpawnPosition;
 
+		// TODO Extract the X and Z calculations into a different functions or simplify the code
 		if (spawnVegetationChance < WTSR->TreeSpawnChance) {
 			float treeX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
 			float treeZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
@@ -651,6 +652,15 @@ void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, con
 			vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
 			CLDR->addGrassSpawnPosition(vegetationSpawnPosition);
+		} else if (spawnVegetationChance < WTSR->NPCSpawnChance) {
+			// TODO Adjust the X and Z, since this is just a copy of the tree calculation
+			float npcX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
+			float npcZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
+
+			vegetationSpawnPosition.ObjectPosition = FVector(npcX, npcZ, height * WTSR->UnrealScale);
+			vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
+			CLDR->addNPCSpawnPosition(vegetationSpawnPosition);
 		}
 	}
 }

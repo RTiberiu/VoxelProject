@@ -38,14 +38,17 @@ public:
     TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
     TArray<FVoxelObjectLocationData> getGrassSpawnPosition();
     TArray<FVoxelObjectLocationData> getFlowerSpawnPosition();
+    TArray<FVoxelObjectLocationData> getNPCSpawnPosition();
 
     void addTreeSpawnPosition(const FVoxelObjectLocationData position);
     void addGrassSpawnPosition(const FVoxelObjectLocationData position);
     void addFlowerSpawnPosition(const FVoxelObjectLocationData position);
+    void addNPCSpawnPosition(const FVoxelObjectLocationData position);
 
     void RemoveTreeSpawnPosition(const FIntPoint& point);
     void RemoveGrassSpawnPosition(const FIntPoint& point);
     void RemoveFlowerSpawnPosition(const FIntPoint& point);
+    void RemoveNPCSpawnPosition(const FIntPoint& point);
 
     bool AddUnspawnedTreeToDestroy(ATree* InTreeToDestroy);
     bool GetUnspawnedTreeToDestroy(ATree* InTreeToDestroy);
@@ -86,6 +89,9 @@ private:
 
     FairSemaphore* FlowersToSpawnSemaphore;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>> flowersSpawnPositions;
+
+    FairSemaphore* NPCToSpawnSemaphore;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>> NPCSpawnPositions;
 
     FairSemaphore* MeshDataSemaphore;
 };

@@ -103,6 +103,7 @@ public:
 	const float TreeSpawnChance{ 0.0014f };
 	const float FlowerSpawnChance{ 0.04f };
 	const float GrassSpawnChance{ 0.18f };
+	const float NPCSpawnChance{ 0.182f };
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };
@@ -152,6 +153,8 @@ public:
 	const uint8_t GrassIntsPerHeight{ static_cast<uint8_t>(GrassHeight / GrassSize) };
 
 	TArray<FColor> GrassBladesColorArray = { FColor(98, 117, 67), FColor(84, 108, 61), FColor(71, 99, 54), FColor(58, 90, 48), FColor(46, 80, 42) };
+
+	int NPCCount{ 0 };
 
 	// TODO I might want to move this to VegetationMeshData.cpp eventually
 	// Vegetation interacting methods 

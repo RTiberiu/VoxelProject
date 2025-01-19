@@ -5,6 +5,7 @@
 #include "..\TerrainSettings\WorldTerrainSettings.h"
 #include "..\ChunkData\ChunkLocationData.h"
 #include "..\SingleChunk\BinaryChunk.h" 
+#include "..\..\NPC\BasicNPC\BasicNPC.h"
 #include "GameFramework/DefaultPawn.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include <Kismet/GameplayStatics.h>
@@ -12,11 +13,15 @@
 #include "ProceduralMeshComponent.h" // MAYBE
 
 #include <set>
+#include <AI/NavigationSystemBase.h>
 
 // Sets default values
 AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThread(nullptr), isLocationTaskRunning(false), isMeshTaskRunning(false) {
 	// Set this actor to call Tick() every frame.  Yosu can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	// Locking the tick at 60fps
+	// PrimaryActorTick.TickInterval = 1.0f / 60.0f;
 
 	isInitialWorldGenerated = false;
 
@@ -25,6 +30,8 @@ AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThre
 
 	// Initializing Tree with the Tree class
 	Tree = ATree::StaticClass();
+
+	NPC = ABasicNPC::StaticClass();
 }
 
 void AChunkWorld::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -256,6 +263,43 @@ void AChunkWorld::SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVecto
 	WTSR->AddSpawnedFlower(ChunkLocationData.ObjectWorldCoords, Mesh);
 }
 
+void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
+	// Spawn the NPC actor deferred
+	ABasicNPC* SpawnedNPCActor = GetWorld()->SpawnActorDeferred<ABasicNPC>(NPC, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+	if (SpawnedNPCActor) {
+		// Add references to BinaryChunk and pass the computed mesh data
+		/*SpawnedTreeActor->SetWorldTerrainSettings(WTSR);
+		SpawnedTreeActor->SetPerlinNoiseSettings(PNSR);
+		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
+		SpawnedTreeActor->SetTreeWorldLocation(ChunkLocationData.ObjectWorldCoords);*/
+		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
+
+		// Define the boundaries for the collision check
+		//float minX = PlayerPosition.X - WTSR->VegetationCollisionDistance;
+		//float maxX = PlayerPosition.X + WTSR->VegetationCollisionDistance;
+		//float minY = PlayerPosition.Y - WTSR->VegetationCollisionDistance;
+		//float maxY = PlayerPosition.Y + WTSR->VegetationCollisionDistance;
+
+		//// Check if the player is within the collision boundaries
+		//bool withinCollisionDistance = (ChunkLocationData.ObjectPosition.X >= minX && ChunkLocationData.ObjectPosition.X <= maxX) &&
+		//	(ChunkLocationData.ObjectPosition.Y >= minY && ChunkLocationData.ObjectPosition.Y <= maxY);
+
+		//if (withinCollisionDistance) {
+		//	SpawnedTreeActor->SetTreeCollision(true);
+		//}
+
+		// Finish spawning the chunk actor
+		UGameplayStatics::FinishSpawningActor(SpawnedNPCActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
+
+		// TODO Add the tree actor to a map so I can update the collision and remove it later on
+		// WTSR->AddSpawnedTrees(ChunkLocationData.ObjectWorldCoords, SpawnedTreeActor);
+	} else {
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn NPC Actor!"));
+	}
+
+}
+
 // Remove the vegetation (tree, grass, flowers) spawn points, and add the actor pointers
 // to a local cache, to be removed across multiple frames in Tick().
 void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyPosition) {
@@ -404,6 +448,28 @@ void AChunkWorld::DestroyFlowerActors() {
 }
 
 
+
+void AChunkWorld::updateNavmeshLocationToPlayer() {
+	AActor* player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
+	TArray<AActor*> navmeshVolume;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), "NavMeshVolumeAroundPlayer", navmeshVolume);
+
+	// TODO Continue from here to attach the bounding box to the player
+	FVector playerLocation = player->GetActorLocation();
+	
+	// TODO Move this and store it once rather then getting every time 
+	FVector navmeshOrigin, navmeshBoxExtent;
+	navmeshVolume[0]->GetActorBounds(false, navmeshOrigin, navmeshBoxExtent);
+
+
+	FVector centeredToPlayerLocation = FVector(playerLocation.X - (navmeshBoxExtent.X / 2.0f), playerLocation.Y - (navmeshBoxExtent.Y / 2.0f), playerLocation.Z - (navmeshBoxExtent.Z / 2.0f));
+
+	navmeshVolume[0]->SetActorLocation(centeredToPlayerLocation);
+
+	// Update the navigation mesh
+	FNavigationSystem::Build(*GetWorld());
+}
 
 // Called when the game starts or when spawned
 void AChunkWorld::BeginPlay() {
@@ -560,9 +626,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		WTSR->GrassCount++;
 
 		// Print the tree count every 50
-		if (WTSR->GrassCount % 1000 == 0) {
+		/*if (WTSR->GrassCount % 1000 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("Grass count: %d"), WTSR->GrassCount);
-		}
+		}*/
 
 		GrassPositionsToSpawn.RemoveAt(positionIndex);
 		spawnedGrassCounter++;
@@ -583,12 +649,35 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		WTSR->FlowerCount++;
 
 		// Print the tree count every 50
-		if (WTSR->FlowerCount % 50 == 0) {
+		/*if (WTSR->FlowerCount % 50 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("Flower count: %d"), WTSR->FlowerCount);
-		}
+		}*/
 
 		FlowerPositionsToSpawn.RemoveAt(positionIndex);
 		spawnedFlowerCounter++;
+	}
+
+	// Append NPC positions waiting to be spawned
+	TArray<FVoxelObjectLocationData> NPCSpawnPositions = CLDR->getNPCSpawnPosition();
+	NPCPositionsToSpawn.Append(NPCSpawnPositions);
+
+	// Spawn a few flowers in the current frame
+	int spawnedNPCCounter = 0;
+	for (int32 positionIndex = 0; positionIndex < NPCPositionsToSpawn.Num();) {
+		if (spawnedNPCCounter >= npcToSpawnPerFrame) {
+			break;
+		}
+
+		SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		WTSR->NPCCount++;
+
+		// Print the tree count every 50
+		if (WTSR->NPCCount % 50 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount);
+		}
+
+		NPCPositionsToSpawn.RemoveAt(positionIndex);
+		spawnedNPCCounter++;
 	}
 
 
@@ -684,6 +773,14 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		enableCollisionChunk->UpdateCollision(true);
 	}
 
+
+	// Move the nav mesh bounding box to the player location and rebuild the navigation mesh 
+	if (navmeshUpdateCounter >= navmeshUpdatePerFrame) {
+		updateNavmeshLocationToPlayer();
+		navmeshUpdateCounter = 0;
+	}
+
+	navmeshUpdateCounter++;
 }
 
 void AChunkWorld::calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime) {

@@ -6,6 +6,7 @@ UChunkLocationData::UChunkLocationData() :
 	ChunksToDestroySemaphore(new FairSemaphore(1)),
 	GrassToSpawnSemaphore(new FairSemaphore(1)),
 	FlowersToSpawnSemaphore(new FairSemaphore(1)),
+	NPCToSpawnSemaphore(new FairSemaphore(1)),
 	TreesToSpawnSemaphore(new FairSemaphore(1)) {
 }
 
@@ -17,6 +18,7 @@ UChunkLocationData::~UChunkLocationData() {
 	delete TreesToSpawnSemaphore;
 	delete FlowersToSpawnSemaphore;
 	delete GrassToSpawnSemaphore;
+	delete NPCToSpawnSemaphore;
 }
 
 bool UChunkLocationData::getChunkToSpawnPosition(FVoxelObjectLocationData& OutLocation) {
@@ -125,6 +127,24 @@ TArray<FVoxelObjectLocationData> UChunkLocationData::getFlowerSpawnPosition() {
 	return output;
 }
 
+TArray<FVoxelObjectLocationData> UChunkLocationData::getNPCSpawnPosition() {
+	TArray<FVoxelObjectLocationData> output;
+
+	NPCToSpawnSemaphore->Acquire();
+	
+	// Get the first item from the map // TODO Maybe extractt this into a function, as all getSpawnPosition use the same logic
+	if (!NPCSpawnPositions.IsEmpty()) {
+		for (const TPair<FIntPoint, TArray<FVoxelObjectLocationData>>& pair : NPCSpawnPositions) {
+			output = pair.Value;
+			NPCSpawnPositions.Remove(pair.Key);
+			break;
+		}
+	}
+
+	NPCToSpawnSemaphore->Release();
+	return output;
+}
+
 void UChunkLocationData::addTreeSpawnPosition(const FVoxelObjectLocationData position) {
 	TreesToSpawnSemaphore->Acquire();
 
@@ -167,6 +187,20 @@ void UChunkLocationData::addFlowerSpawnPosition(const FVoxelObjectLocationData p
 	FlowersToSpawnSemaphore->Release();
 }
 
+void UChunkLocationData::addNPCSpawnPosition(const FVoxelObjectLocationData position) {
+	NPCToSpawnSemaphore->Acquire();
+
+	// If it exists, add the new NPC position to the existing array
+	if (NPCSpawnPositions.Contains(position.ObjectWorldCoords)) {
+		NPCSpawnPositions[position.ObjectWorldCoords].Add(position);
+	} else {
+		// If not, create a new array with the new NPC position
+		NPCSpawnPositions.Add(position.ObjectWorldCoords, TArray<FVoxelObjectLocationData>({ position }));
+	}
+
+	NPCToSpawnSemaphore->Release();
+}
+
 void UChunkLocationData::RemoveTreeSpawnPosition(const FIntPoint& point) {
 	TreesToSpawnSemaphore->Acquire();
 
@@ -207,6 +241,20 @@ void UChunkLocationData::RemoveFlowerSpawnPosition(const FIntPoint& point) {
 	}
 
 	FlowersToSpawnSemaphore->Release();
+}
+
+void UChunkLocationData::RemoveNPCSpawnPosition(const FIntPoint& point) {
+	NPCToSpawnSemaphore->Acquire();
+
+	// Iterating over the map and removing the key and value
+	for (TMap<FIntPoint, TArray<FVoxelObjectLocationData>>::TIterator SpawnPosition(NPCSpawnPositions); SpawnPosition; ++SpawnPosition) {
+		if (SpawnPosition.Key() == point) {
+			SpawnPosition.RemoveCurrent();
+			break;
+		}
+	}
+
+	NPCToSpawnSemaphore->Release();
 }
 
 bool UChunkLocationData::AddUnspawnedTreeToDestroy(ATree* InTreeToDestroy) {
