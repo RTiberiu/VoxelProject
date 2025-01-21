@@ -1,29 +1,53 @@
 #include "VoxelSearchState.h"
 
 // Constructor
-// TODO IMPLEMENT THIS
-VoxelSearchState::VoxelSearchState() {
-    // Initialize your state here
+VoxelSearchState::VoxelSearchState(const FVector& InPosition) : position(InPosition) {
 }
 
 // Override pure virtual methods from State
 // TODO IMPLEMENT THIS
 std::string VoxelSearchState::toString() const {
-    return "VoxelSearchState";
+    return "VoxelSearchState: Position(" + std::to_string(position.X) + ", " + std::to_string(position.Y) + ", " + std::to_string(position.Z) + ")";
 }
 
-// TODO IMPLEMENT THIS
 bool VoxelSearchState::equals(const aips::search::State* state) const {
-    return false;
+    // Cast normal state to the custom state and check if vector positions are equal
+	VoxelSearchState* voxelSearchState = (VoxelSearchState*)state;
+    return voxelSearchState->position == this->position;
 }
 
-// TODO IMPLEMENT THIS
+// Generates a hash code for the VoxelSearchState based on the position vector
 std::size_t VoxelSearchState::hashCode() const {
-    return std::hash<std::string>()("VoxelSearchState");
+    std::size_t seed = 0;
+    std::hash<float> hasher;
+    seed ^= hasher(position.X) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    seed ^= hasher(position.Y) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    seed ^= hasher(position.Z) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed;
 }
 
-// TODO IMPLEMENT THIS
+// Get all the possible positions that can be reached from the current position
 std::vector<aips::search::ActionStatePair*> VoxelSearchState::successor() const {
+    
     std::vector<aips::search::ActionStatePair*> successors;
+
+	// Possible moves (left, right, up, down, up-left, up-right, down-left, down-right)
+    std::vector<FVector> possibleMoves = {
+        FVector(-1, 0, 0), FVector(1, 0, 0), 
+        FVector(0, 1, 0), FVector(0, -1, 0), 
+        FVector(-1, 1, 0), FVector(1, 1, 0),
+        FVector(-1, -1, 0), FVector(1, -1, 0)
+    };
+	FVector unrealScale = FVector(50, 50, 50);
+
+    // Generate successors based on possible moves
+    for (const FVector& move : possibleMoves) {
+        FVector newPosition = position + (move * unrealScale);
+        VoxelSearchAction* newAction = new VoxelSearchAction(newPosition);
+        VoxelSearchState* newState = new VoxelSearchState(newPosition);
+        aips::search::ActionStatePair* actionStatePair = new aips::search::ActionStatePair(newAction, newState);
+        successors.push_back(actionStatePair);
+    }
+
     return successors;
 }

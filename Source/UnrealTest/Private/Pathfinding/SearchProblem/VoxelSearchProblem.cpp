@@ -2,7 +2,6 @@
 
 VoxelSearchProblem::VoxelSearchProblem(const aips::search::State& initialState, const aips::search::State& goalState)
     : voxelSearchGoalState(&goalState) {
-
 }
 
 double VoxelSearchProblem::evaluation(const aips::search::Node& node) const {
