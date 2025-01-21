@@ -18,7 +18,6 @@
 AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThread(nullptr), isLocationTaskRunning(false), isMeshTaskRunning(false) {
 	// Set this actor to call Tick() every frame.  Yosu can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 	// Locking the tick at 60fps
 	// PrimaryActorTick.TickInterval = 1.0f / 60.0f;
 
