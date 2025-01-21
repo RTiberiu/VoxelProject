@@ -27,7 +27,7 @@ public:
 
 	~UWorldTerrainSettings();
 
-	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m)
+	const uint8_t UnrealScale{ 50 }; // this changes the voxel size (100 is 1m) // 50 
 	const uint8_t DrawDistance{ 5 }; // 5 
 
 	// Single chunk settings
@@ -101,9 +101,9 @@ public:
 	// Vegetation settings
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
 	const float TreeSpawnChance{ 0.0014f };
-	const float FlowerSpawnChance{ 0.04f };
-	const float GrassSpawnChance{ 0.18f };
-	const float NPCSpawnChance{ 0.182f };
+	const float FlowerSpawnChance{ 0.02f };
+	const float GrassSpawnChance{ 0.03f };
+	const float NPCSpawnChance{ 0.032f };
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };

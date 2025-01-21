@@ -1,8 +1,8 @@
 #include "BasicNPC.h"
 
-#include "NavigationSystem.h"
 #include <Runtime/AIModule/Classes/AIController.h>
-#include <Runtime/AIModule/Classes/Blueprint/AIBlueprintHelperLibrary.h>
+#include "..\..\Chunks\TerrainSettings\WorldTerrainSettings.h"
+
 #include "GameFramework/PawnMovementComponent.h"
 
 ABasicNPC::ABasicNPC() {
@@ -36,6 +36,10 @@ void ABasicNPC::SetNPCWorldLocation(FIntPoint InTreeLocation) {
 	NPCLocation = InTreeLocation;
 }
 
+void ABasicNPC::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
+    WorldTerrainSettingsRef = InWorldTerrainSettings;
+}
+
 void ABasicNPC::spawnNPC() {
     FString MeshPath = TEXT("SkeletalMesh'/Game/Characters/Animals/Panda/Animations/Panda_Animations.Panda_Animations'");
 
@@ -59,32 +63,6 @@ void ABasicNPC::buildAnimationsList() {
     Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Death.Panda_Animations_Anim_Death'"));
     Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Eat.Panda_Animations_Anim_Eat'"));
     Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Fly.Panda_Animations_Anim_Fly'"));
-}
-
-void ABasicNPC::moveToRandomLocation() {
-    // Make the NPC move on the NavMesh
-    if (frameCounter % 30 == 0) {
-        FVector RandomNavPoint;
-
-        // Get a random point on the NavMesh
-        UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
-        if (NavSystem) {
-            FNavLocation NavLocation;
-            if (NavSystem->GetRandomReachablePointInRadius(GetActorLocation(), 1000.0f, NavLocation)) {
-                RandomNavPoint = NavLocation.Location;
-
-
-                // Command the AI to move to the location
-                UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), RandomNavPoint);
-
-                // Command the AI to move to the location
-                /*AAIController* AIController = Cast<AAIController>(GetController());
-                if (AIController) {
-                    AIController->MoveToLocation(RandomNavPoint);
-                }*/
-            }
-        }
-    }
 }
 
 void ABasicNPC::BeginPlay() {
@@ -118,11 +96,6 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
         frameCounter = 0;
     }
-
-    // TODO Try to make the NPC move on the navmesh
-    moveToRandomLocation();
-
-
 
     frameCounter++;
 }

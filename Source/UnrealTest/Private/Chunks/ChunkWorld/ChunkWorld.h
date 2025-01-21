@@ -125,11 +125,6 @@ private:
 	TArray<FVoxelObjectLocationData> NPCPositionsToSpawn;
 	const int npcToSpawnPerFrame = 2;
 
-	// Navmesh
-	void updateNavmeshLocationToPlayer();
-	const int navmeshUpdatePerFrame = 60; //  180;
-	int navmeshUpdateCounter = 0;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

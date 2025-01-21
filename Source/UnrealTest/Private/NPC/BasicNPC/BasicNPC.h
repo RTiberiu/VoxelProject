@@ -3,7 +3,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include <GameFramework/FloatingPawnMovement.h>
+
 #include "BasicNPC.generated.h"
+
+class UWorldTerrainSettings;
 
 UCLASS()
 class ABasicNPC : public APawn {
@@ -15,10 +18,13 @@ public:
 
 	void SetNPCWorldLocation(FIntPoint InNPCLocation);
 
+	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 private:
+	UWorldTerrainSettings* WorldTerrainSettingsRef;
+	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
+
 	void spawnNPC();
 	void buildAnimationsList();
-	void moveToRandomLocation();
 
 	FIntPoint NPCLocation;
 

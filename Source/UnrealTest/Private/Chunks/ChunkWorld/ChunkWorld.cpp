@@ -13,7 +13,6 @@
 #include "ProceduralMeshComponent.h" // MAYBE
 
 #include <set>
-#include <AI/NavigationSystemBase.h>
 
 // Sets default values
 AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThread(nullptr), isLocationTaskRunning(false), isMeshTaskRunning(false) {
@@ -273,6 +272,7 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 		SpawnedTreeActor->SetPerlinNoiseSettings(PNSR);
 		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
 		SpawnedTreeActor->SetTreeWorldLocation(ChunkLocationData.ObjectWorldCoords);*/
+		SpawnedNPCActor->SetWorldTerrainSettings(WTSR);
 		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
 
 		// Define the boundaries for the collision check
@@ -445,30 +445,6 @@ void AChunkWorld::DestroyFlowerActors() {
 			CLDR->AddUnspawnedFlowerToDestroy(unspawnedFlower);
 		}
 	}
-}
-
-
-
-void AChunkWorld::updateNavmeshLocationToPlayer() {
-	AActor* player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-
-	TArray<AActor*> navmeshVolume;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), "NavMeshVolumeAroundPlayer", navmeshVolume);
-
-	// TODO Continue from here to attach the bounding box to the player
-	FVector playerLocation = player->GetActorLocation();
-	
-	// TODO Move this and store it once rather then getting every time 
-	FVector navmeshOrigin, navmeshBoxExtent;
-	navmeshVolume[0]->GetActorBounds(false, navmeshOrigin, navmeshBoxExtent);
-
-
-	FVector centeredToPlayerLocation = FVector(playerLocation.X - (navmeshBoxExtent.X / 2.0f), playerLocation.Y - (navmeshBoxExtent.Y / 2.0f), playerLocation.Z - (navmeshBoxExtent.Z / 2.0f));
-
-	navmeshVolume[0]->SetActorLocation(centeredToPlayerLocation);
-
-	// Update the navigation mesh
-	FNavigationSystem::Build(*GetWorld());
 }
 
 // Called when the game starts or when spawned
@@ -772,15 +748,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	if (IsValid(enableCollisionChunk) && enableCollisionChunk->IsActorInitialized()) {
 		enableCollisionChunk->UpdateCollision(true);
 	}
-
-
-	// Move the nav mesh bounding box to the player location and rebuild the navigation mesh 
-	if (navmeshUpdateCounter >= navmeshUpdatePerFrame) {
-		updateNavmeshLocationToPlayer();
-		navmeshUpdateCounter = 0;
-	}
-
-	navmeshUpdateCounter++;
 }
 
 void AChunkWorld::calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime) {
