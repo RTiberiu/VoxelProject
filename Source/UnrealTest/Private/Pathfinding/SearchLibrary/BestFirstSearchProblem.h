@@ -10,23 +10,25 @@ namespace aips {
     namespace search {
         namespace informed {
 
-            class BestFirstSearchProblem : public SearchProblem {
+            class BestFirstSearchProblem {
             public:
                 BestFirstSearchProblem(State* start, State* goal);
 
-                Path* search() override;
+                Path* search();
+
+                virtual double evaluation(const aips::search::Node& node) const = 0;
 
             protected:
                 void addChildBinary(std::list<Node*>& fringe, Node* childNode);
                 void addChildBinary(std::list<Node*>& fringe, Node* node, int left, int right);
 
+                bool isGoal(State* state);
+                Path* constructPath(Node* node);
+
             private:
                 State* goalState;
-
-                double evaluation(Node* node) const {
-                    // Implement the evaluation function
-                    return 0.0;
-                }
+                State* startState;
+                int nodeVisited;
             };
 
         } // namespace informed

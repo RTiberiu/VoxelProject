@@ -51,8 +51,6 @@ namespace aips {
                     std::cout << "\n";
                 }
             }
-
-        private:
             std::list<ActionStatePair*> path;
         };
 

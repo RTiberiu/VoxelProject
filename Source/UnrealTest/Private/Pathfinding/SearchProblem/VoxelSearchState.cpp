@@ -4,8 +4,6 @@
 VoxelSearchState::VoxelSearchState(const FVector& InPosition) : position(InPosition) {
 }
 
-// Override pure virtual methods from State
-// TODO IMPLEMENT THIS
 std::string VoxelSearchState::toString() const {
     return "VoxelSearchState: Position(" + std::to_string(position.X) + ", " + std::to_string(position.Y) + ", " + std::to_string(position.Z) + ")";
 }
@@ -38,11 +36,11 @@ std::vector<aips::search::ActionStatePair*> VoxelSearchState::successor() const 
         FVector(-1, 1, 0), FVector(1, 1, 0),
         FVector(-1, -1, 0), FVector(1, -1, 0)
     };
-	FVector unrealScale = FVector(50, 50, 50);
+	// FVector unrealScale = FVector(50, 50, 50); // TODO THIS SCALING CAN BE DONE AFTERWARDS TO SIMPLIFY THE SEARCH
 
     // Generate successors based on possible moves
     for (const FVector& move : possibleMoves) {
-        FVector newPosition = position + (move * unrealScale);
+        FVector newPosition = position + move; //  (move * unrealScale);
         VoxelSearchAction* newAction = new VoxelSearchAction(newPosition);
         VoxelSearchState* newState = new VoxelSearchState(newPosition);
         aips::search::ActionStatePair* actionStatePair = new aips::search::ActionStatePair(newAction, newState);
@@ -50,4 +48,8 @@ std::vector<aips::search::ActionStatePair*> VoxelSearchState::successor() const 
     }
 
     return successors;
+}
+
+const FVector& VoxelSearchState::getPosition() const {
+    return position;
 }

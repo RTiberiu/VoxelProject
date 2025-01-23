@@ -1,8 +1,8 @@
+#include "BestFirstSearchProblem.h"
 #include <iostream>
 #include <unordered_map>
 #include <list>
 #include <vector>
-#include "BestFirstSearchProblem.h"
 
 /**
 *  TODO Update this description
@@ -16,12 +16,11 @@
  * Translated from Java to C++ by Tiberiu Rociu
  */
 
-
 namespace aips {
     namespace search {
         namespace informed {
 
-            BestFirstSearchProblem::BestFirstSearchProblem(State* start, State* goal) : SearchProblem(start), goalState(goal) {}
+            BestFirstSearchProblem::BestFirstSearchProblem(State* start, State* goal) : startState(start), goalState(goal), nodeVisited(0) {}
 
             Path* BestFirstSearchProblem::search() {
                 std::unordered_map<State*, Node*> visitedNodes; // history
@@ -32,7 +31,7 @@ namespace aips {
                 visitedNodes[rootNode->state] = rootNode; // seen root node and state
                 this->nodeVisited++; // increment node count
                 if (nodeVisited % 1000 == 0) // print message every 1000 nodes
-                    std::cout << "No. of nodes explored: " << nodeVisited << std::endl;
+                    UE_LOG(LogTemp, Warning, TEXT("No. of nodes explored: %d"), nodeVisited);
 
                 while (true) {
                     if (fringe.empty()) // no more node to expand
@@ -47,7 +46,7 @@ namespace aips {
                     for (size_t i = 0; i < childrenNodes.size(); i++) {
                         this->nodeVisited++; // increment node count
                         if (nodeVisited % 1000 == 0) // print message every 1000 nodes
-                            std::cout << "No. of nodes explored: " << nodeVisited << std::endl;
+                            UE_LOG(LogTemp, Warning, TEXT("No. of nodes explored: %d"), nodeVisited);
 
                         ActionStatePair* child = childrenNodes[i];
                         Action* action = child->action;
@@ -77,9 +76,9 @@ namespace aips {
                         fringe.insert(it, node);
                         return;
                     }
-                    double nodeValue = this->evaluation(node); // f(n) value of new node
+                    double nodeValue = this->evaluation(*node); // f(n) value of new node
                     if (left == right) { // left meets right
-                        double leftValue = this->evaluation(*std::next(fringe.begin(), left)); // f(n) of node at position left
+                        double leftValue = this->evaluation(**std::next(fringe.begin(), left)); // f(n) of node at position left
                         if (leftValue > nodeValue) {
                             auto it = fringe.begin();
                             std::advance(it, left);
@@ -88,7 +87,7 @@ namespace aips {
                         }
                     }
                     int mid = (left + right) / 2;
-                    double midValue = this->evaluation(*std::next(fringe.begin(), mid)); // f(n) of node at position mid
+                    double midValue = this->evaluation(**std::next(fringe.begin(), mid)); // f(n) of node at position mid
                     if (midValue > nodeValue) {
                         right = mid - 1;
                     } else {
@@ -96,6 +95,27 @@ namespace aips {
                     }
                 }
             }
+
+            bool BestFirstSearchProblem::isGoal(State* state) {
+                return state->equals(goalState);
+            }
+
+            Path* BestFirstSearchProblem::constructPath(Node* node) {
+                if (node == nullptr)
+                    return nullptr;
+
+                Path* result = new Path();
+                result->cost = node->getCost();
+                while (node->parent != nullptr) {
+                    result->path.push_front(new ActionStatePair(node->action, node->state));	//add state to the beginning of list
+                    node = node->parent;
+                }
+                result->head = node->state;	//now node is the head of the path
+
+                return result;
+            }
+
+
 
         } // namespace informed
     } // namespace search

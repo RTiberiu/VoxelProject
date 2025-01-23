@@ -13,6 +13,7 @@ public:
     std::size_t hashCode() const override;
     std::vector<aips::search::ActionStatePair*> successor() const override;
 
+    const FVector& getPosition() const;
 private:
     const FVector position;
 
