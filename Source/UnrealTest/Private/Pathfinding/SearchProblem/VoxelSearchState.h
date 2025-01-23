@@ -1,3 +1,5 @@
+#pragma once
+
 #include "..\SearchLibrary\State.h"
 #include "..\SearchLibrary\ActionStatePair.h"
 #include "VoxelSearchAction.h"

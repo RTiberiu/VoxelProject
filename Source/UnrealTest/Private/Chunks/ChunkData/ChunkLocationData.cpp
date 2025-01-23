@@ -1,9 +1,9 @@
 #include "ChunkLocationData.h"
 
 UChunkLocationData::UChunkLocationData() :
-	MeshDataSemaphore(new FairSemaphore(1)),
 	ChunksToSpawnSemaphore(new FairSemaphore(1)),
 	ChunksToDestroySemaphore(new FairSemaphore(1)),
+	MeshDataSemaphore(new FairSemaphore(1)),
 	GrassToSpawnSemaphore(new FairSemaphore(1)),
 	FlowersToSpawnSemaphore(new FairSemaphore(1)),
 	NPCToSpawnSemaphore(new FairSemaphore(1)),

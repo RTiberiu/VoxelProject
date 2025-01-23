@@ -30,7 +30,7 @@ namespace aips {
 
         class Path {
         public:
-            ActionStatePair* head;
+            State* head;
             double cost;
 
             Path() : head(nullptr), cost(0.0) {}
