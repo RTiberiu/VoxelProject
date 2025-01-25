@@ -7,7 +7,8 @@ UChunkLocationData::UChunkLocationData() :
 	GrassToSpawnSemaphore(new FairSemaphore(1)),
 	FlowersToSpawnSemaphore(new FairSemaphore(1)),
 	NPCToSpawnSemaphore(new FairSemaphore(1)),
-	TreesToSpawnSemaphore(new FairSemaphore(1)) {
+	TreesToSpawnSemaphore(new FairSemaphore(1)),
+	SurfaceVoxelPointsSemaphore(new FairSemaphore(1)) {
 }
 
 UChunkLocationData::~UChunkLocationData() {
@@ -19,6 +20,7 @@ UChunkLocationData::~UChunkLocationData() {
 	delete FlowersToSpawnSemaphore;
 	delete GrassToSpawnSemaphore;
 	delete NPCToSpawnSemaphore;
+	delete SurfaceVoxelPointsSemaphore;
 }
 
 bool UChunkLocationData::getChunkToSpawnPosition(FVoxelObjectLocationData& OutLocation) {
@@ -279,4 +281,16 @@ bool UChunkLocationData::AddUnspawnedFlowerToDestroy(UProceduralMeshComponent* I
 
 bool UChunkLocationData::GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy) {
 	return unspawnedFlowerToDestroy.Dequeue(InFlowerToDestroy);
+}
+
+void UChunkLocationData::AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<FIntVector3>& voxelPoints) {
+	SurfaceVoxelPointsSemaphore->Acquire();
+	surfaceVoxelPoints.Add(chunkPosition, voxelPoints);
+	SurfaceVoxelPointsSemaphore->Release();
+}
+
+void UChunkLocationData::RemoveSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition) {
+	SurfaceVoxelPointsSemaphore->Acquire();
+	surfaceVoxelPoints.Remove(chunkPosition);
+	SurfaceVoxelPointsSemaphore->Release();
 }

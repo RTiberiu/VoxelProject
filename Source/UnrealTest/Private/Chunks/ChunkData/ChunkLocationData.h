@@ -59,6 +59,9 @@ public:
     bool AddUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
     bool GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
 
+	void AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<FIntVector3>& voxelPoints);
+	void RemoveSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition);
+
 private:
     // Queue for storing chunks position that need to be spawned
     TQueue<FVoxelObjectLocationData> chunksToSpawnPositions;
@@ -94,4 +97,7 @@ private:
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>> NPCSpawnPositions;
 
     FairSemaphore* MeshDataSemaphore;
+
+	FairSemaphore* SurfaceVoxelPointsSemaphore;
+    TMap<FIntPoint, TArray<FIntVector3>> surfaceVoxelPoints;
 };

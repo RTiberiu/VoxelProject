@@ -574,7 +574,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
+		// SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->TreeCount++;
 
 		// Print the tree count every 50
@@ -597,7 +597,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
+		// SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->GrassCount++;
 
 		// Print the tree count every 50
@@ -620,7 +620,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
+		// SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->FlowerCount++;
 
 		// Print the tree count every 50
@@ -643,7 +643,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->NPCCount++;
 
 		// Print the tree count every 50
@@ -714,6 +714,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			// Remove remaining vegetation spawn points for the destroyed chunk location
 			// and add the aactor pointers to a local cache to be removed across multiple frames
 			RemoveVegetationSpawnPointsAndActors(chunkToDestroyPosition);
+
+			// Remove the voxel surface points from the pathfinding map
+			CLDR->RemoveSurfaceVoxelPointsForChunk(chunkToDestroyPosition);
 		} else {
 			// Add the chunk position back because the chunk is not yet spawned
 			CLDR->addChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back. I should use a TMap instead and remove the entry of that object instead, preventing it from spawning in the first place.
