@@ -646,7 +646,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->NPCCount++;
 
 		// Print the tree count every 50
