@@ -12,9 +12,10 @@
 //#include "..\ChunkData\ObjectMeshData.h"
 
 
-ChunkMeshDataRunnable::ChunkMeshDataRunnable(FVoxelObjectLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : ChunkLocationData(InChunkLocationData) {
+ChunkMeshDataRunnable::ChunkMeshDataRunnable(FVoxelObjectLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef, APerlinNoiseSettings* InPerlinNoiseSettingsRef) : ChunkLocationData(InChunkLocationData) {
 	WorldTerrainSettingsRef = InWorldTerrainSettingsRef;
 	ChunkLocationDataRef = InChunkLocationDataRef;
+	PerlinNoiseSettingsRef = InPerlinNoiseSettingsRef;
 }
 
 ChunkMeshDataRunnable::~ChunkMeshDataRunnable() {
@@ -62,6 +63,10 @@ void ChunkMeshDataRunnable::SetWorldTerrainSettings(UWorldTerrainSettings* InWor
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }
 
+void ChunkMeshDataRunnable::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettingsRef) {
+	PerlinNoiseSettingsRef = InPerlinNoiseSettingsRef;
+}
+
 void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	const FVector chunkWorldLocation = ChunkLocationData.ObjectPosition;
 
@@ -75,6 +80,11 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	
 	// Surface voxel points that will be used for pathfinding
 	TArray<FIntVector3> surfaceVoxelPoints;
+
+	// Holding the correct noise settings for each noise type
+	const FNoiseMapSettings& continentalnessSettings = PNSR->noiseMapSettings[0];
+	const FNoiseMapSettings& erosionSettings = PNSR->noiseMapSettings[1];
+	const FNoiseMapSettings& peaksAndValleysSettings = PNSR->noiseMapSettings[2];
 
 	// Loop over the chunk dimensions (X, Y, Z)
 	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
@@ -109,32 +119,32 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 				continentalnessHeight = continentalnessVal * amplitudeContinent;
 
 				// Adding erosion 
-				const float amplitudeErosion = 20;
+				const float amplitudeErosion = erosionSettings.Amplitudes[0];
 				float normalizedErosNoise = (erosionVal - 0.5f) / 1.0f;
 				erosionHeight = erosionVal * amplitudeErosion;
 
 				// Adding peaks and valleys
 				if (erosionVal <= 1) {
-					amplitudePV = 5;
+					amplitudePV = peaksAndValleysSettings.Amplitudes[0];
 				} else if (erosionVal <= 1.5) {
-					amplitudePV = 10;
+					amplitudePV = peaksAndValleysSettings.Amplitudes[1];
 				} else {
-					amplitudePV = 15;
+					amplitudePV = peaksAndValleysSettings.Amplitudes[2];
 				}
 			} else {
 				continentalnessHeight = 150;
 
 				// Adding erosion 
-				const float amplitudeErosion = 85;
+				const float amplitudeErosion = erosionSettings.Amplitudes[1];
 				erosionHeight = erosionVal * amplitudeErosion;
 
 				// Adding peaks and valleys
 				if (erosionVal <= 1) {
-					amplitudePV = 20;
+					amplitudePV = peaksAndValleysSettings.Amplitudes[3];
 				} else if (erosionVal <= 1.5) {
-					amplitudePV = 25;
+					amplitudePV = peaksAndValleysSettings.Amplitudes[4];
 				} else {
-					amplitudePV = 30;
+					amplitudePV = peaksAndValleysSettings.Amplitudes[5];
 				}
 			}
 

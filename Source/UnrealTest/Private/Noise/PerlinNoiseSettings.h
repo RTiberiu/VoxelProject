@@ -18,6 +18,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
     bool changedSettings;
 
+	UFUNCTION(CallInEditor, Category = "Terrain Generation")
+	void OnChangedSettings();
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain Generation")
     float noiseFrequency3D;
 
@@ -34,6 +37,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	void BindInputToRespawnTerrain();
 
 public:
 	// Called every frame

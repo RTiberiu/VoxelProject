@@ -27,7 +27,7 @@ class ChunkMeshDataRunnable : public FRunnable {
 	};
 
 public:
-	ChunkMeshDataRunnable(FVoxelObjectLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
+	ChunkMeshDataRunnable(FVoxelObjectLocationData InChunkLocationData, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef, APerlinNoiseSettings* InPerlinNoiseSettingsRef);
 	virtual ~ChunkMeshDataRunnable() override;
 
 	virtual bool Init() override;
@@ -39,6 +39,7 @@ public:
 
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
+	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettingsRef);
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
@@ -46,6 +47,9 @@ private:
 
 	UChunkLocationData* ChunkLocationDataRef;
 	UChunkLocationData*& CLDR = ChunkLocationDataRef;
+
+	APerlinNoiseSettings* PerlinNoiseSettingsRef;
+	APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
 
 	FVoxelObjectLocationData ChunkLocationData;
 

@@ -14,7 +14,7 @@ struct FNoiseMapSettings {
     float Frequencies;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map", meta = (ClampMin = "-200", ClampMax = "200", SliderMin = "-200", SliderMax = "200"))
-    int Amplitudes;
+    TArray<int> Amplitudes;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Map", meta = (ClampMin = "-200", ClampMax = "200", SliderMin = "-200", SliderMax = "200"))
     float Lacunarity;

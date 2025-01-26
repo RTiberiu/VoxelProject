@@ -480,6 +480,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 		destroyCurrentWorldChunks();
 
+		// Update the noise?
+		SetPerlinNoiseSettings(PerlinNoiseSettingsRef);
+
 		spawnInitialWorld();
 
 		isInitialWorldGenerated = true;
@@ -539,7 +542,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		if (doesSpawnPositionExist) {
 			// Calculate the chunk mesh data in a separate thread
 			isMeshTaskRunning.AtomicSet(true);
-			chunkMeshDataRunnable = new ChunkMeshDataRunnable(chunkToSpawnPosition, WTSR, CLDR);
+			chunkMeshDataRunnable = new ChunkMeshDataRunnable(chunkToSpawnPosition, WTSR, CLDR, PNSR);
 			chunkMeshDataThread = FRunnableThread::Create(chunkMeshDataRunnable, TEXT("chunkMeshDataThread"), 0, TPri_Normal);
 		}
 	}
@@ -574,7 +577,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		// SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
+		SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->TreeCount++;
 
 		// Print the tree count every 50
@@ -597,7 +600,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		// SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
+		SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->GrassCount++;
 
 		// Print the tree count every 50
@@ -620,7 +623,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		// SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
+		SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->FlowerCount++;
 
 		// Print the tree count every 50
