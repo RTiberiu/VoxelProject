@@ -518,7 +518,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	// Attempt pathfinding 
 	FVector startLocation = FVector(0, 0, 0);
-	FVector endLocation = FVector(10, 10, 10);
+	FVector endLocation = FVector(100, 100, 0);
 	PathfindingManager->AddPathfindingTask(startLocation, endLocation);
 
 	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();

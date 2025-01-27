@@ -42,13 +42,15 @@ namespace aips {
              * which can be customised in the domain specific sub-classes.
              */
             void print() const {
-                if (head == nullptr)
+                if (head == nullptr) {
+                    UE_LOG(LogTemp, Warning, TEXT("Head of path is nullptr."));
                     return;
-                std::cout << head->toString() << "\n";
+                }
+                UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(head->toString().c_str()));
                 for (const auto& next : path) {
-                    std::cout << next->action->toString() << "\n";
-                    std::cout << next->state->toString() << "\n";
-                    std::cout << "\n";
+                    UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(next->action->toString().c_str()));
+                    UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(next->state->toString().c_str()));
+                    UE_LOG(LogTemp, Warning, TEXT(""));
                 }
             }
             std::list<ActionStatePair*> path;

@@ -5,15 +5,13 @@
 #include "Async/Async.h"
 #include "CoreMinimal.h"
 #include "PathfindingThreadManager.h"
+#include "..\SearchProblem\VoxelSearchProblem.h"
 
 class UWorldTerrainSettings;
 class UChunkLocationData;
 
 class FPathfindingTask : public IQueuedWork {
 public:
-	/*PathfindingRunnable(UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
-	virtual ~PathfindingRunnable() override;*/
-
 	FPathfindingTask(
 		const FVector& InStartLocation, 
 		const FVector& InEndLocation,
@@ -21,7 +19,7 @@ public:
 		UChunkLocationData* InChunkLocationDataRef
 		);
 
-	virtual ~FPathfindingTask() {}
+	virtual ~FPathfindingTask();
 
 	virtual void DoThreadedWork() override;
 	virtual void Abandon() override;
@@ -32,6 +30,8 @@ public:
 
 private:
 	void TestFakeSearch();
+	aips::search::Path* GetPathToEndLocation();
+	void AdjustPathWithActualVoxelHeights(aips::search::Path* path);
 
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
