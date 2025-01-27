@@ -11,6 +11,7 @@
 #include "..\ChunkMeshThreads\ChunkMeshDataRunnable.h"
 #include "..\ChunkData\ChunkLocationData.h"
 
+#include "Pathfinding/PathfindingThreadPool/PathfindingThreadManager.h"
 
 #include <chrono>
 #include "CoreMinimal.h"
@@ -31,11 +32,13 @@ class AChunkWorld : public AActor {
 public:
 	// Sets default values for this actor's properties
 	AChunkWorld();
+	
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
 
+	PathfindingThreadManager* PathfindingManager;
 private:
 	APerlinNoiseSettings* PerlinNoiseSettingsRef;
 	APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
@@ -128,6 +131,9 @@ private:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	// Called when the game ends or when destroyed
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	FIntPoint GetChunkCoordinates(FVector Position) const;
 

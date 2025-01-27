@@ -30,6 +30,10 @@ AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThre
 	Tree = ATree::StaticClass();
 
 	NPC = ABasicNPC::StaticClass();
+
+	// Initialize thread pool for the NPC pathfinding
+	const int PathfindingThreads = 3;
+	PathfindingManager = new PathfindingThreadManager(WTSR, CLDR, PathfindingThreads);
 }
 
 void AChunkWorld::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -464,6 +468,17 @@ void AChunkWorld::BeginPlay() {
 	WTSR->printMapElements("Map after BeginPlay()");
 }
 
+void AChunkWorld::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	Super::EndPlay(EndPlayReason);
+
+	// Cleanup 
+	if (PathfindingManager) {
+		PathfindingManager->ShutDownThreadPool();
+		delete PathfindingManager;
+		PathfindingManager = nullptr;
+	}
+}
+
 FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
 	int32 ChunkX = FMath::FloorToInt(Position.X / (WTSR->chunkSize * WTSR->UnrealScale));
 	int32 ChunkZ = FMath::FloorToInt(Position.Y / (WTSR->chunkSize * WTSR->UnrealScale));
@@ -500,6 +515,11 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		UE_LOG(LogTemp, Error, TEXT("WTSR is nullptr!"));
 		return;
 	}
+
+	// Attempt pathfinding 
+	FVector startLocation = FVector(0, 0, 0);
+	FVector endLocation = FVector(10, 10, 10);
+	PathfindingManager->AddPathfindingTask(startLocation, endLocation);
 
 	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
@@ -646,13 +666,13 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->NPCCount++;
 
 		// Print the tree count every 50
-		if (WTSR->NPCCount % 50 == 0) {
+		/*if (WTSR->NPCCount % 50 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount);
-		}
+		}*/
 
 		NPCPositionsToSpawn.RemoveAt(positionIndex);
 		spawnedNPCCounter++;

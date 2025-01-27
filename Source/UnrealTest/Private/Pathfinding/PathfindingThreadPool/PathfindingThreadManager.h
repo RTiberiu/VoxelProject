@@ -1,32 +1,27 @@
 #pragma once
 
-// #include "..\..\Utils\Semaphore\FairSemaphore.h"
 #include "Containers/Queue.h"
 #include "CoreMinimal.h"
-#include "PathfindingRunnable.h"
-#include <UObject/Object.h>
-#include "PathfindingThreadManager.generated.h"
+#include "PathfindingTask.h"
+#include "Misc/QueuedThreadPool.h"
 
 class UChunkLocationData;
+class UWorldTerrainSettings;
 
-UCLASS()
-class UPathfindingThreadManager : public UObject {
-    GENERATED_BODY()
+class PathfindingThreadManager  {
 
 public:
-    UPathfindingThreadManager(const FObjectInitializer& ObjectInitializer);
+    PathfindingThreadManager(UWorldTerrainSettings* InWorldTerrainSettings, UChunkLocationData* InChunkLocationData, const int& NumThreads);
 
-    UPathfindingThreadManager(UWorldTerrainSettings* InWorldTerrainSettings, UChunkLocationData* InChunkLocationData, const int& NumThreads);
-
+    void ShutDownThreadPool();
+    
     void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
     void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 
     // TODO Adds a task to the thread pool
-    void AddPathfindingTask(FVector* startLocation, FVector* endLocation);
+    void AddPathfindingTask(FVector& startLocation, FVector& endLocation);
 
-    // Shuts down the thread pool
-    void Shutdown();
-
+    
 private:
     UWorldTerrainSettings* WorldTerrainSettingsRef;
     UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
@@ -34,13 +29,14 @@ private:
     UChunkLocationData* ChunkLocationDataRef;
     UChunkLocationData*& CLDR = ChunkLocationDataRef;
 
-    // Thread queue
-	TArray<PathfindingRunnable*> RunnablePool;
-    TArray<FRunnableThread*> ThreadPool;
+    FQueuedThreadPool* PathfindingThreadPool;
 
-    // Store running threads, to avoid checking all the threads in the pool
-	TArray<PathfindingRunnable*> RunningRunnable;
-	TArray<FRunnableThread*> RunningThreads;
+    // Thread queue
+ //   TArray<FRunnableThread*> ThreadPool;
+ //   TArray<PathfindingRunnable*> Runnables;
+
+ //   // Pathfinding work queue
+	//TQueue<IQueuedWork*> QueuedWork;
 
     // Thread management
     bool threadPoolRunning;

@@ -1,63 +1,48 @@
-#include "PathfindingRunnable.h"
 #include "PathfindingThreadManager.h"
 
-UPathfindingThreadManager::UPathfindingThreadManager(const FObjectInitializer& ObjectInitializer) {
+PathfindingThreadManager::PathfindingThreadManager(UWorldTerrainSettings* InWorldTerrainSettings, UChunkLocationData* InChunkLocationData, const int& NumThreads) {
+	threadPoolRunning = true;
+
+	SetWorldTerrainSettings(InWorldTerrainSettings);
+	SetChunkLocationData(InChunkLocationData);
+
+	// Alocate the thread pool and create the threads
+	PathfindingThreadPool = FQueuedThreadPool::Allocate();
+	bool threadPoolResult = PathfindingThreadPool->Create(NumThreads, 32 * 1024, EThreadPriority::TPri_Normal, TEXT("PathfindingThreadPool"));
+
+	if (threadPoolResult) {
+		UE_LOG(LogTemp, Warning, TEXT("Thread pool created with %d threads."), NumThreads);
+	} else {
+		UE_LOG(LogTemp, Error, TEXT("Failed to create FQueuedThreadPool!"));
+		delete PathfindingThreadPool;
+		PathfindingThreadPool = nullptr;
+	}
 }
 
-UPathfindingThreadManager::UPathfindingThreadManager(UWorldTerrainSettings* InWorldTerrainSettings, UChunkLocationData* InChunkLocationData, const int& NumThreads) {
-    threadPoolRunning = true;
-
-    SetWorldTerrainSettings(InWorldTerrainSettings);
-    SetChunkLocationData(InChunkLocationData);
-
-    for (int i = 0; i < NumThreads; i++) {
-        PathfindingRunnable* PathfindingRunnable = new PathfindingRunnable(InWorldTerrainSettings, InChunkLocationData);
-        FRunnableThread* Thread = FRunnableThread::Create(PathfindingRunnable, *FString::Printf(TEXT("PathfindingThread%d"), i));
-
-        RunnablePool.Add(PathfindingRunnable);
-        ThreadPool.Add(Thread);
-    }
+void PathfindingThreadManager::ShutDownThreadPool() {
+	if (PathfindingThreadPool) {
+		PathfindingThreadPool->Destroy();
+		delete PathfindingThreadPool;
+		PathfindingThreadPool = nullptr;
+		UE_LOG(LogTemp, Warning, TEXT("Thread pool destroyed succesfully."));
+	}
 }
 
-void UPathfindingThreadManager::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
+void PathfindingThreadManager::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }
 
-void UPathfindingThreadManager::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
+void PathfindingThreadManager::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
 	ChunkLocationDataRef = InChunkLocationData;
 }
 
-void UPathfindingThreadManager::AddPathfindingTask(FVector* startLocation, FVector* endLocation) {
-    // TODO Add some wait mechanism or something to wait when there are no available threads
-    if (RunnablePool.Num() != 0 && ThreadPool.Num() != 0) {
+void PathfindingThreadManager::AddPathfindingTask(FVector& startLocation, FVector& endLocation) {
+	if (!PathfindingThreadPool) {
+		UE_LOG(LogTemp, Error, TEXT("Thread pool is not initialized!"));
+		return;
+	}
 
-        // TODO This doesn't correctly start a thread. I need to adjust the logic here.
-
-		// Remove available runnable from the pool and add it to the running threads
-        PathfindingRunnable* runnable = RunnablePool[0];
-        RunnablePool.RemoveAt(0);
-        RunningRunnable.Add(runnable);
-
-		FRunnableThread* thread = ThreadPool[0];
-		ThreadPool.RemoveAt(0);
-		RunningThreads.Add(thread);
-
-        // Set the runnable search data and run
-        runnable->SetSearchData(startLocation, endLocation);
-        runnable->Run();
-
-        // TODO Implement a flag system to add the thread back to the available pool
-
-        // When runnable is done, add it back to the available pool
-        RunningRunnable.Remove(runnable);
-		RunnablePool.Add(runnable);
-
-		RunningThreads.Remove(thread);
-		ThreadPool.Add(thread);
-
-    }
-}
-
-void UPathfindingThreadManager::Shutdown() {
-	// TODO Shutdown all the threads and destroy the objects
+	FPathfindingTask* NewTask = new FPathfindingTask(startLocation, endLocation, WTSR, CLDR);
+	PathfindingThreadPool->AddQueuedWork(NewTask);
+	UE_LOG(LogTemp, Warning, TEXT("Pathfinding task added."));
 }
