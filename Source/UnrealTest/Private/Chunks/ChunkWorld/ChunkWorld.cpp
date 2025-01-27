@@ -276,6 +276,7 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
 		SpawnedTreeActor->SetTreeWorldLocation(ChunkLocationData.ObjectWorldCoords);*/
 		SpawnedNPCActor->SetWorldTerrainSettings(WTSR);
+		SpawnedNPCActor->SetPathfindingManager(PathfindingManager);
 		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
 
 		// Define the boundaries for the collision check
@@ -450,6 +451,16 @@ void AChunkWorld::DestroyFlowerActors() {
 	}
 }
 
+// Update the player's current position that will be used for pathfinding
+void AChunkWorld::updatePlayerCurrentPosition(FVector& PlayerPosition) {
+	if (updatePlayerCurrentPositionCounter >= updatePlayerCurrentPositionPerFrames) {
+		WTSR->updateCurrentPlayerPosition(PlayerPosition);
+		updatePlayerCurrentPositionCounter = 0;
+	} else {
+		updatePlayerCurrentPositionCounter++;
+	}
+}
+
 // Called when the game starts or when spawned
 void AChunkWorld::BeginPlay() {
 	Super::BeginPlay();
@@ -516,12 +527,15 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		return;
 	}
 
-	// Attempt pathfinding 
+	// Attempt pathfinding // TODO THIS IS JUST TESTING. Will eventually call this from the NPC class. 
 	FVector startLocation = FVector(0, 0, 0);
 	FVector endLocation = FVector(100, 100, 0);
 	PathfindingManager->AddPathfindingTask(startLocation, endLocation);
 
 	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+
+	// Update the player's current position so NPCs can use it for pathfinding
+	updatePlayerCurrentPosition(PlayerPosition);
 
 	const FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	const FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());

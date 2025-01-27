@@ -79,7 +79,7 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	int vegetationXZLimit = WTSR->chunkSizePadding - WTSR->chunkSize;
 	
 	// Surface voxel points that will be used for pathfinding
-	TArray<FIntVector3> surfaceVoxelPoints;
+	TArray<int> surfaceVoxelPoints;
 
 	// Holding the correct noise settings for each noise type
 	const FNoiseMapSettings& continentalnessSettings = PNSR->noiseMapSettings[0];
@@ -157,7 +157,7 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 			int height = std::clamp(combinedNoiseHeight, 0, static_cast<int>(WTSR->chunkHeight));
 
 			// Add the voxel point to the surface voxel points array
-			surfaceVoxelPoints.Add(FIntVector3(x, z, height));
+			surfaceVoxelPoints.Add(height);
 
 			// Spawn some vegetation at current voxel point
 			attemptToSpawnVegetationAtLocation(x, z, height, vegetationXZLimit, chunkWorldLocation);

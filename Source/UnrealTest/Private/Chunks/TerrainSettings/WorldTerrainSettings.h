@@ -49,8 +49,6 @@ public:
 	AActor* GetAndRemoveChunkFromMap(const FIntPoint& ChunkCoordinates);
 	AActor* GetNextChunkFromMap();
 	int GetMapSize();
-	void updateInitialPlayerPosition(FVector newPosition);
-	FVector getInitialPlayerPosition();
 	void EmptyChunkMap();
 	const TMap<FIntPoint, AActor*>& GetSpawnedChunksMap() const;
 
@@ -59,6 +57,14 @@ public:
 	void UpdateTreeCollisions(FVector& PlayerPosition);
 
 	FairSemaphore* UpdateChunkSemaphore;
+
+	// Player positions (used to despawn objects and for pathfinding)
+	void updateInitialPlayerPosition(FVector newPosition);
+	FVector getInitialPlayerPosition();
+
+	void updateCurrentPlayerPosition(FVector& newPosition);
+	FVector& getCurrentPlayerPosition();
+
 
 	// Chunk noises
 	// Noise objects used to generate the world
@@ -200,6 +206,7 @@ private:
 
 	// Player settings
 	FVector playerInitialPosition;
+	FVector playerCurrentPosition; // This is used for pathfinding and updated in ChunkWorld
 
 	// Locks for critical sections
 	FairSemaphore* PlayerPositionSemaphore;

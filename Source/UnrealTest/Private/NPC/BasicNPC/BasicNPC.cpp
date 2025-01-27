@@ -15,16 +15,10 @@ ABasicNPC::ABasicNPC() {
 
     // SkeletalMesh->SetupAttachment(RootComponent);
 
+    pathToPlayer = nullptr;
 
     UPawnMovementComponent* MovementComponent = FindComponentByClass<UPawnMovementComponent>();
     if (!MovementComponent) {
-        // UE_LOG(LogTemp, Error, TEXT("Pawn lacks a compatible movement component!"));
-
-        // TODO Continue from here to allow the NPC to move on the navmesh
-        // 1. Move the mesh in the center of the player (-X and -Z of the navmesh volume from the player's location)
-        // 2. Research how can I make the navmesh actually go on my terrain, as currently a lot of the voxels 
-        // are not actually used by the navmesh. Inspect by opening the command ~ or ` and running the command:
-        // show navigation
         FloatingMovement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("FloatingMovement"));
     }
 }
@@ -32,12 +26,16 @@ ABasicNPC::ABasicNPC() {
 ABasicNPC::~ABasicNPC() {
 }
 
-void ABasicNPC::SetNPCWorldLocation(FIntPoint InTreeLocation) {
-	NPCLocation = InTreeLocation;
+void ABasicNPC::SetNPCWorldLocation(FIntPoint InNPCWorldLocation) {
+    NPCWorldLocation = InNPCWorldLocation;
 }
 
 void ABasicNPC::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
     WorldTerrainSettingsRef = InWorldTerrainSettings;
+}
+
+void ABasicNPC::SetPathfindingManager(PathfindingThreadManager* InPathfindingManager) {
+	PathfindingManager = InPathfindingManager;
 }
 
 void ABasicNPC::spawnNPC() {
@@ -65,6 +63,36 @@ void ABasicNPC::buildAnimationsList() {
     Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Fly.Panda_Animations_Anim_Fly'"));
 }
 
+void ABasicNPC::PlayRandomAnimation() {
+    // Play a new random animation
+    if (animationFrameCounter >= animationChangeAfterFrames) {
+
+        FString& Animation = Animations[FMath::RandRange(0, Animations.Num() - 1)];
+
+        UAnimSequence* LoadedAnim = LoadObject<UAnimSequence>(nullptr, *Animation);
+        if (LoadedAnim) {
+            SkeletalMesh->PlayAnimation(LoadedAnim, true);
+        }
+
+        animationFrameCounter = 0;
+    }
+
+    animationFrameCounter++;
+}
+
+void ABasicNPC::GetPathToPlayer() {
+    FVector npcLocation = GetActorLocation();
+	FVector playerLocation = WTSR->getCurrentPlayerPosition();
+
+    // TODO NEED TO PASS HERE A REFERENCE TO THE CURRENT NPC OBJECT
+    // AND LET THE TASK NOTIFY IT WHEN THE PATH IS AVAILABLE
+    // 
+	//      TODO Modify the task to receive a pointer to the current NPC object
+	//      TODO Call a function in the NPC object to notify it when the path is available
+	//      TODO The NPC object will then call a function in the AIController to move the NPC along the path
+    PathfindingManager->AddPathfindingTask(npcLocation, playerLocation);
+}
+
 void ABasicNPC::BeginPlay() {
 	Super::BeginPlay();
 
@@ -84,18 +112,6 @@ void ABasicNPC::BeginPlay() {
 void ABasicNPC::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 
-    // Play a new random animation
-    if (frameCounter >= animationChangeAfterFrames) {
-        
-        FString& Animation = Animations[FMath::RandRange(0, Animations.Num() - 1)];
+    PlayRandomAnimation();
 
-        UAnimSequence* LoadedAnim = LoadObject<UAnimSequence>(nullptr, *Animation);
-        if (LoadedAnim) {
-            SkeletalMesh->PlayAnimation(LoadedAnim, true);
-        }
-
-        frameCounter = 0;
-    }
-
-    frameCounter++;
 }

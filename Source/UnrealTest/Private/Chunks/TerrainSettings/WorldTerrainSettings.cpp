@@ -97,6 +97,14 @@ FVector UWorldTerrainSettings::getInitialPlayerPosition() {
 	return Position;
 }
 
+void UWorldTerrainSettings::updateCurrentPlayerPosition(FVector& newPosition) {
+	playerCurrentPosition = newPosition;
+}
+
+FVector& UWorldTerrainSettings::getCurrentPlayerPosition() {
+	return playerCurrentPosition;
+}
+
 void UWorldTerrainSettings::EmptyChunkMap() {
 	ChunkMapSemaphore->Acquire();
 	SpawnedChunksMap.Empty();

@@ -4,6 +4,9 @@
 #include "GameFramework/Pawn.h"
 #include <GameFramework/FloatingPawnMovement.h>
 
+#include "..\..\Pathfinding\SearchLibrary\Path.h"
+#include "..\..\Pathfinding\PathfindingThreadPool\PathfindingThreadManager.h"
+
 #include "BasicNPC.generated.h"
 
 class UWorldTerrainSettings;
@@ -16,17 +19,25 @@ public:
 	ABasicNPC();
 	~ABasicNPC();
 
-	void SetNPCWorldLocation(FIntPoint InNPCLocation);
+	void SetNPCWorldLocation(FIntPoint InNPCWorldLocation);
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
+	void SetPathfindingManager(PathfindingThreadManager* InPathfindingManager);
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
 
+	PathfindingThreadManager* PathfindingManager;
+
 	void spawnNPC();
 	void buildAnimationsList();
 
-	FIntPoint NPCLocation;
+	void PlayRandomAnimation();
+
+	void GetPathToPlayer();
+	aips::search::Path* pathToPlayer;
+
+	FIntPoint NPCWorldLocation;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* SkeletalMesh;
@@ -34,7 +45,7 @@ private:
 	UFloatingPawnMovement* FloatingMovement;
 
 	static constexpr int animationChangeAfterFrames = 180;
-	int frameCounter = 0;
+	int animationFrameCounter = 0;
 
 	TArray<FString> Animations;
 

@@ -59,7 +59,7 @@ public:
     bool AddUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
     bool GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
 
-	void AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<FIntVector3>& voxelPoints);
+	void AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints);
 	void RemoveSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition);
 
 private:
@@ -99,5 +99,5 @@ private:
     FairSemaphore* MeshDataSemaphore;
 
 	FairSemaphore* SurfaceVoxelPointsSemaphore;
-    TMap<FIntPoint, TArray<FIntVector3>> surfaceVoxelPoints;
+    TMap<FIntPoint, TArray<int>> surfaceVoxelPoints;
 };

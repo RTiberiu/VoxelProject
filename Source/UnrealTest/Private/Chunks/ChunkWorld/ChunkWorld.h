@@ -128,6 +128,9 @@ private:
 	TArray<FVoxelObjectLocationData> NPCPositionsToSpawn;
 	const int npcToSpawnPerFrame = 2;
 
+	int updatePlayerCurrentPositionCounter = 0;
+	int updatePlayerCurrentPositionPerFrames = 60;
+	void updatePlayerCurrentPosition(FVector& PlayerPosition);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

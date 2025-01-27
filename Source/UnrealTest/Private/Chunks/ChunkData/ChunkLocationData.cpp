@@ -52,9 +52,6 @@ void UChunkLocationData::addChunksToSpawnPosition(const FVoxelObjectLocationData
 }
 
 void UChunkLocationData::addChunksToDestroyPosition(const FIntPoint& position) {
-	if (position.X == 5 && position.Y == -3) {
-		UE_LOG(LogTemp, Warning, TEXT("addChunksToDestroyPosition() -- Added the point X:5 Z:-3."));
-	}
 	chunksToDestroyPositions.Enqueue(position);
 }
 
@@ -283,7 +280,7 @@ bool UChunkLocationData::GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* I
 	return unspawnedFlowerToDestroy.Dequeue(InFlowerToDestroy);
 }
 
-void UChunkLocationData::AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<FIntVector3>& voxelPoints) {
+void UChunkLocationData::AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints) {
 	SurfaceVoxelPointsSemaphore->Acquire();
 	surfaceVoxelPoints.Add(chunkPosition, voxelPoints);
 	SurfaceVoxelPointsSemaphore->Release();
