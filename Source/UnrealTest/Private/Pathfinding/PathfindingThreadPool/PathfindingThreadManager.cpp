@@ -36,13 +36,13 @@ void PathfindingThreadManager::SetChunkLocationData(UChunkLocationData* InChunkL
 	ChunkLocationDataRef = InChunkLocationData;
 }
 
-void PathfindingThreadManager::AddPathfindingTask(FVector& startLocation, FVector& endLocation) {
+void PathfindingThreadManager::AddPathfindingTask(ABasicNPC* npcRef, FVector& startLocation, FVector& endLocation) {
 	if (!PathfindingThreadPool) {
 		UE_LOG(LogTemp, Error, TEXT("Thread pool is not initialized!"));
 		return;
 	}
 
-	FPathfindingTask* NewTask = new FPathfindingTask(startLocation, endLocation, WTSR, CLDR);
+	FPathfindingTask* NewTask = new FPathfindingTask(startLocation, endLocation, npcRef, WTSR, CLDR);
 	PathfindingThreadPool->AddQueuedWork(NewTask);
 	// UE_LOG(LogTemp, Warning, TEXT("Pathfinding task added."));
 }

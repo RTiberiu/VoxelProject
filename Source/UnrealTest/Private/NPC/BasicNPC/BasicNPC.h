@@ -9,6 +9,7 @@
 
 #include "BasicNPC.generated.h"
 
+class PathfindingThreadManager;
 class UWorldTerrainSettings;
 
 UCLASS()
@@ -23,6 +24,9 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPathfindingManager(PathfindingThreadManager* InPathfindingManager);
+
+	void SetPathToPlayerAndNotify(Path* InPathToPlayer);
+
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
@@ -34,8 +38,11 @@ private:
 
 	void PlayRandomAnimation();
 
-	void GetPathToPlayer();
-	aips::search::Path* pathToPlayer;
+	void RequestPathToPlayer();
+	Path* pathToPlayer;
+	bool pathIsReady;
+
+	void ConsumePathAndMoveToLocation();
 
 	FIntPoint NPCWorldLocation;
 

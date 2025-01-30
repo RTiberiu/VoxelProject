@@ -3,8 +3,10 @@
 #include "Containers/Queue.h"
 #include "CoreMinimal.h"
 #include "PathfindingTask.h"
+//#include "..\..\NPC\BasicNPC\BasicNPC.h"
 #include "Misc/QueuedThreadPool.h"
 
+class ABasicNPC;
 class UChunkLocationData;
 class UWorldTerrainSettings;
 
@@ -19,7 +21,7 @@ public:
     void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 
     // TODO Adds a task to the thread pool
-    void AddPathfindingTask(FVector& startLocation, FVector& endLocation);
+    void AddPathfindingTask(ABasicNPC* npcRef, FVector& startLocation, FVector& endLocation);
 
     
 private:

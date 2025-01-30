@@ -280,14 +280,40 @@ bool UChunkLocationData::GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* I
 	return unspawnedFlowerToDestroy.Dequeue(InFlowerToDestroy);
 }
 
-void UChunkLocationData::AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints) {
+void UChunkLocationData::AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints, const TArray<FVector2D>& avoidPoints) {
 	SurfaceVoxelPointsSemaphore->Acquire();
 	surfaceVoxelPoints.Add(chunkPosition, voxelPoints);
+	surfaceAvoidPoints.Add(chunkPosition, avoidPoints);
 	SurfaceVoxelPointsSemaphore->Release();
 }
 
 void UChunkLocationData::RemoveSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition) {
 	SurfaceVoxelPointsSemaphore->Acquire();
 	surfaceVoxelPoints.Remove(chunkPosition);
+	surfaceAvoidPoints.Remove(chunkPosition);
 	SurfaceVoxelPointsSemaphore->Release();
+}
+
+bool UChunkLocationData::IsSurfacePointValid(const double& X, const double& Z) {
+	// Adjust the coordinates to they're relative to the coordinates inside a single chunk
+	const int relativeToChunkX = FMath::Floor(X / chunkSize);
+	const int relativeToChunkZ = FMath::Floor(Z / chunkSize);
+
+    const FIntPoint chunkCoords = FIntPoint(relativeToChunkX, relativeToChunkZ);
+
+    TArray<FVector2D> avoidPoints;
+    SurfaceVoxelPointsSemaphore->Acquire();
+    if (surfaceAvoidPoints.Contains(chunkCoords)) {
+        avoidPoints = surfaceAvoidPoints[chunkCoords];
+    }
+    SurfaceVoxelPointsSemaphore->Release();
+
+    // Check if any point in avoidPoints contains the relative X and Z
+    for (const FVector2D& point : avoidPoints) {
+        if (point.X == relativeToChunkX && point.Y == relativeToChunkZ) {
+            return false;
+        }
+    }
+
+    return true;
 }

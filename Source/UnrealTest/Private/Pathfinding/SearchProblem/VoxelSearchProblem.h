@@ -5,14 +5,14 @@
 #include "..\SearchLibrary\BestFirstSearchProblem.h"
 #include "VoxelSearchState.h"
 
-class VoxelSearchProblem : public aips::search::informed::BestFirstSearchProblem {
+class VoxelSearchProblem : public BestFirstSearchProblem {
 public:
-    VoxelSearchProblem(const aips::search::State& initialState, const aips::search::State& goalState); 
+    VoxelSearchProblem(VoxelSearchState& initialState, VoxelSearchState& goalState);
 
-    double evaluation(const aips::search::Node& node) const override;
-    double heuristic(const aips::search::State& state) const;
-    bool isGoal(const aips::search::State& state) const;
-    double getManhattanDistanceCost(const aips::search::State& currentState) const;
+    double evaluation(const Node& node) const override;
+    double heuristic(const VoxelSearchState& state) const;
+    bool isGoal(const VoxelSearchState& state) const;
+    double getManhattanDistanceCost(const VoxelSearchState& currentState) const;
 
 private:
     //VoxelSearchState voxelSearchGoalState;

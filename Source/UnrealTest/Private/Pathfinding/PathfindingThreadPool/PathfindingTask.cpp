@@ -1,26 +1,34 @@
 #include "PathfindingTask.h"
+#include "..\..\Chunks\TerrainSettings\WorldTerrainSettings.h"
 #include "Misc/DateTime.h"
 
 FPathfindingTask::FPathfindingTask(
 	const FVector& InStartLocation,
 	const FVector& InEndLocation,
+	ABasicNPC* InNPCRef,
 	UWorldTerrainSettings* InWorldTerrainSettingsRef,
 	UChunkLocationData* InChunkLocationDataRef
-) : StartLocation(InStartLocation), EndLocation(InEndLocation), WorldTerrainSettingsRef(InWorldTerrainSettingsRef), ChunkLocationDataRef(InChunkLocationDataRef) {
+) : StartLocation(InStartLocation), EndLocation(InEndLocation), NPCRef(InNPCRef), WorldTerrainSettingsRef(InWorldTerrainSettingsRef), ChunkLocationDataRef(InChunkLocationDataRef) {
 
 }
 
 FPathfindingTask::~FPathfindingTask() {
     WorldTerrainSettingsRef = nullptr;
     ChunkLocationDataRef = nullptr;
+	NPCRef = nullptr;
 }
 
 void FPathfindingTask::DoThreadedWork() {
 	// TestFakeSearch();
 
-	aips::search::Path* path = GetPathToEndLocation();
+	AdjustLocationsToUnrealScaling();
+
+	Path* path = GetPathToEndLocation();
 
 	AdjustPathWithActualVoxelHeights(path);
+
+	// Notify the NPC that the path is ready
+	NPCRef->SetPathToPlayerAndNotify(path);
 }
 
 void FPathfindingTask::Abandon() {
@@ -45,16 +53,22 @@ void FPathfindingTask::TestFakeSearch() {
 	FPlatformProcess::Sleep(0.01f); // Avoiding tight loops
 }
 
-aips::search::Path* FPathfindingTask::GetPathToEndLocation() {
+// Makes each unit in the start and end locaiton be the equivalent of a voxel size
+void FPathfindingTask::AdjustLocationsToUnrealScaling() {
+	StartLocation = FVector(FMath::FloorToDouble(StartLocation.X / WTSR->UnrealScale), FMath::FloorToDouble(StartLocation.Y / WTSR->UnrealScale), 0);
+	EndLocation = FVector(FMath::FloorToDouble(EndLocation.X / WTSR->UnrealScale), FMath::FloorToDouble(EndLocation.Y / WTSR->UnrealScale), 0);
+}
+
+Path* FPathfindingTask::GetPathToEndLocation() {
     // UE_LOG(LogTemp, Warning, TEXT("Started pathfinding for %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
     FDateTime StartTime = FDateTime::Now();
-		
-    VoxelSearchState startPosition = VoxelSearchState(StartLocation);
-    VoxelSearchState endPosition = VoxelSearchState(EndLocation);
+	
+    VoxelSearchState startPosition = VoxelSearchState(StartLocation, CLDR);
+    VoxelSearchState endPosition = VoxelSearchState(EndLocation, CLDR);
 
     VoxelSearchProblem* searchProblem = new VoxelSearchProblem(startPosition, endPosition);
 
-    aips::search::Path* pathToGoal = searchProblem->search();
+    Path* pathToGoal = searchProblem->search();
 
     FDateTime EndTime = FDateTime::Now();
     // pathToGoal->print(); // TESTING THE PATH
@@ -66,6 +80,6 @@ aips::search::Path* FPathfindingTask::GetPathToEndLocation() {
     return pathToGoal;
 }
 
-void FPathfindingTask::AdjustPathWithActualVoxelHeights(aips::search::Path* path) {
+void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 	// TODO Implement this
 }

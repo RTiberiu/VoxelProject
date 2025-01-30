@@ -68,6 +68,7 @@ void UVoxelGameInstance::Init() {
         chunkWorld->SetChunkLocationData(chunkLocationData);
         chunkWorld->SetWorldTerrainSettings(worldTerrainSettings);
         chunkWorld->SetPerlinNoiseSettings(perlinNoiseSettings);
+        chunkWorld->InitializePathfindingManager();
 
         // Finish spawning the chunk world
         UGameplayStatics::FinishSpawningActor(chunkWorld, FTransform(FRotator::ZeroRotator, FVector::ZeroVector));

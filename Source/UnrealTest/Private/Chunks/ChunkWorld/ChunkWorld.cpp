@@ -30,10 +30,6 @@ AChunkWorld::AChunkWorld() : chunksLocationRunnable(nullptr), chunksLocationThre
 	Tree = ATree::StaticClass();
 
 	NPC = ABasicNPC::StaticClass();
-
-	// Initialize thread pool for the NPC pathfinding
-	const int PathfindingThreads = 3;
-	PathfindingManager = new PathfindingThreadManager(WTSR, CLDR, PathfindingThreads);
 }
 
 void AChunkWorld::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -49,6 +45,12 @@ void AChunkWorld::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSett
 
 	// Create all the instances of perlin noise and set their settings
 	WTSR->SetPerlinNoiseSettings(InPerlinNoiseSettings);
+}
+
+void AChunkWorld::InitializePathfindingManager() {
+	// Initialize thread pool for the NPC pathfinding
+	const int PathfindingThreads = 3;
+	PathfindingManager = new PathfindingThreadManager(WTSR, CLDR, PathfindingThreads);
 }
 
 void AChunkWorld::printExecutionTime(Time& start, Time& end, const char* functionName) {
@@ -528,9 +530,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	}
 
 	// Attempt pathfinding // TODO THIS IS JUST TESTING. Will eventually call this from the NPC class. 
-	FVector startLocation = FVector(0, 0, 0);
+	/*FVector startLocation = FVector(0, 0, 0);
 	FVector endLocation = FVector(100, 100, 0);
-	PathfindingManager->AddPathfindingTask(startLocation, endLocation);
+	PathfindingManager->AddPathfindingTask(startLocation, endLocation);*/
 
 	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
@@ -680,7 +682,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->NPCCount++;
 
 		// Print the tree count every 50

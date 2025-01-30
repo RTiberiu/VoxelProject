@@ -3,7 +3,9 @@
 #include <iostream>
 #include <iterator>
 #include <list>
+#include "..\SearchProblem\VoxelSearchState.h"
 #include "ActionStatePair.h"
+
 
 /**
 * TODO Update this description
@@ -25,37 +27,31 @@
  *
  */
 
-namespace aips {
-    namespace search {
+class Path {
+public:
+    VoxelSearchState* head;
+    double cost;
 
-        class Path {
-        public:
-            State* head;
-            double cost;
+    Path() : head(nullptr), cost(0.0) {}
 
-            Path() : head(nullptr), cost(0.0) {}
-
-            /**
-             * Prints the path, with each node and action.
-             * The output is controlled by the toString() method
-             * of the State objects and Action objects,
-             * which can be customised in the domain specific sub-classes.
-             */
-            void print() const {
-                if (head == nullptr) {
-                    UE_LOG(LogTemp, Warning, TEXT("Head of path is nullptr."));
-                    return;
-                }
-                UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(head->toString().c_str()));
-                for (const auto& next : path) {
-                    UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(next->action->toString().c_str()));
-                    UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(next->state->toString().c_str()));
-                    UE_LOG(LogTemp, Warning, TEXT(""));
-                }
-            }
-            std::list<ActionStatePair*> path;
-        };
-
-    } // namespace search
-} // namespace aips
+    /**
+        * Prints the path, with each node and action.
+        * The output is controlled by the toString() method
+        * of the State objects and Action objects,
+        * which can be customised in the domain specific sub-classes.
+        */
+    void print() const {
+        if (head == nullptr) {
+            UE_LOG(LogTemp, Warning, TEXT("Head of path is nullptr."));
+            return;
+        }
+        UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(head->toString().c_str()));
+        for (const auto& next : path) {
+            UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(next->action->toString().c_str()));
+            UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(next->state->toString().c_str()));
+            UE_LOG(LogTemp, Warning, TEXT(""));
+        }
+    }
+    std::list<ActionStatePair*> path;
+};
 

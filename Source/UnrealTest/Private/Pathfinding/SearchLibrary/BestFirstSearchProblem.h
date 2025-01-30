@@ -4,34 +4,27 @@
 #include "SearchProblem.h"
 #include "Node.h"
 #include "Path.h"
+#include "..\SearchProblem\VoxelSearchState.h"
 #include "ActionStatePair.h"
 
-namespace aips {
-    namespace search {
-        namespace informed {
+class BestFirstSearchProblem {
+public:
+    BestFirstSearchProblem(VoxelSearchState* start, VoxelSearchState* goal);
 
-            class BestFirstSearchProblem {
-            public:
-                BestFirstSearchProblem(State* start, State* goal);
+    Path* search();
 
-                Path* search();
+    virtual double evaluation(const Node& node) const = 0;
 
-                virtual double evaluation(const aips::search::Node& node) const = 0;
+protected:
+    void addChildBinary(std::list<Node*>& fringe, Node* childNode);
+    void addChildBinary(std::list<Node*>& fringe, Node* node, int left, int right);
 
-            protected:
-                void addChildBinary(std::list<Node*>& fringe, Node* childNode);
-                void addChildBinary(std::list<Node*>& fringe, Node* node, int left, int right);
+    bool isGoal(VoxelSearchState* state);
+    Path* constructPath(Node* node);
 
-                bool isGoal(State* state);
-                Path* constructPath(Node* node);
-
-            private:
-                State* goalState;
-                State* startState;
-                int nodeVisited;
-            };
-
-        } // namespace informed
-    } // namespace search
-} // namespace aips
+private:
+    VoxelSearchState* goalState;
+    VoxelSearchState* startState;
+    int nodeVisited;
+};
 

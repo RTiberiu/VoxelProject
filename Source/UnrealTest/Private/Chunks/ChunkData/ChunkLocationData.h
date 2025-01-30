@@ -59,10 +59,15 @@ public:
     bool AddUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
     bool GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
 
-	void AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints);
+	void AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints, const TArray<FVector2D>& avoidPoints);
 	void RemoveSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition);
 
+    bool IsSurfacePointValid(const double& X, const double& Z);
+
 private:
+
+    const int chunkSize{ 62 };
+
     // Queue for storing chunks position that need to be spawned
     TQueue<FVoxelObjectLocationData> chunksToSpawnPositions;
     FairSemaphore* ChunksToSpawnSemaphore; // TODO might not be needed in a producer-consumer pattern, since TQueue is thread-safe
@@ -99,5 +104,13 @@ private:
     FairSemaphore* MeshDataSemaphore;
 
 	FairSemaphore* SurfaceVoxelPointsSemaphore;
+    // 2D Array in a 1D Array representing the height of each surface voxel (not scaled to the chunk position in the world)
+    // FIntPoint represents the tile of the chunk
+    // TArray<int> represents a flatten 2D array of all the heights of each surface voxel in the chunk
     TMap<FIntPoint, TArray<int>> surfaceVoxelPoints;
+    
+    // Positions to avoid in the pathfinding (not scaled to the chunk position in the world)
+    // FIntPoint represents the tile of the chunk
+    // TArray<FVector2D> represents each 2D coordinate inside the chunk that is occupied (currently just a tree)
+    TMap<FIntPoint, TArray<FVector2D>> surfaceAvoidPoints;
 };

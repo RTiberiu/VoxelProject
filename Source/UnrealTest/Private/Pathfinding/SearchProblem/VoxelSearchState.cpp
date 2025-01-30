@@ -1,17 +1,15 @@
 #include "VoxelSearchState.h"
 
 // Constructor
-VoxelSearchState::VoxelSearchState(const FVector& InPosition) : position(InPosition) {
+VoxelSearchState::VoxelSearchState(const FVector& InPosition, UChunkLocationData* InChunkLocationDataRef) : position(InPosition), ChunkLocationDataRef(InChunkLocationDataRef) {
 }
 
 std::string VoxelSearchState::toString() const {
     return "VoxelSearchState: Position(" + std::to_string(position.X) + ", " + std::to_string(position.Y) + ", " + std::to_string(position.Z) + ")";
 }
 
-bool VoxelSearchState::equals(const aips::search::State* state) const {
-    // Cast normal state to the custom state and check if vector positions are equal
-	VoxelSearchState* voxelSearchState = (VoxelSearchState*)state;
-    return voxelSearchState->position == this->position;
+bool VoxelSearchState::equals(const VoxelSearchState* state) const {
+    return state->position == this->position;
 }
 
 // Generates a hash code for the VoxelSearchState based on the position vector
@@ -25,9 +23,9 @@ std::size_t VoxelSearchState::hashCode() const {
 }
 
 // Get all the possible positions that can be reached from the current position
-std::vector<aips::search::ActionStatePair*> VoxelSearchState::successor() const {
+std::vector<ActionStatePair*> VoxelSearchState::successor() const {
     
-    std::vector<aips::search::ActionStatePair*> successors;
+    std::vector<ActionStatePair*> successors;
 
 	// Possible moves (left, right, up, down, up-left, up-right, down-left, down-right)
     std::vector<FVector> possibleMoves = {
@@ -36,14 +34,21 @@ std::vector<aips::search::ActionStatePair*> VoxelSearchState::successor() const 
         FVector(-1, 1, 0), FVector(1, 1, 0),
         FVector(-1, -1, 0), FVector(1, -1, 0)
     };
-	// FVector unrealScale = FVector(50, 50, 50); // TODO THIS SCALING CAN BE DONE AFTERWARDS TO SIMPLIFY THE SEARCH
 
     // Generate successors based on possible moves
     for (const FVector& move : possibleMoves) {
-        FVector newPosition = position + move; //  (move * unrealScale);
+        FVector newPosition = position + move;
+
+        // Validate position is not occupied by a solid object (currently just by a tree)
+        bool isValid = CLDR->IsSurfacePointValid(newPosition.X, newPosition.Y);
+
+        if (!isValid) {
+            continue;
+        }
+
         VoxelSearchAction* newAction = new VoxelSearchAction(newPosition);
-        VoxelSearchState* newState = new VoxelSearchState(newPosition);
-        aips::search::ActionStatePair* actionStatePair = new aips::search::ActionStatePair(newAction, newState);
+        VoxelSearchState* newState = new VoxelSearchState(newPosition, CLDR);
+        ActionStatePair* actionStatePair = new ActionStatePair(newAction, newState);
         successors.push_back(actionStatePair);
     }
 
@@ -52,4 +57,8 @@ std::vector<aips::search::ActionStatePair*> VoxelSearchState::successor() const 
 
 const FVector& VoxelSearchState::getPosition() const {
     return position;
+}
+
+void VoxelSearchState::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
+    ChunkLocationDataRef = InChunkLocationData;
 }

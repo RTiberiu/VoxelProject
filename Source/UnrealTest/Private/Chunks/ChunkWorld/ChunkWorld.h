@@ -37,6 +37,7 @@ public:
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
+	void InitializePathfindingManager();
 
 	PathfindingThreadManager* PathfindingManager;
 private:

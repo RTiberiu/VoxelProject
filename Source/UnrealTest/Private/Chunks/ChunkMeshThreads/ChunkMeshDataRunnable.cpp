@@ -224,7 +224,8 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	}
 
 	// Add the surface voxel points to the chunk location data
-	CLDR->AddSurfaceVoxelPointsForChunk(ChunkLocationData.ObjectWorldCoords, surfaceVoxelPoints);
+	CLDR->AddSurfaceVoxelPointsForChunk(ChunkLocationData.ObjectWorldCoords, surfaceVoxelPoints, surfaceAvoidPositions);
+
 }
 
 void ChunkMeshDataRunnable::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
@@ -649,6 +650,10 @@ void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, con
 			vegetationSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
 			CLDR->addTreeSpawnPosition(vegetationSpawnPosition);
+
+			// Add position to be avoided in the pathfinding
+			surfaceAvoidPositions.Add(FVector2D(x, z));
+
 		} else if (spawnVegetationChance < WTSR->FlowerSpawnChance) {
 			// Reduce the flower spawn levels by 2 
 			bool isOnReducedGrassLevel = colorIndex > WTSR->GrassColorEndIndex - 2;

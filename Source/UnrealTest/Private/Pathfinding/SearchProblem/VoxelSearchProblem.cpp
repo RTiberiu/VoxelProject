@@ -1,27 +1,25 @@
 #include "VoxelSearchProblem.h"
 
-VoxelSearchProblem::VoxelSearchProblem(const aips::search::State& initialState, const aips::search::State& goalState)
-    : aips::search::informed::BestFirstSearchProblem((aips::search::State*)&initialState, (aips::search::State*)&goalState),
-    voxelSearchGoalState((VoxelSearchState*)&goalState),
-    voxelSearchInitialState((VoxelSearchState*)&initialState) {
+VoxelSearchProblem::VoxelSearchProblem(VoxelSearchState& initialState, VoxelSearchState& goalState)
+    : BestFirstSearchProblem(&initialState, &goalState),
+    voxelSearchGoalState(&goalState),
+    voxelSearchInitialState(&initialState) {
 }
 
-double VoxelSearchProblem::evaluation(const aips::search::Node& node) const {
+double VoxelSearchProblem::evaluation(const Node& node) const {
     return heuristic(*node.state) + node.getCost(); // f(n) = h(n) + g(n)
 }
 
-double VoxelSearchProblem::heuristic(const aips::search::State& state) const {
+double VoxelSearchProblem::heuristic(const VoxelSearchState& state) const {
     return getManhattanDistanceCost(state);
 }
 
-bool VoxelSearchProblem::isGoal(const aips::search::State& state) const {
+bool VoxelSearchProblem::isGoal(const VoxelSearchState& state) const {
     return state.equals(voxelSearchGoalState);
 }
 
-double VoxelSearchProblem::getManhattanDistanceCost(const aips::search::State& currentState) const {
-	const VoxelSearchState* voxelSearchState = (VoxelSearchState*)&currentState;
-
-    const FVector& currentPosition = voxelSearchState->getPosition();
+double VoxelSearchProblem::getManhattanDistanceCost(const VoxelSearchState& currentState) const {
+    const FVector& currentPosition = currentState.getPosition();
 	const FVector& goalPosition = voxelSearchGoalState->getPosition();
 
     const float currentX = currentPosition.X;

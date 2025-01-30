@@ -67,6 +67,8 @@ private:
 
 	int vertexCount{ 0 };
 
+	TArray<FVector2D> surfaceAvoidPositions;
+
 	void createBinarySolidColumnsYXZ();
 
 	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);

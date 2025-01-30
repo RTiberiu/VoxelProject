@@ -4,9 +4,11 @@
 
 #include "Async/Async.h"
 #include "CoreMinimal.h"
+#include "..\..\NPC\BasicNPC\BasicNPC.h"
 #include "PathfindingThreadManager.h"
 #include "..\SearchProblem\VoxelSearchProblem.h"
 
+class ABasicNPC;
 class UWorldTerrainSettings;
 class UChunkLocationData;
 
@@ -15,6 +17,7 @@ public:
 	FPathfindingTask(
 		const FVector& InStartLocation, 
 		const FVector& InEndLocation,
+		ABasicNPC* InNPCRef,
 		UWorldTerrainSettings* InWorldTerrainSettingsRef, 
 		UChunkLocationData* InChunkLocationDataRef
 		);
@@ -30,14 +33,18 @@ public:
 
 private:
 	void TestFakeSearch();
-	aips::search::Path* GetPathToEndLocation();
-	void AdjustPathWithActualVoxelHeights(aips::search::Path* path);
+
+	void AdjustLocationsToUnrealScaling();
+	Path* GetPathToEndLocation();
+	void AdjustPathWithActualVoxelHeights(Path* path);
 
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
 
 	UChunkLocationData* ChunkLocationDataRef;
 	UChunkLocationData*& CLDR = ChunkLocationDataRef;
+
+	ABasicNPC* NPCRef;
 
 	FVector StartLocation;
 	FVector EndLocation;

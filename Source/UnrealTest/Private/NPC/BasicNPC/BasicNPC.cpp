@@ -16,6 +16,7 @@ ABasicNPC::ABasicNPC() {
     // SkeletalMesh->SetupAttachment(RootComponent);
 
     pathToPlayer = nullptr;
+    pathIsReady = false;
 
     UPawnMovementComponent* MovementComponent = FindComponentByClass<UPawnMovementComponent>();
     if (!MovementComponent) {
@@ -80,17 +81,21 @@ void ABasicNPC::PlayRandomAnimation() {
     animationFrameCounter++;
 }
 
-void ABasicNPC::GetPathToPlayer() {
+void ABasicNPC::RequestPathToPlayer() {
     FVector npcLocation = GetActorLocation();
 	FVector playerLocation = WTSR->getCurrentPlayerPosition();
 
-    // TODO NEED TO PASS HERE A REFERENCE TO THE CURRENT NPC OBJECT
-    // AND LET THE TASK NOTIFY IT WHEN THE PATH IS AVAILABLE
-    // 
-	//      TODO Modify the task to receive a pointer to the current NPC object
-	//      TODO Call a function in the NPC object to notify it when the path is available
-	//      TODO The NPC object will then call a function in the AIController to move the NPC along the path
-    PathfindingManager->AddPathfindingTask(npcLocation, playerLocation);
+    PathfindingManager->AddPathfindingTask(this, npcLocation, playerLocation);
+}
+
+void ABasicNPC::ConsumePathAndMoveToLocation() {
+    // TODO IMPLEMENET MOVING TO EACH VECTOR AND ANIMATE AT EACH POINT
+    UE_LOG(LogTemp, Warning, TEXT("Consuming path and moving to location")); 
+}
+
+void ABasicNPC::SetPathToPlayerAndNotify(Path* InPathToPlayer) {
+	pathToPlayer = InPathToPlayer;
+    pathIsReady = true;
 }
 
 void ABasicNPC::BeginPlay() {
@@ -104,9 +109,6 @@ void ABasicNPC::BeginPlay() {
     if (AIController) {
         AIController->Possess(this);
     }
-
-
-
 }
 
 void ABasicNPC::Tick(float DeltaSeconds) {
@@ -114,4 +116,15 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
     PlayRandomAnimation();
 
+
+    if (pathToPlayer == nullptr) {
+        RequestPathToPlayer();
+    }
+
+    // Move the player to the location if path is ready
+    if (pathIsReady) {
+        ConsumePathAndMoveToLocation();
+
+        pathIsReady = false;
+    }
 }
