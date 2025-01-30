@@ -90,5 +90,22 @@ Path* FPathfindingTask::GetPathToEndLocation() {
 }
 
 void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
-	// TODO Implement this
+	// Get actual surface voxel heights
+	TMap<FIntPoint, TArray<int>> surfaceVoxelPoints = CLDR->GetSurfaceVoxelPoints();
+
+	// Update each ActionStatePair in the path // TODO I HAVE TO VALIDATE THIS
+	for (ActionStatePair* pair : path->path) {
+		FVector& location = pair->state->getPosition();
+		FIntPoint chunkPosition(FMath::FloorToInt(location.X / WTSR->UnrealScale), FMath::FloorToInt(location.Y / WTSR->UnrealScale));
+		if (surfaceVoxelPoints.Contains(chunkPosition)) {
+			const TArray<int>& heights = surfaceVoxelPoints[chunkPosition];
+
+			int index = FMath::FloorToInt(location.X) + FMath::FloorToInt(location.Y) * WTSR->chunkSize;
+			if (heights.IsValidIndex(index)) {
+				location.Z = heights[index] * WTSR->UnrealScale;
+				location.X = location.X * WTSR->UnrealScale;
+				location.Y = location.Y * WTSR->UnrealScale;
+			}
+		}
+	}
 }

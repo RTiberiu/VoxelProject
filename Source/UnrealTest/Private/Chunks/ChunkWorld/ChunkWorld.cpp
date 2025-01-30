@@ -682,7 +682,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		if (WTSR->NPCCount < 10) { // TODO TESTING Spawning just one NPC to test path adjustment
+			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		}
 		WTSR->NPCCount++;
 
 		// Print the tree count every 50

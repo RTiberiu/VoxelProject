@@ -61,6 +61,7 @@ public:
 
 	void AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints, const TArray<FVector2D>& avoidPoints);
 	void RemoveSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition);
+    TMap<FIntPoint, TArray<int>> GetSurfaceVoxelPoints();
 
     bool IsSurfacePointValid(const double& X, const double& Z);
 

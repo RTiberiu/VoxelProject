@@ -10,7 +10,7 @@ class UChunkLocationData;
 class VoxelSearchState {
 public:
     // Constructor
-    VoxelSearchState(const FVector& InPosition, UChunkLocationData* InChunkLocationDataRef);
+    VoxelSearchState(FVector& InPosition, UChunkLocationData* InChunkLocationDataRef);
 
     // Override pure virtual methods from State
     std::string toString() const;
@@ -18,13 +18,13 @@ public:
     std::size_t hashCode() const;
     std::vector<ActionStatePair*> successor() const;
 
-    const FVector& getPosition() const;
+    FVector& getPosition();
 private:
     UChunkLocationData* ChunkLocationDataRef;
     UChunkLocationData*& CLDR = ChunkLocationDataRef;
     void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 
-    const FVector position;
+    FVector position;
 
 };
 

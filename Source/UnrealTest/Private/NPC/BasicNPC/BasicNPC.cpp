@@ -46,6 +46,7 @@ void ABasicNPC::spawnNPC() {
     USkeletalMesh* LoadedMesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath);
     if (LoadedMesh) {
         SkeletalMesh->SetSkeletalMesh(LoadedMesh);
+        SkeletalMesh->SetWorldScale3D(FVector(0.65f, 0.65f, 0.65f)); // TODO I might want to scale this in the editor only once
     }
 
     // Load the animation asset
@@ -91,6 +92,19 @@ void ABasicNPC::RequestPathToPlayer() {
 void ABasicNPC::ConsumePathAndMoveToLocation() {
     // TODO IMPLEMENET MOVING TO EACH VECTOR AND ANIMATE AT EACH POINT
     UE_LOG(LogTemp, Warning, TEXT("Consuming path and moving to location")); 
+
+    if (!pathToPlayer->path.empty()) {
+        // Get the first item
+        ActionStatePair* firstItem = pathToPlayer->path.front();
+
+        // Remove the first item from the list
+        pathToPlayer->path.pop_front();
+
+        SetActorLocation(firstItem->state->getPosition());
+    } else {
+        pathToPlayer = nullptr;
+        pathIsReady = false;
+    }
 }
 
 void ABasicNPC::SetPathToPlayerAndNotify(Path* InPathToPlayer) {
@@ -112,19 +126,23 @@ void ABasicNPC::BeginPlay() {
 }
 
 void ABasicNPC::Tick(float DeltaSeconds) {
-	Super::Tick(DeltaSeconds);
+    Super::Tick(DeltaSeconds);
 
     PlayRandomAnimation();
-
 
     if (pathToPlayer == nullptr) {
         RequestPathToPlayer();
     }
 
-    // Move the player to the location if path is ready
-    if (pathIsReady) {
-        ConsumePathAndMoveToLocation();
+    static float TimeSinceLastCall = 0.0f;
+    TimeSinceLastCall += DeltaSeconds;
 
-        pathIsReady = false;
+    if (TimeSinceLastCall >= 1.0f) {
+        // Move the player to the location if path is ready
+        if (pathIsReady) {
+            ConsumePathAndMoveToLocation();
+        }
+
+        TimeSinceLastCall = 0.0f;
     }
 }

@@ -294,6 +294,14 @@ void UChunkLocationData::RemoveSurfaceVoxelPointsForChunk(const FIntPoint& chunk
 	SurfaceVoxelPointsSemaphore->Release();
 }
 
+TMap<FIntPoint, TArray<int>> UChunkLocationData::GetSurfaceVoxelPoints() {
+    TMap<FIntPoint, TArray<int>> result;
+    SurfaceVoxelPointsSemaphore->Acquire();
+    result = surfaceVoxelPoints;
+    SurfaceVoxelPointsSemaphore->Release();
+    return result;
+}
+
 bool UChunkLocationData::IsSurfacePointValid(const double& X, const double& Z) {
 	// Adjust the coordinates to they're relative to the coordinates inside a single chunk
 	const int relativeToChunkX = FMath::Floor(X / chunkSize);

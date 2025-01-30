@@ -1,7 +1,7 @@
 #include "VoxelSearchState.h"
 
 // Constructor
-VoxelSearchState::VoxelSearchState(const FVector& InPosition, UChunkLocationData* InChunkLocationDataRef) : position(InPosition), ChunkLocationDataRef(InChunkLocationDataRef) {
+VoxelSearchState::VoxelSearchState(FVector& InPosition, UChunkLocationData* InChunkLocationDataRef) : position(InPosition), ChunkLocationDataRef(InChunkLocationDataRef) {
 }
 
 std::string VoxelSearchState::toString() const {
@@ -55,7 +55,7 @@ std::vector<ActionStatePair*> VoxelSearchState::successor() const {
     return successors;
 }
 
-const FVector& VoxelSearchState::getPosition() const {
+FVector& VoxelSearchState::getPosition() {
     return position;
 }
 
