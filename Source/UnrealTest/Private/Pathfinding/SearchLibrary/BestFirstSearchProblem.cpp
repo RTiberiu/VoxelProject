@@ -16,7 +16,7 @@
  * Translated from Java to C++ by Tiberiu Rociu
  */
 
-BestFirstSearchProblem::BestFirstSearchProblem(VoxelSearchState* start, VoxelSearchState* goal) : startState(start), goalState(goal), nodeVisited(0) {}
+BestFirstSearchProblem::BestFirstSearchProblem(VoxelSearchState* start, VoxelSearchState* goal) : startState(start), goalState(goal), nodeVisited(0), stopSearching(false) {}
 
 Path* BestFirstSearchProblem::search() {
     std::unordered_map<VoxelSearchState*, Node*> visitedNodes; // history
@@ -34,6 +34,10 @@ Path* BestFirstSearchProblem::search() {
         );
 
     while (true) {
+        if (stopSearching) {
+            return nullptr;
+        }
+
         if (fringe.empty()) // no more node to expand
             return nullptr; // no solution
 
@@ -66,6 +70,10 @@ Path* BestFirstSearchProblem::search() {
             }
         }
     }
+}
+
+void BestFirstSearchProblem::StopSearching() {
+    stopSearching.AtomicSet(true);
 }
 
 void BestFirstSearchProblem::addChildBinary(std::list<Node*>& fringe, Node* childNode) {

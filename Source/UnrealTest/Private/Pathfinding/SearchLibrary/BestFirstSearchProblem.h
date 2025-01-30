@@ -15,6 +15,8 @@ public:
 
     virtual double evaluation(const Node& node) const = 0;
 
+    void StopSearching();
+
 protected:
     void addChildBinary(std::list<Node*>& fringe, Node* childNode);
     void addChildBinary(std::list<Node*>& fringe, Node* node, int left, int right);
@@ -26,5 +28,7 @@ private:
     VoxelSearchState* goalState;
     VoxelSearchState* startState;
     int nodeVisited;
+
+    FThreadSafeBool stopSearching;
 };
 

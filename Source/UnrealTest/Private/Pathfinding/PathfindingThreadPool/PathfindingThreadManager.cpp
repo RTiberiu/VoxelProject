@@ -21,6 +21,7 @@ PathfindingThreadManager::PathfindingThreadManager(UWorldTerrainSettings* InWorl
 
 void PathfindingThreadManager::ShutDownThreadPool() {
 	if (PathfindingThreadPool) {
+		UE_LOG(LogTemp, Warning, TEXT("Started the thread pool destroy process."));
 		PathfindingThreadPool->Destroy();
 		delete PathfindingThreadPool;
 		PathfindingThreadPool = nullptr;

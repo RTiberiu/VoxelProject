@@ -49,4 +49,6 @@ private:
 	FVector StartLocation;
 	FVector EndLocation;
 
+	VoxelSearchProblem* searchProblem;
+	bool isSearching;
 };

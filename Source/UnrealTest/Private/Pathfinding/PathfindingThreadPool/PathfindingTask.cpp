@@ -8,7 +8,7 @@ FPathfindingTask::FPathfindingTask(
 	ABasicNPC* InNPCRef,
 	UWorldTerrainSettings* InWorldTerrainSettingsRef,
 	UChunkLocationData* InChunkLocationDataRef
-) : StartLocation(InStartLocation), EndLocation(InEndLocation), NPCRef(InNPCRef), WorldTerrainSettingsRef(InWorldTerrainSettingsRef), ChunkLocationDataRef(InChunkLocationDataRef) {
+) : StartLocation(InStartLocation), EndLocation(InEndLocation), NPCRef(InNPCRef), WorldTerrainSettingsRef(InWorldTerrainSettingsRef), ChunkLocationDataRef(InChunkLocationDataRef), isSearching(false) {
 
 }
 
@@ -16,6 +16,7 @@ FPathfindingTask::~FPathfindingTask() {
     WorldTerrainSettingsRef = nullptr;
     ChunkLocationDataRef = nullptr;
 	NPCRef = nullptr;
+	searchProblem = nullptr;
 }
 
 void FPathfindingTask::DoThreadedWork() {
@@ -32,8 +33,10 @@ void FPathfindingTask::DoThreadedWork() {
 }
 
 void FPathfindingTask::Abandon() {
-	// TODO IMPLEMENT THIS AND FLAG THE SEARCH TO STOP IF IT'S RUNNING
-	UE_LOG(LogTemp, Warning, TEXT("Task abandoned for pathfinding from %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
+	// Notify the search problem to stop searching
+	if (isSearching) {
+		searchProblem->StopSearching();
+	}
 }
 
 void FPathfindingTask::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -66,9 +69,11 @@ Path* FPathfindingTask::GetPathToEndLocation() {
     VoxelSearchState startPosition = VoxelSearchState(StartLocation, CLDR);
     VoxelSearchState endPosition = VoxelSearchState(EndLocation, CLDR);
 
-    VoxelSearchProblem* searchProblem = new VoxelSearchProblem(startPosition, endPosition);
+    searchProblem = new VoxelSearchProblem(startPosition, endPosition);
 
+	isSearching = true;
     Path* pathToGoal = searchProblem->search();
+	isSearching = false;
 
     FDateTime EndTime = FDateTime::Now();
     // pathToGoal->print(); // TESTING THE PATH
@@ -76,6 +81,10 @@ Path* FPathfindingTask::GetPathToEndLocation() {
    /* FTimespan Duration = EndTime - StartTime;
     UE_LOG(LogTemp, Warning, TEXT("Finished pathfinding for %s to %s in %d minutes, %d seconds, and %f milliseconds"), 
         *StartLocation.ToString(), *EndLocation.ToString(), Duration.GetMinutes(), Duration.GetSeconds(), Duration.GetTotalMilliseconds());*/
+
+	// Cleanup 
+	delete searchProblem;
+	searchProblem = nullptr;
 
     return pathToGoal;
 }
