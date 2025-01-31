@@ -502,6 +502,9 @@ FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
 void AChunkWorld::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 
+	spawnedTreesThisFrame = false;
+	spawnedChunksThisFrame = false;
+
 	// If Perlin noise settings changed, respawn the world
 	if (PNSR->changedSettings) {
 		isInitialWorldGenerated = false;
@@ -602,6 +605,80 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		isMeshTaskRunning.AtomicSet(false);
 	}
 
+	// Spawn chunk if there is a calculated mesh data waiting
+	if (CLDR->isMeshWaitingToBeSpawned()) {
+		// Get the location data and the computed mesh data for the chunk
+		FVoxelObjectLocationData waitingMeshLocationData;
+		FVoxelObjectMeshData waitingMeshData;
+		CLDR->getComputedMeshDataAndLocationData(waitingMeshLocationData, waitingMeshData);
+
+		Time start = std::chrono::high_resolution_clock::now();
+
+		// Spawn the chunk actor deferred
+		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+		if (SpawnedChunkActor) {
+			// Add references to BinaryChunk and pass the computed mesh data
+			SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
+			SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
+			SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
+			SpawnedChunkActor->SetChunkLocation(waitingMeshLocationData.ObjectWorldCoords);
+
+			// Define the boundaries for the collision check
+			float minX = PlayerPosition.X - WTSR->CollisionDistance;
+			float maxX = PlayerPosition.X + WTSR->CollisionDistance;
+			float minY = PlayerPosition.Y - WTSR->CollisionDistance;
+			float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
+
+			// Check if the player is within the collision boundaries
+			bool withinCollisionDistance = (waitingMeshLocationData.ObjectPosition.X >= minX && waitingMeshLocationData.ObjectPosition.X <= maxX) &&
+				(waitingMeshLocationData.ObjectPosition.Y >= minY && waitingMeshLocationData.ObjectPosition.Y <= maxY);
+
+			if (withinCollisionDistance) {
+				SpawnedChunkActor->SetChunkCollision(true);
+			}
+
+			// Finish spawning the chunk actor
+			UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition));
+
+			WTSR->AddChunkToMap(waitingMeshLocationData.ObjectWorldCoords, SpawnedChunkActor);
+
+			spawnedChunksThisFrame = true;
+		} else {
+			UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
+		}
+
+		Time end = std::chrono::high_resolution_clock::now();
+		calculateAverageChunkSpawnTime(start, end);
+	}
+
+	// Destroy a chunk and remove it from the map if there is a destroy position in queue
+	FIntPoint chunkToDestroyPosition{};
+	bool doesDestroyPositionExist = CLDR->getChunkToDestroyPosition(chunkToDestroyPosition);
+
+	// I need to check if the destroy position exists in the map, otherwise I need to push it back 
+	if (doesDestroyPositionExist) {
+		AActor* chunkToRemove = WTSR->GetAndRemoveChunkFromMap(chunkToDestroyPosition);
+		if (chunkToRemove) {
+			chunkToRemove->Destroy();
+
+			// Remove remaining vegetation spawn points for the destroyed chunk location
+			// and add the aactor pointers to a local cache to be removed across multiple frames
+			RemoveVegetationSpawnPointsAndActors(chunkToDestroyPosition);
+
+			// Remove the voxel surface points from the pathfinding map
+			CLDR->RemoveSurfaceVoxelPointsForChunk(chunkToDestroyPosition);
+		} else {
+			// Add the chunk position back because the chunk is not yet spawned
+			CLDR->addChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back. I should use a TMap instead and remove the entry of that object instead, preventing it from spawning in the first place.
+		}
+	}
+
+	// Reduce computing per frame by returning early if a chunk already got spawned this frame
+	if (spawnedChunksThisFrame) {
+		return;
+	}
+
 	// Append tree positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositions();
 	TreePositionsToSpawn.Append(treeSpawnPositions);
@@ -611,10 +688,12 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	for (int32 positionIndex = 0; positionIndex < TreePositionsToSpawn.Num();) {
 		if (spawnedTreeCounter >= treesToSpawnPerFrame) {
 			break;
+			spawnedTreesThisFrame = true;
 		}
 
 		SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->TreeCount++;
+
 
 		// Print the tree count every 50
 		if (WTSR->TreeCount % 1000 == 0) {
@@ -623,6 +702,13 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 		TreePositionsToSpawn.RemoveAt(positionIndex);
 		spawnedTreeCounter++;
+	}
+
+	DestroyTreeActors();
+
+	// Reduce computing per frame by returning early if a tree already got spawned this frame
+	if (spawnedTreesThisFrame) {
+		return;
 	}
 
 	// Append grass positions waiting to be spawned
@@ -683,7 +769,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		}
 
 		if (WTSR->NPCCount < 10) { // TODO TESTING Spawning just one NPC to test path adjustment
-			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+			// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 		WTSR->NPCCount++;
 
@@ -696,76 +782,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		spawnedNPCCounter++;
 	}
 
-
-	// Spawn chunk if there is a calculated mesh data waiting
-	if (CLDR->isMeshWaitingToBeSpawned()) {
-		// Get the location data and the computed mesh data for the chunk
-		FVoxelObjectLocationData waitingMeshLocationData;
-		FVoxelObjectMeshData waitingMeshData;
-		CLDR->getComputedMeshDataAndLocationData(waitingMeshLocationData, waitingMeshData);
-
-		Time start = std::chrono::high_resolution_clock::now();
-
-		// Spawn the chunk actor deferred
-		ABinaryChunk* SpawnedChunkActor = GetWorld()->SpawnActorDeferred<ABinaryChunk>(Chunk, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-
-		if (SpawnedChunkActor) {
-			// Add references to BinaryChunk and pass the computed mesh data
-			SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
-			SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
-			SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
-			SpawnedChunkActor->SetChunkLocation(waitingMeshLocationData.ObjectWorldCoords);
-
-			// Define the boundaries for the collision check
-			float minX = PlayerPosition.X - WTSR->CollisionDistance;
-			float maxX = PlayerPosition.X + WTSR->CollisionDistance;
-			float minY = PlayerPosition.Y - WTSR->CollisionDistance;
-			float maxY = PlayerPosition.Y + WTSR->CollisionDistance;
-
-			// Check if the player is within the collision boundaries
-			bool withinCollisionDistance = (waitingMeshLocationData.ObjectPosition.X >= minX && waitingMeshLocationData.ObjectPosition.X <= maxX) &&
-				(waitingMeshLocationData.ObjectPosition.Y >= minY && waitingMeshLocationData.ObjectPosition.Y <= maxY);
-
-			if (withinCollisionDistance) {
-				SpawnedChunkActor->SetChunkCollision(true);
-			}
-
-			// Finish spawning the chunk actor
-			UGameplayStatics::FinishSpawningActor(SpawnedChunkActor, FTransform(FRotator::ZeroRotator, waitingMeshLocationData.ObjectPosition));
-
-			WTSR->AddChunkToMap(waitingMeshLocationData.ObjectWorldCoords, SpawnedChunkActor);
-		} else {
-			UE_LOG(LogTemp, Error, TEXT("Failed to spawn Chunk Actor!"));
-		}
-
-		Time end = std::chrono::high_resolution_clock::now();
-		calculateAverageChunkSpawnTime(start, end);
-	}
-
-	// Destroy a chunk and remove it from the map if there is a destroy position in queue
-	FIntPoint chunkToDestroyPosition{};
-	bool doesDestroyPositionExist = CLDR->getChunkToDestroyPosition(chunkToDestroyPosition);
-
-	// I need to check if the destroy position exists in the map, otherwise I need to push it back 
-	if (doesDestroyPositionExist) {
-		AActor* chunkToRemove = WTSR->GetAndRemoveChunkFromMap(chunkToDestroyPosition);
-		if (chunkToRemove) {
-			chunkToRemove->Destroy();
-
-			// Remove remaining vegetation spawn points for the destroyed chunk location
-			// and add the aactor pointers to a local cache to be removed across multiple frames
-			RemoveVegetationSpawnPointsAndActors(chunkToDestroyPosition);
-
-			// Remove the voxel surface points from the pathfinding map
-			CLDR->RemoveSurfaceVoxelPointsForChunk(chunkToDestroyPosition);
-		} else {
-			// Add the chunk position back because the chunk is not yet spawned
-			CLDR->addChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back. I should use a TMap instead and remove the entry of that object instead, preventing it from spawning in the first place.
-		}
-	}
-
 	// Destroy a few vegetation aactors
-	DestroyTreeActors();
 	DestroyGrassActors();
 	DestroyFlowerActors();
 	

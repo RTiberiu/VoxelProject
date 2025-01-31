@@ -129,6 +129,9 @@ private:
 	TArray<FVoxelObjectLocationData> NPCPositionsToSpawn;
 	const int npcToSpawnPerFrame = 2;
 
+	bool spawnedTreesThisFrame;
+	bool spawnedChunksThisFrame;
+
 	int updatePlayerCurrentPositionCounter = 0;
 	int updatePlayerCurrentPositionPerFrames = 60;
 	void updatePlayerCurrentPosition(FVector& PlayerPosition);
