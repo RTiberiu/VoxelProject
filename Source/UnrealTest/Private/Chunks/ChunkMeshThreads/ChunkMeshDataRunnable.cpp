@@ -30,8 +30,15 @@ bool ChunkMeshDataRunnable::Init() {
 uint32 ChunkMeshDataRunnable::Run() {
 	while (isRunning) {
 
+		Time start = std::chrono::high_resolution_clock::now();
+
 		createBinarySolidColumnsYXZ();
 		createTerrainMeshesData();
+
+		Time end = std::chrono::high_resolution_clock::now();
+
+		WTSR->chunkSpawnTime += end - start;
+		WTSR->chunksMeshCounter++;
 
 		WTSR->UpdateChunkSemaphore->Acquire(); // TODO This might need to be changed to a different semaphore
 		CLDR->addMeshDataForPosition(ChunkLocationData, TemporaryMeshData);
@@ -65,6 +72,13 @@ void ChunkMeshDataRunnable::SetWorldTerrainSettings(UWorldTerrainSettings* InWor
 
 void ChunkMeshDataRunnable::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettingsRef) {
 	PerlinNoiseSettingsRef = InPerlinNoiseSettingsRef;
+}
+
+void ChunkMeshDataRunnable::printExecutionTime(Time& start, Time& end, const char* functionName) {
+	std::chrono::duration<double, std::milli> duration = end - start;
+	UE_LOG(LogTemp, Warning, TEXT("%s() took %d seconds, %d milliseconds to execute."), *FString(functionName),
+		static_cast<int>((duration.count() / 1000)) % 60,
+		static_cast<int>(fmod(duration.count(), 1000)));
 }
 
 void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {

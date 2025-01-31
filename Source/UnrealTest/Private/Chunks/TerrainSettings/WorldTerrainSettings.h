@@ -36,6 +36,9 @@ public:
 	const uint8_t chunkSizePadding{ 64 }; // 64
 	const uint8_t intsPerHeight{ static_cast<uint8_t>(chunkHeight / chunkSize) };
 
+	std::chrono::duration<double, std::milli> chunkSpawnTime{ 0 };
+	int chunksMeshCounter{0};
+
 	// World chunks settings
 	const int CollisionDistance{ chunkSize * UnrealScale * 2 };
 

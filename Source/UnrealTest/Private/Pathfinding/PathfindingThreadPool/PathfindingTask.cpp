@@ -63,7 +63,7 @@ void FPathfindingTask::AdjustLocationsToUnrealScaling() {
 }
 
 Path* FPathfindingTask::GetPathToEndLocation() {
-    // UE_LOG(LogTemp, Warning, TEXT("Started pathfinding for %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
+    UE_LOG(LogTemp, Warning, TEXT("Started pathfinding for %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
     FDateTime StartTime = FDateTime::Now();
 	
     VoxelSearchState startPosition = VoxelSearchState(StartLocation, CLDR);
@@ -93,6 +93,9 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 	// Get actual surface voxel heights
 	TMap<FIntPoint, TArray<int>> surfaceVoxelPoints = CLDR->GetSurfaceVoxelPoints();
 
+	UE_LOG(LogTemp, Warning, TEXT("PATH BEFORE ADJUSTMENT"));
+	path->print();
+
 	// Update each ActionStatePair in the path // TODO I HAVE TO VALIDATE THIS
 	for (ActionStatePair* pair : path->path) {
 		FVector& location = pair->state->getPosition();
@@ -108,4 +111,7 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 			}
 		}
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("PATH AFTER ADJUSTMENT"));
+	path->print();
 }

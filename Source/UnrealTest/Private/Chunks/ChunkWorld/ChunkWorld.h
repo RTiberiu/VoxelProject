@@ -135,6 +135,9 @@ private:
 	int updatePlayerCurrentPositionCounter = 0;
 	int updatePlayerCurrentPositionPerFrames = 60;
 	void updatePlayerCurrentPosition(FVector& PlayerPosition);
+
+	// Control variable for printing the chunk mesh compute time 
+	int lastLoggedChunkCount = 0;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

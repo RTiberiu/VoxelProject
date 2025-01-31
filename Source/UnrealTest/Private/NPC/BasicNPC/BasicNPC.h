@@ -56,6 +56,10 @@ private:
 
 	TArray<FString> Animations;
 
+	// TESTING TICK CALLS
+	float DelayBeforeFirstPathRequest;
+	float TimeSinceLastCall;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

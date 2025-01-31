@@ -91,7 +91,7 @@ void ABasicNPC::RequestPathToPlayer() {
 
 void ABasicNPC::ConsumePathAndMoveToLocation() {
     // TODO IMPLEMENET MOVING TO EACH VECTOR AND ANIMATE AT EACH POINT
-    UE_LOG(LogTemp, Warning, TEXT("Consuming path and moving to location")); 
+    // UE_LOG(LogTemp, Warning, TEXT("Consuming path and moving to location")); 
 
     if (!pathToPlayer->path.empty()) {
         // Get the first item
@@ -102,8 +102,10 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
 
         SetActorLocation(firstItem->state->getPosition());
     } else {
-        pathToPlayer = nullptr;
-        pathIsReady = false;
+
+        // TESTING NOT RESETTING (Meaning no request for another path)
+        // pathToPlayer = nullptr;
+        // pathIsReady = false;
     }
 }
 
@@ -130,14 +132,19 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
     PlayRandomAnimation();
 
+    DelayBeforeFirstPathRequest += DeltaSeconds;
+
+    if (DelayBeforeFirstPathRequest < 5.0f) {
+        return;
+    }
+
     if (pathToPlayer == nullptr) {
         RequestPathToPlayer();
     }
 
-    static float TimeSinceLastCall = 0.0f;
     TimeSinceLastCall += DeltaSeconds;
 
-    if (TimeSinceLastCall >= 1.0f) {
+    if (TimeSinceLastCall >= 0.5f) {
         // Move the player to the location if path is ready
         if (pathIsReady) {
             ConsumePathAndMoveToLocation();

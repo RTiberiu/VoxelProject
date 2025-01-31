@@ -55,12 +55,13 @@ void AChunkWorld::InitializePathfindingManager() {
 
 void AChunkWorld::printExecutionTime(Time& start, Time& end, const char* functionName) {
 	std::chrono::duration<double, std::milli> duration = end - start;
-	UE_LOG(LogTemp, Warning, TEXT("%s() took %f milliseconds to execute."), *FString(functionName), duration.count());
+    UE_LOG(LogTemp, Warning, TEXT("%s() took %d seconds, %d milliseconds to execute."), *FString(functionName), 
+		static_cast<int>((duration.count() / 1000)) % 60,
+		static_cast<int>(fmod(duration.count(), 1000)));
 }
 
 void AChunkWorld::spawnInitialWorld() {
 	int spawnedChunks{ 0 };
-	Time start = std::chrono::high_resolution_clock::now();
 
 	// Add initial chunk position to spawn
 	FIntPoint PlayerStartCoords = FIntPoint(0, 0);
@@ -93,14 +94,6 @@ void AChunkWorld::spawnInitialWorld() {
 		}
 		currentSpiralRing++;
 	}
-
-	Time end = std::chrono::high_resolution_clock::now();
-
-	printExecutionTime(start, end, "Spawned entire terrain.");
-	UE_LOG(LogTemp, Warning, TEXT("Chunks spawned: %d"), spawnedChunks);
-	UE_LOG(LogTemp, Warning, TEXT("SpawnedChunkMap size = %d"), WTSR->GetMapSize());
-	UE_LOG(LogTemp, Warning, TEXT("DrawDistance = %d"), WTSR->DrawDistance);
-
 }
 
 void AChunkWorld::generateTreeMeshVariations() {
@@ -505,6 +498,17 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	spawnedTreesThisFrame = false;
 	spawnedChunksThisFrame = false;
 
+	// Print the average chunk mesh compute time
+	if (WTSR->chunksMeshCounter % 100 == 0 && WTSR->chunksMeshCounter != lastLoggedChunkCount) {
+		float chunkSpawnTime = WTSR->chunkSpawnTime.count() / WTSR->chunksMeshCounter;
+		int seconds = static_cast<int>(chunkSpawnTime) / 1000;
+		int milliseconds = static_cast<int>(chunkSpawnTime) % 1000;
+
+		UE_LOG(LogTemp, Warning, TEXT("Average mesh compute time for %d chunks: %d seconds, %d milliseconds."), WTSR->chunksMeshCounter, seconds, milliseconds);
+
+		lastLoggedChunkCount = WTSR->chunksMeshCounter;
+	}
+
 	// If Perlin noise settings changed, respawn the world
 	if (PNSR->changedSettings) {
 		isInitialWorldGenerated = false;
@@ -768,8 +772,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 10) { // TODO TESTING Spawning just one NPC to test path adjustment
-			// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		if (WTSR->NPCCount < 1) { // TODO TESTING Spawning just one NPC to test path adjustment
+			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 		WTSR->NPCCount++;
 
