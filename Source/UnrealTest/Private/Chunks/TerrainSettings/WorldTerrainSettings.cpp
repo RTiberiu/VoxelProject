@@ -36,6 +36,10 @@ UWorldTerrainSettings::~UWorldTerrainSettings() {
 	delete RemoveCollisionTreesSemaphore;
 	delete AddCollisionChunksSemaphore;
 	delete RemoveCollisionChunksSemaphore;
+
+	if (PerlinNoiseSettingsRef) {
+		PerlinNoiseSettingsRef = nullptr;
+	}
 }
 
 void UWorldTerrainSettings::AddChunkToMap(const FIntPoint& ChunkCoordinates, AActor* ChunkActor) {

@@ -96,3 +96,8 @@ void APerlinNoiseSettings::Tick(float DeltaTime) {
 
 }
 
+void APerlinNoiseSettings::BeginDestroy() {
+	Super::BeginDestroy();
+	UE_LOG(LogTemp, Warning, TEXT("PerlinNoiseSettings is being destroyed!"));
+}
+

@@ -59,8 +59,6 @@ private:
 	// Create chrono type alias
 	using Time = std::chrono::high_resolution_clock::time_point;
 
-	void printExecutionTime(Time& start, Time& end, const char* functionName); // TODO This is a duplicate from BinaryChunk.h; Add this in a UTIL header
-
 	BinaryChunk3D binaryChunk = BinaryChunk3D{};
 
 	std::vector<uint64_t> columnsFaceMask;

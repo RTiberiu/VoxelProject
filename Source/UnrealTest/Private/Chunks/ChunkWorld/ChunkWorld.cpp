@@ -177,7 +177,6 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 	if (SpawnedTreeActor) {
 		// Add references to BinaryChunk and pass the computed mesh data
 		SpawnedTreeActor->SetWorldTerrainSettings(WTSR);
-		SpawnedTreeActor->SetPerlinNoiseSettings(PNSR);
 		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
 		SpawnedTreeActor->SetTreeWorldLocation(ChunkLocationData.ObjectWorldCoords);
 
@@ -483,6 +482,18 @@ void AChunkWorld::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 		delete PathfindingManager;
 		PathfindingManager = nullptr;
 	}
+
+	if (PerlinNoiseSettingsRef) {
+		PerlinNoiseSettingsRef = nullptr;
+	}
+
+	if (WorldTerrainSettingsRef) {
+		WorldTerrainSettingsRef = nullptr;
+	}
+
+	if (ChunkLocationDataRef) {
+		ChunkLocationDataRef = nullptr;
+	}
 }
 
 FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
@@ -624,7 +635,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		if (SpawnedChunkActor) {
 			// Add references to BinaryChunk and pass the computed mesh data
 			SpawnedChunkActor->SetWorldTerrainSettings(WTSR);
-			SpawnedChunkActor->SetPerlinNoiseSettings(PNSR);
 			SpawnedChunkActor->SetComputedMeshData(waitingMeshData);
 			SpawnedChunkActor->SetChunkLocation(waitingMeshLocationData.ObjectWorldCoords);
 
@@ -772,7 +782,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 1) { // TODO TESTING Spawning just one NPC to test path adjustment
+		if (WTSR->NPCCount < 100) { // TODO TESTING Spawning just one NPC to test path adjustment
 			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 		WTSR->NPCCount++;

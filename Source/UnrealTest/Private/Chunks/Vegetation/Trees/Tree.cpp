@@ -67,10 +67,6 @@ void ATree::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSetting
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }
 
-void ATree::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings) {
-	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
-}
-
 void ATree::printExecutionTime(Time& start, Time& end, const char* functionName) {
 	std::chrono::duration<double, std::milli> duration = end - start;
 	UE_LOG(LogTemp, Warning, TEXT("%s() took %f milliseconds to execute."), *FString(functionName), duration.count());

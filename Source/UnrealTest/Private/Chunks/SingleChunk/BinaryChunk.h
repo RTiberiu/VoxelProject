@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "..\..\Noise\PerlinNoiseSettings.h"
 #include <vector>
 #include <chrono>
 #include "..\DataStructures\VoxelObjectMeshData.h"
@@ -13,7 +12,6 @@
 class FastNoiseLite;
 class UWorldTerrainSettings;
 class UProceduralMeshComponent;
-class APerlinNoiseSettings;
 
 UCLASS()
 class ABinaryChunk : public AActor {
@@ -26,7 +24,6 @@ public:
 	~ABinaryChunk();
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
-	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
 	void SetComputedMeshData(FVoxelObjectMeshData InMeshData);
 	void SetChunkCollision(bool InHasCollision);
 	void SetChunkLocation(FIntPoint InChunkLocation);
@@ -35,9 +32,6 @@ public:
 	void UpdateCollision(bool InHasCollision);
 
 private: 
-	APerlinNoiseSettings* PerlinNoiseSettingsRef;
-	APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
-
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef; // creating an alias for the world terrain settings ref
 

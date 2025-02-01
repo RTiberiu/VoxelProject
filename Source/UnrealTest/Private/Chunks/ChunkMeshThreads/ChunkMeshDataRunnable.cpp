@@ -74,13 +74,6 @@ void ChunkMeshDataRunnable::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerli
 	PerlinNoiseSettingsRef = InPerlinNoiseSettingsRef;
 }
 
-void ChunkMeshDataRunnable::printExecutionTime(Time& start, Time& end, const char* functionName) {
-	std::chrono::duration<double, std::milli> duration = end - start;
-	UE_LOG(LogTemp, Warning, TEXT("%s() took %d seconds, %d milliseconds to execute."), *FString(functionName),
-		static_cast<int>((duration.count() / 1000)) % 60,
-		static_cast<int>(fmod(duration.count(), 1000)));
-}
-
 void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	const FVector chunkWorldLocation = ChunkLocationData.ObjectPosition;
 

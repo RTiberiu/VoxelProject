@@ -33,10 +33,6 @@ void ABinaryChunk::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrain
 	WorldTerrainSettingsRef = InWorldTerrainSettings;
 }
 
-void ABinaryChunk::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings) {
-	PerlinNoiseSettingsRef = InPerlinNoiseSettings;
-}
-
 void ABinaryChunk::SetComputedMeshData(FVoxelObjectMeshData InMeshData) {
 	meshData = InMeshData;
 }

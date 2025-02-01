@@ -13,7 +13,6 @@
 #include "Tree.generated.h"
 
 class UProceduralMeshComponent;
-class APerlinNoiseSettings;
 class UWorldTerrainSettings;
 
 UCLASS()
@@ -32,12 +31,7 @@ public:
 	void SetTreeWorldLocation(FIntPoint InTreeLocation);
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
-	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
-
 private:
-	APerlinNoiseSettings* PerlinNoiseSettingsRef;
-	APerlinNoiseSettings*& PNSR = PerlinNoiseSettingsRef;
-
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
 

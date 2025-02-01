@@ -49,5 +49,9 @@
 			"Name": "DeformerGraph",
 			"Enabled": true
 		}
+	],
+	"TargetPlatforms": [
+		"Mac",
+		"Windows"
 	]
 }

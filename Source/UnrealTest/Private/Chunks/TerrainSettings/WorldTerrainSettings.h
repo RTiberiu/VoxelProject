@@ -110,9 +110,9 @@ public:
 	// Vegetation settings
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
 	const float TreeSpawnChance{ 0.0014f };
-	const float FlowerSpawnChance{ 0.02f };	// Showcase settings: 0.03f		// Testing settings: 0.02f
-	const float GrassSpawnChance{ 0.03f };	// Showcase settings: 0.08f		// Testing settings: 0.03f
-	const float NPCSpawnChance{ 0.032f };	// Showcase settings: 0.082f	// Testing settings: 0.032f
+	const float FlowerSpawnChance{ 0.03f };	// Showcase settings: 0.03f		// Testing settings: 0.03f
+	const float GrassSpawnChance{ 0.10f };	// Showcase settings: 0.08f		// Testing settings: 0.10f
+	const float NPCSpawnChance{ 0.102f };	// Showcase settings: 0.082f	// Testing settings: 0.102f
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };

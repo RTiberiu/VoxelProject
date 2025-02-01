@@ -23,8 +23,15 @@ void UVoxelGameInstance::Shutdown() {
         chunkLocationData = nullptr;
     }
 
+    if (chunkWorld) {
+        chunkWorld->RemoveFromRoot();
+        chunkWorld->Destroy();
+        chunkWorld = nullptr;
+    }
+
     if (perlinNoiseSettings) {
         perlinNoiseSettings->RemoveFromRoot();
+        perlinNoiseSettings->Destroy();
         perlinNoiseSettings = nullptr;
     }
 }
