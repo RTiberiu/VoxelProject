@@ -6,38 +6,16 @@
 #include "GameFramework/Actor.h" 
 
 // Sets default values
-UVoxelGameInstance::UVoxelGameInstance() {
+AVoxelGameInstance::AVoxelGameInstance() {
+    PrimaryActorTick.bCanEverTick = false;
 }
 
-void UVoxelGameInstance::Shutdown() {
-    Super::Shutdown();
+void AVoxelGameInstance::BeginPlay() {
+	Super::BeginPlay();
 
-    // Removing added objects from root
-    if (worldTerrainSettings) {
-        worldTerrainSettings->RemoveFromRoot();
-        worldTerrainSettings = nullptr;
+    if (GEngine) {
+        GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, TEXT("VoxelGameInstance Initialized!"));
     }
-
-    if (chunkLocationData) {
-        chunkLocationData->RemoveFromRoot();
-        chunkLocationData = nullptr;
-    }
-
-    if (chunkWorld) {
-        chunkWorld->RemoveFromRoot();
-        chunkWorld->Destroy();
-        chunkWorld = nullptr;
-    }
-
-    if (perlinNoiseSettings) {
-        perlinNoiseSettings->RemoveFromRoot();
-        perlinNoiseSettings->Destroy();
-        perlinNoiseSettings = nullptr;
-    }
-}
-
-void UVoxelGameInstance::Init() {
-	Super::Init();
 
     chunkLocationData = NewObject<UChunkLocationData>();
     worldTerrainSettings = NewObject<UWorldTerrainSettings>();
@@ -53,10 +31,6 @@ void UVoxelGameInstance::Init() {
             FRotator::ZeroRotator               
     );
     
-    if (perlinNoiseSettings) {
-        perlinNoiseSettings->AddToRoot();
-    }
-
     // Spawn chunkWorld as an actor in the world
     FActorSpawnParameters SpawnParams;
 
@@ -81,6 +55,32 @@ void UVoxelGameInstance::Init() {
         UGameplayStatics::FinishSpawningActor(chunkWorld, FTransform(FRotator::ZeroRotator, FVector::ZeroVector));
 
         UE_LOG(LogTemp, Warning, TEXT("Spawned Chunk World!"));
+        GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, TEXT("Spawned Chunk World!"));
+    }
+}
+
+void AVoxelGameInstance::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+    // Removing added objects from root
+    if (worldTerrainSettings) {
+        worldTerrainSettings->RemoveFromRoot();
+        worldTerrainSettings = nullptr;
+    }
+
+    if (chunkLocationData) {
+        chunkLocationData->RemoveFromRoot();
+        chunkLocationData = nullptr;
+    }
+
+    if (chunkWorld) {
+        chunkWorld->RemoveFromRoot();
+        chunkWorld->Destroy();
+        chunkWorld = nullptr;
+    }
+
+    if (perlinNoiseSettings) {
+        perlinNoiseSettings->RemoveFromRoot();
+        perlinNoiseSettings->Destroy();
+        perlinNoiseSettings = nullptr;
     }
 }
 

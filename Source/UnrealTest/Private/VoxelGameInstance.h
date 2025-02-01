@@ -8,18 +8,16 @@
 #include "Chunks\ChunkWorld\ChunkWorld.h"
 
 #include "CoreMinimal.h"
-#include "Engine/GameInstance.h"
+//#include "Engine/GameInstance.h"
 #include "VoxelGameInstance.generated.h"
 
 UCLASS()
-class UVoxelGameInstance : public UGameInstance {
+class AVoxelGameInstance : public AActor {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
-	UVoxelGameInstance();
-
-	void Shutdown();
+	AVoxelGameInstance();
 
 private:
 	UWorldTerrainSettings* worldTerrainSettings;
@@ -27,9 +25,9 @@ private:
 	AChunkWorld* chunkWorld;
 	APerlinNoiseSettings* perlinNoiseSettings;
 
-
 protected:
 	// Called when the game starts or when spawned
-	virtual void Init() override;
+	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

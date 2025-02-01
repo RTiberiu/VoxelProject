@@ -782,7 +782,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 100) { // TODO TESTING Spawning just one NPC to test path adjustment
+		if (WTSR->NPCCount < 1) { // TODO TESTING Spawning just one NPC to test path adjustment
 			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 		WTSR->NPCCount++;
