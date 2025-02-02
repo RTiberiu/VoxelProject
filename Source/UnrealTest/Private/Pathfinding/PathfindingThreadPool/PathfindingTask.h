@@ -38,6 +38,8 @@ private:
 	Path* GetPathToEndLocation();
 	void AdjustPathWithActualVoxelHeights(Path* path);
 
+	void PrintHeights(const TArray<int>& heights); // TESTING THE SURFACE VOXELS
+
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
 

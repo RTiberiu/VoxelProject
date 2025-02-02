@@ -787,7 +787,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		}
 		WTSR->NPCCount++;
 
-		// Print the tree count every 50
+		// Print the NPC count every 50
 		/*if (WTSR->NPCCount % 50 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount);
 		}*/

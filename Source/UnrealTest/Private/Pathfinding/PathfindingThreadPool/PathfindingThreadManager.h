@@ -33,13 +33,6 @@ private:
 
     FQueuedThreadPool* PathfindingThreadPool;
 
-    // Thread queue
- //   TArray<FRunnableThread*> ThreadPool;
- //   TArray<PathfindingRunnable*> Runnables;
-
- //   // Pathfinding work queue
-	//TQueue<IQueuedWork*> QueuedWork;
-
     // Thread management
     bool threadPoolRunning;
 

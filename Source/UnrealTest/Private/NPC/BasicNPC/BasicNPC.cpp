@@ -125,16 +125,18 @@ void ABasicNPC::BeginPlay() {
     if (AIController) {
         AIController->Possess(this);
     }
+
+    PlayRandomAnimation();
 }
 
 void ABasicNPC::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
 
-    PlayRandomAnimation();
+    // PlayRandomAnimation();
 
     DelayBeforeFirstPathRequest += DeltaSeconds;
 
-    if (DelayBeforeFirstPathRequest < 5.0f) {
+    if (DelayBeforeFirstPathRequest < 7.0f) {
         return;
     }
 

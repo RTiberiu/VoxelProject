@@ -316,9 +316,9 @@ bool UChunkLocationData::IsSurfacePointValid(const double& X, const double& Z) {
     }
     SurfaceVoxelPointsSemaphore->Release();
 
-    // Check if any point in avoidPoints contains the relative X and Z
+    // Check if any point in avoidPoints contains the points given
     for (const FVector2D& point : avoidPoints) {
-        if (point.X == relativeToChunkX && point.Y == relativeToChunkZ) {
+        if (point.X == X && point.Y == Z) {
             return false;
         }
     }

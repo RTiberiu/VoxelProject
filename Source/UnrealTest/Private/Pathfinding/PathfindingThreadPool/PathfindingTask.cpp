@@ -99,19 +99,44 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 	// Update each ActionStatePair in the path // TODO I HAVE TO VALIDATE THIS
 	for (ActionStatePair* pair : path->path) {
 		FVector& location = pair->state->getPosition();
-		FIntPoint chunkPosition(FMath::FloorToInt(location.X / WTSR->UnrealScale), FMath::FloorToInt(location.Y / WTSR->UnrealScale));
+
+
+		FIntPoint chunkPosition(FMath::FloorToInt(location.X / WTSR->chunkSize), FMath::FloorToInt(location.Y / WTSR->chunkSize));
+		
+        UE_LOG(LogTemp, Warning, TEXT("Chunk Position: %s, Location X: %f, Location Y: %f"), *chunkPosition.ToString(), location.X, location.Y);
+
 		if (surfaceVoxelPoints.Contains(chunkPosition)) {
 			const TArray<int>& heights = surfaceVoxelPoints[chunkPosition];
 
-			int index = FMath::FloorToInt(location.X) + FMath::FloorToInt(location.Y) * WTSR->chunkSize;
+			// PrintHeights(heights); // TESTING ONLY
+
+			const int modX = FMath::Max(((static_cast<int>(location.X) % WTSR->chunkSize) + WTSR->chunkSize) % WTSR->chunkSize - 1, 0);
+			const int modY = FMath::Max(((static_cast<int>(location.Y) % WTSR->chunkSize) + WTSR->chunkSize) % WTSR->chunkSize - 1, 0);
+
+			const int index = modX * WTSR->chunkSize + modY;
+
 			if (heights.IsValidIndex(index)) {
+				UE_LOG(LogTemp, Warning, TEXT("Index: %d, Location X: %f, Location Y: %f, modX: %d, modY: %d -- Height: %d -- Height adjusted: %d"), index, location.X, location.Y, modX, modY, heights[index], heights[index] * WTSR->UnrealScale);
 				location.Z = heights[index] * WTSR->UnrealScale;
-				location.X = location.X * WTSR->UnrealScale;
-				location.Y = location.Y * WTSR->UnrealScale;
+				location.X = location.X * WTSR->UnrealScale + WTSR->HalfUnrealScale;
+				location.Y = location.Y * WTSR->UnrealScale + WTSR->HalfUnrealScale;
 			}
 		}
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("PATH AFTER ADJUSTMENT"));
 	path->print();
+}
+
+void FPathfindingTask::PrintHeights(const TArray<int>& heights) {
+	FString output;
+	output += TEXT("CHUNK: \n");	
+
+	for (int i = 0; i < heights.Num(); ++i) {
+		output += FString::FromInt(heights[i]) + TEXT("\t");
+		if ((i + 1) % 62 == 0) {
+			output += TEXT("\n");
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *output);
 }
