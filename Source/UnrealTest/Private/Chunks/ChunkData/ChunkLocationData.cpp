@@ -316,22 +316,12 @@ bool UChunkLocationData::IsSurfacePointValid(const double& X, const double& Z) {
     }
     SurfaceVoxelPointsSemaphore->Release();
 
-
     // Check if any point in avoidPoints contains the points given
-    const double modX = FMath::Max(fmod((X + chunkSize), chunkSize) - 1, 0.0);
-    const double modZ = FMath::Max(fmod((Z + chunkSize), chunkSize) - 1, 0.0);
+    const double modX = FMath::Max(((static_cast<int>(X) % chunkSize) + chunkSize) % chunkSize - 1, 0);
+    const double modZ = FMath::Max(((static_cast<int>(Z) % chunkSize) + chunkSize) % chunkSize - 1, 0);
 
-    // Print the values of X, Z, modX, and modY
     for (const FVector2D& point : avoidPoints) {
         if (point.X == modX && point.Y == modZ) {
-			// TESTING THE AVOID POINTS
-			UE_LOG(LogTemp, Warning, TEXT("Chunk Coordinates -- X: %d, Z: %d.  Avoid points:\n"), chunkCoords.X, chunkCoords.Y);
-			FString avoidPointsStr;
-			for (const FVector2D& testPoint : avoidPoints) {
-				avoidPointsStr += FString::Printf(TEXT("X: %f, Y: %f\n"), testPoint.X, testPoint.Y);
-			}
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *avoidPointsStr);
-			UE_LOG(LogTemp, Warning, TEXT("POINT NOT VALID -- X: %f, Z: %f, modX: %f, modZ: %f"), X, Z, modX, modZ);
             return false;
         }
     }

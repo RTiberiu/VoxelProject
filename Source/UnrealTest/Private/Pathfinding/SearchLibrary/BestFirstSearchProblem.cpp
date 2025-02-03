@@ -16,10 +16,23 @@
  * Translated from Java to C++ by Tiberiu Rociu
  */
 
+struct VoxelSearchStateHash {
+    std::size_t operator()(const VoxelSearchState* state) const {
+        return state->hashCode();
+    }
+};
+
+struct VoxelSearchStateEqual {
+    bool operator()(const VoxelSearchState* stateA, const VoxelSearchState* stateB) const {
+        return stateA->equals(stateB);
+    }
+};
+
 BestFirstSearchProblem::BestFirstSearchProblem(VoxelSearchState* start, VoxelSearchState* goal) : startState(start), goalState(goal), nodeVisited(0), stopSearching(false) {}
 
 Path* BestFirstSearchProblem::search() {
-    std::unordered_map<VoxelSearchState*, Node*> visitedNodes; // history
+    std::unordered_map<VoxelSearchState*, Node*, VoxelSearchStateHash, VoxelSearchStateEqual> visitedNodes; // history
+
     std::list<Node*> fringe; // the list of fringe nodes
 
     Node* rootNode = new Node(this->startState, nullptr, nullptr); // create root node
@@ -35,18 +48,29 @@ Path* BestFirstSearchProblem::search() {
 
     while (true) {
         if (stopSearching) {
+            // Print the number of visited nodes before returning nullptr
+            UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
             return nullptr;
         }
 
-        if (fringe.empty()) // no more node to expand
+        if (fringe.empty()) { // no more node to expand
+            // Print the number of visited nodes before returning nullptr (no solution)
+            UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
             return nullptr; // no solution
+        }
 
         Node* node = fringe.front();
         fringe.pop_front(); // remove and take 1st node
-        if (this->isGoal(node->state)) // if goal is found
+        if (this->isGoal(node->state)) { // if goal is found
+            // Print the number of visited nodes before returning path
+            UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
             return constructPath(node); // construct path and return path
+        }
 
         std::vector<ActionStatePair*> childrenNodes = node->state->successor(); // get successors
+
+        if (childrenNodes.empty()) continue;  // If no successors, don't continue searching
+
         for (size_t i = 0; i < childrenNodes.size(); i++) {
             this->nodeVisited++; // increment node count
             if (nodeVisited % 3000 == 0) // print message every 3000 nodes
@@ -59,18 +83,18 @@ Path* BestFirstSearchProblem::search() {
             ActionStatePair* child = childrenNodes[i];
             Action* action = child->action;
             VoxelSearchState* nextState = child->state;
-            Node* lastSeenNode = visitedNodes[nextState]; // look up state in history
 
-            if (lastSeenNode == nullptr) { // have not seen this state before
+            std::unordered_map<VoxelSearchState*, Node*>::iterator lastSeenNode = visitedNodes.find(nextState); // look up state in history
+
+            if (lastSeenNode == visitedNodes.end()) { // have not seen this state before
                 Node* childNode = new Node(nextState, node, action); // create child node from state
                 addChildBinary(fringe, childNode); // add child into fringe
                 visitedNodes[nextState] = childNode; // add into history
-            } else {
-                // state is in history
             }
         }
     }
 }
+
 
 void BestFirstSearchProblem::StopSearching() {
     stopSearching.AtomicSet(true);

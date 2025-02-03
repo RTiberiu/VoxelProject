@@ -59,8 +59,18 @@ bool ATree::HasCollision() {
 	return hasCollision;
 }
 
-void ATree::SetTreeWorldLocation(FIntPoint InTreeLocation) {
-	treeWorldLocation = InTreeLocation;
+void ATree::SetTreeWorldLocation(FIntPoint InTreeWorldLocation) {
+	treeWorldLocation = InTreeWorldLocation;
+}
+
+void ATree::SetTreeChunkRelativeLocation(FVector InTreeLocation) {
+	float x = (InTreeLocation.X + WTSR->TreeScale / 2 - treeWorldLocation.X + (WTSR->TreeSize * WTSR->TreeScale) / 2 - WTSR->UnrealScale / 2) / WTSR->UnrealScale;
+	float z = (InTreeLocation.Y + WTSR->TreeScale / 2 - treeWorldLocation.Y + (WTSR->TreeSize * WTSR->TreeScale) / 2 - WTSR->UnrealScale / 2) / WTSR->UnrealScale - 1;
+
+	const int modX = FMath::Max(((static_cast<int>(x) % WTSR->chunkSize) + WTSR->chunkSize) % WTSR->chunkSize - 1, 0);
+	const int modZ = FMath::Max(((static_cast<int>(z) % WTSR->chunkSize) + WTSR->chunkSize) % WTSR->chunkSize - 1, 0);
+
+	treeLocation = FIntPoint(modX, modZ);
 }
 
 void ATree::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {

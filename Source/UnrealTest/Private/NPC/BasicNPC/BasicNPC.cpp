@@ -104,8 +104,8 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
     } else {
 
         // TESTING NOT RESETTING (Meaning no request for another path)
-        // pathToPlayer = nullptr;
-        // pathIsReady = false;
+        pathToPlayer = nullptr;
+        pathIsReady = false;
     }
 }
 
@@ -146,7 +146,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
     TimeSinceLastCall += DeltaSeconds;
 
-    if (TimeSinceLastCall >= 0.5f) {
+    if (TimeSinceLastCall >= 0.2f) {
         // Move the player to the location if path is ready
         if (pathIsReady) {
             ConsumePathAndMoveToLocation();

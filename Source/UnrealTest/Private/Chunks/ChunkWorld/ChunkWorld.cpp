@@ -179,6 +179,7 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 		SpawnedTreeActor->SetWorldTerrainSettings(WTSR);
 		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
 		SpawnedTreeActor->SetTreeWorldLocation(ChunkLocationData.ObjectWorldCoords);
+		SpawnedTreeActor->SetTreeChunkRelativeLocation(ChunkLocationData.ObjectPosition);
 
 		// Define the boundaries for the collision check
 		float minX = PlayerPosition.X - WTSR->VegetationCollisionDistance;

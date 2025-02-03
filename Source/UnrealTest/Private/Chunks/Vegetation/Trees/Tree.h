@@ -28,7 +28,8 @@ public:
 	void UpdateCollision(bool InHasCollision);
 	void SetTreeMeshData(FVoxelObjectMeshData* InMeshData);
 	bool HasCollision();
-	void SetTreeWorldLocation(FIntPoint InTreeLocation);
+	void SetTreeWorldLocation(FIntPoint InTreeWorldLocation);
+	void SetTreeChunkRelativeLocation(FVector InTreeLocation);
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 private:
@@ -40,11 +41,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tree Settings", meta = (AllowPrivateAccess = "true"))
 	FIntPoint treeWorldLocation;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tree Settings", meta = (AllowPrivateAccess = "true"))
+	FIntPoint treeLocation;
+
 	UProceduralMeshComponent* Mesh;
 
 	FVoxelObjectMeshData* MeshData; // store vertices, normals, triangles, etc.
 
-	FIntPoint treeLocation;
 	bool hasCollision;
 
 	// Create chrono type alias

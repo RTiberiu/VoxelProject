@@ -27,7 +27,7 @@ std::vector<ActionStatePair*> VoxelSearchState::successor() const {
     
     std::vector<ActionStatePair*> successors;
 
-	// Possible moves (left, right, up, down, up-left, up-right, down-left, down-right)
+    // Possible moves (left, right, up, down, up-left, up-right, down-left, down-right)
     std::vector<FVector> possibleMoves = {
         FVector(-1, 0, 0), FVector(1, 0, 0), 
         FVector(0, 1, 0), FVector(0, -1, 0), 

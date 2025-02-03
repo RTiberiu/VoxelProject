@@ -661,7 +661,9 @@ void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, con
 		CLDR->addTreeSpawnPosition(vegetationSpawnPosition);
 
 		// Add position to be avoided in the pathfinding
-		surfaceAvoidPositions.Add(FVector2D(x, z));
+		const int adjustedX = x - 1;
+		const int adjustedZ = z - 1;
+		surfaceAvoidPositions.Add(FVector2D(adjustedX, adjustedZ));
 
 	} else if (spawnVegetationChance < WTSR->FlowerSpawnChance) {
 		// Reduce the flower spawn levels by 2 
