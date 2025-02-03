@@ -32,8 +32,6 @@ public:
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 
 private:
-	void TestFakeSearch();
-
 	void AdjustLocationsToUnrealScaling();
 	Path* GetPathToEndLocation();
 	void AdjustPathWithActualVoxelHeights(Path* path);

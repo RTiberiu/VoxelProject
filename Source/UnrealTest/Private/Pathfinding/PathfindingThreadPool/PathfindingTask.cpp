@@ -20,8 +20,6 @@ FPathfindingTask::~FPathfindingTask() {
 }
 
 void FPathfindingTask::DoThreadedWork() {
-	// TestFakeSearch();
-
 	AdjustLocationsToUnrealScaling();
 
 	Path* path = GetPathToEndLocation();
@@ -47,15 +45,6 @@ void FPathfindingTask::SetChunkLocationData(UChunkLocationData* InChunkLocationD
 	ChunkLocationDataRef = InChunkLocationData;
 }
 
-void FPathfindingTask::TestFakeSearch() {
-	// Perform pathfinding between startLocation and endLocation
-	UE_LOG(LogTemp, Warning, TEXT("Started pathfinding for %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
-	FPlatformProcess::Sleep(5.0f);
-	UE_LOG(LogTemp, Warning, TEXT("Finished pathfinding for %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
-
-	FPlatformProcess::Sleep(0.01f); // Avoiding tight loops
-}
-
 // Makes each unit in the start and end locaiton be the equivalent of a voxel size
 void FPathfindingTask::AdjustLocationsToUnrealScaling() {
 	StartLocation = FVector(FMath::FloorToDouble(StartLocation.X / WTSR->UnrealScale), FMath::FloorToDouble(StartLocation.Y / WTSR->UnrealScale), 0);
@@ -63,7 +52,7 @@ void FPathfindingTask::AdjustLocationsToUnrealScaling() {
 }
 
 Path* FPathfindingTask::GetPathToEndLocation() {
-    UE_LOG(LogTemp, Warning, TEXT("Started pathfinding for %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
+    // UE_LOG(LogTemp, Warning, TEXT("Started pathfinding for %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
     FDateTime StartTime = FDateTime::Now();
 	
     VoxelSearchState startPosition = VoxelSearchState(StartLocation, CLDR);
@@ -76,11 +65,6 @@ Path* FPathfindingTask::GetPathToEndLocation() {
 	isSearching = false;
 
     FDateTime EndTime = FDateTime::Now();
-    // pathToGoal->print(); // TESTING THE PATH
-
-   /* FTimespan Duration = EndTime - StartTime;
-    UE_LOG(LogTemp, Warning, TEXT("Finished pathfinding for %s to %s in %d minutes, %d seconds, and %f milliseconds"), 
-        *StartLocation.ToString(), *EndLocation.ToString(), Duration.GetMinutes(), Duration.GetSeconds(), Duration.GetTotalMilliseconds());*/
 
 	// Cleanup 
 	delete searchProblem;
@@ -93,22 +77,15 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 	// Get actual surface voxel heights
 	TMap<FIntPoint, TArray<int>> surfaceVoxelPoints = CLDR->GetSurfaceVoxelPoints();
 
-	/*UE_LOG(LogTemp, Warning, TEXT("PATH BEFORE ADJUSTMENT"));
-	path->print();*/
-
-	// Update each ActionStatePair in the path // TODO I HAVE TO VALIDATE THIS
+	// Update each ActionStatePair in the path
 	for (ActionStatePair* pair : path->path) {
 		FVector& location = pair->state->getPosition();
 
 
 		FIntPoint chunkPosition(FMath::FloorToInt(location.X / WTSR->chunkSize), FMath::FloorToInt(location.Y / WTSR->chunkSize));
 		
-        // UE_LOG(LogTemp, Warning, TEXT("Chunk Position: %s, Location X: %f, Location Y: %f"), *chunkPosition.ToString(), location.X, location.Y);
-
 		if (surfaceVoxelPoints.Contains(chunkPosition)) {
 			const TArray<int>& heights = surfaceVoxelPoints[chunkPosition];
-
-			// PrintHeights(heights); // TESTING ONLY
 
 			const int modX = FMath::Max(((static_cast<int>(location.X) % WTSR->chunkSize) + WTSR->chunkSize) % WTSR->chunkSize - 1, 0);
 			const int modY = FMath::Max(((static_cast<int>(location.Y) % WTSR->chunkSize) + WTSR->chunkSize) % WTSR->chunkSize - 1, 0);
@@ -116,18 +93,15 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 			const int index = modX * WTSR->chunkSize + modY;
 
 			if (heights.IsValidIndex(index)) {
-				// UE_LOG(LogTemp, Warning, TEXT("Index: %d, Location X: %f, Location Y: %f, modX: %d, modY: %d -- Height: %d -- Height adjusted: %d"), index, location.X, location.Y, modX, modY, heights[index], heights[index] * WTSR->UnrealScale);
 				location.Z = heights[index] * WTSR->UnrealScale;
 				location.X = location.X * WTSR->UnrealScale + WTSR->HalfUnrealScale;
 				location.Y = location.Y * WTSR->UnrealScale + WTSR->HalfUnrealScale;
 			}
 		}
 	}
-
-	/*UE_LOG(LogTemp, Warning, TEXT("PATH AFTER ADJUSTMENT"));
-	path->print();*/
 }
 
+// Method used for testing. It prints all the heights in the current chunk, to better visualize their positions
 void FPathfindingTask::PrintHeights(const TArray<int>& heights) {
 	FString output;
 	output += TEXT("CHUNK: \n");	

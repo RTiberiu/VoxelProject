@@ -1,6 +1,5 @@
 #include "BasicNPC.h"
 
-#include <Runtime/AIModule/Classes/AIController.h>
 #include "..\..\Chunks\TerrainSettings\WorldTerrainSettings.h"
 
 #include "GameFramework/PawnMovementComponent.h"
@@ -13,8 +12,6 @@ ABasicNPC::ABasicNPC() {
 	
     SkeletalMesh->SetCastShadow(false);
 
-    // SkeletalMesh->SetupAttachment(RootComponent);
-
     pathToPlayer = nullptr;
     pathIsReady = false;
 
@@ -22,6 +19,8 @@ ABasicNPC::ABasicNPC() {
     if (!MovementComponent) {
         FloatingMovement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("FloatingMovement"));
     }
+
+    movementSpeed = 8.0f;
 }
 
 ABasicNPC::~ABasicNPC() {
@@ -54,6 +53,8 @@ void ABasicNPC::spawnNPC() {
     if (LoadedAnim) {
         SkeletalMesh->PlayAnimation(LoadedAnim, true);
     }
+
+    currentLocation = GetActorLocation();
 }
 
 void ABasicNPC::buildAnimationsList() {
@@ -90,23 +91,30 @@ void ABasicNPC::RequestPathToPlayer() {
 }
 
 void ABasicNPC::ConsumePathAndMoveToLocation() {
-    // TODO IMPLEMENET MOVING TO EACH VECTOR AND ANIMATE AT EACH POINT
-    // UE_LOG(LogTemp, Warning, TEXT("Consuming path and moving to location")); 
-
-    if (!pathToPlayer->path.empty()) {
+    if (pathToPlayer && !pathToPlayer->path.empty()) {
         // Get the first item
         ActionStatePair* firstItem = pathToPlayer->path.front();
+        FVector targetPosition = firstItem->state->getPosition();
 
-        // Remove the first item from the list
-        pathToPlayer->path.pop_front();
+        // Interpolate smoothly from the current location to the target using VInterpTo
+        float deltaTime = GetWorld()->GetDeltaSeconds();
+        FVector newPosition = FMath::VInterpTo(GetActorLocation(), targetPosition, deltaTime, movementSpeed);
+        SetActorLocation(newPosition);
 
-        SetActorLocation(firstItem->state->getPosition());
+        // If the NPC is close enough to the target, consider it reached and move to the next point
+        if (FVector::Dist(newPosition, targetPosition) < 10.0f) {
+            pathToPlayer->path.pop_front();
+            currentLocation = targetPosition;
+        }
     } else {
-
-        // TESTING NOT RESETTING (Meaning no request for another path)
         pathToPlayer = nullptr;
         pathIsReady = false;
     }
+}
+
+void ABasicNPC::TimelineProgress(float Value) {
+    FVector CurrentPosition = FMath::Lerp(timelineStartPos, timeLineEndPos, Value);
+    SetActorLocation(CurrentPosition);
 }
 
 void ABasicNPC::SetPathToPlayerAndNotify(Path* InPathToPlayer) {
@@ -121,7 +129,7 @@ void ABasicNPC::BeginPlay() {
 	
     spawnNPC();
 
-    AAIController* AIController = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass());
+    AIController = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass());
     if (AIController) {
         AIController->Possess(this);
     }
@@ -132,11 +140,9 @@ void ABasicNPC::BeginPlay() {
 void ABasicNPC::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
 
-    // PlayRandomAnimation();
-
     DelayBeforeFirstPathRequest += DeltaSeconds;
 
-    if (DelayBeforeFirstPathRequest < 12.0f) {
+    if (DelayBeforeFirstPathRequest < 8.0f) {
         return;
     }
 
@@ -146,12 +152,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
     TimeSinceLastCall += DeltaSeconds;
 
-    if (TimeSinceLastCall >= 0.2f) {
-        // Move the player to the location if path is ready
-        if (pathIsReady) {
-            ConsumePathAndMoveToLocation();
-        }
-
-        TimeSinceLastCall = 0.0f;
+    if (pathIsReady) {
+        ConsumePathAndMoveToLocation();
     }
 }

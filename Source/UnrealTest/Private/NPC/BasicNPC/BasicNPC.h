@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include <GameFramework/FloatingPawnMovement.h>
+#include <Runtime/AIModule/Classes/AIController.h>
 
 #include "..\..\Pathfinding\SearchLibrary\Path.h"
 #include "..\..\Pathfinding\PathfindingThreadPool\PathfindingThreadManager.h"
@@ -33,6 +34,8 @@ private:
 
 	PathfindingThreadManager* PathfindingManager;
 
+	AAIController* AIController;
+
 	void spawnNPC();
 	void buildAnimationsList();
 
@@ -43,6 +46,8 @@ private:
 	bool pathIsReady;
 
 	void ConsumePathAndMoveToLocation();
+
+	void TimelineProgress(float Value);
 
 	FIntPoint NPCWorldLocation;
 
@@ -55,6 +60,12 @@ private:
 	int animationFrameCounter = 0;
 
 	TArray<FString> Animations;
+
+	FVector currentLocation;
+	FVector timelineStartPos;
+	FVector timeLineEndPos;
+
+	float movementSpeed;
 
 	// TESTING TICK CALLS
 	float DelayBeforeFirstPathRequest;

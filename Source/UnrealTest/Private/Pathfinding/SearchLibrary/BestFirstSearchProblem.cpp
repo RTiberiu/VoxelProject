@@ -49,13 +49,13 @@ Path* BestFirstSearchProblem::search() {
     while (true) {
         if (stopSearching) {
             // Print the number of visited nodes before returning nullptr
-            UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
+            // UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
             return nullptr;
         }
 
         if (fringe.empty()) { // no more node to expand
             // Print the number of visited nodes before returning nullptr (no solution)
-            UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
+            // UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
             return nullptr; // no solution
         }
 
@@ -63,7 +63,7 @@ Path* BestFirstSearchProblem::search() {
         fringe.pop_front(); // remove and take 1st node
         if (this->isGoal(node->state)) { // if goal is found
             // Print the number of visited nodes before returning path
-            UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
+            // UE_LOG(LogTemp, Warning, TEXT("Number of visited nodes: %d"), visitedNodes.size());
             return constructPath(node); // construct path and return path
         }
 
