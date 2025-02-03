@@ -136,7 +136,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
     DelayBeforeFirstPathRequest += DeltaSeconds;
 
-    if (DelayBeforeFirstPathRequest < 7.0f) {
+    if (DelayBeforeFirstPathRequest < 12.0f) {
         return;
     }
 

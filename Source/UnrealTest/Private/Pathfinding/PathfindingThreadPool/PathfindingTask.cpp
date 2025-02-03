@@ -93,8 +93,8 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 	// Get actual surface voxel heights
 	TMap<FIntPoint, TArray<int>> surfaceVoxelPoints = CLDR->GetSurfaceVoxelPoints();
 
-	UE_LOG(LogTemp, Warning, TEXT("PATH BEFORE ADJUSTMENT"));
-	path->print();
+	/*UE_LOG(LogTemp, Warning, TEXT("PATH BEFORE ADJUSTMENT"));
+	path->print();*/
 
 	// Update each ActionStatePair in the path // TODO I HAVE TO VALIDATE THIS
 	for (ActionStatePair* pair : path->path) {
@@ -103,7 +103,7 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 
 		FIntPoint chunkPosition(FMath::FloorToInt(location.X / WTSR->chunkSize), FMath::FloorToInt(location.Y / WTSR->chunkSize));
 		
-        UE_LOG(LogTemp, Warning, TEXT("Chunk Position: %s, Location X: %f, Location Y: %f"), *chunkPosition.ToString(), location.X, location.Y);
+        // UE_LOG(LogTemp, Warning, TEXT("Chunk Position: %s, Location X: %f, Location Y: %f"), *chunkPosition.ToString(), location.X, location.Y);
 
 		if (surfaceVoxelPoints.Contains(chunkPosition)) {
 			const TArray<int>& heights = surfaceVoxelPoints[chunkPosition];
@@ -116,7 +116,7 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 			const int index = modX * WTSR->chunkSize + modY;
 
 			if (heights.IsValidIndex(index)) {
-				UE_LOG(LogTemp, Warning, TEXT("Index: %d, Location X: %f, Location Y: %f, modX: %d, modY: %d -- Height: %d -- Height adjusted: %d"), index, location.X, location.Y, modX, modY, heights[index], heights[index] * WTSR->UnrealScale);
+				// UE_LOG(LogTemp, Warning, TEXT("Index: %d, Location X: %f, Location Y: %f, modX: %d, modY: %d -- Height: %d -- Height adjusted: %d"), index, location.X, location.Y, modX, modY, heights[index], heights[index] * WTSR->UnrealScale);
 				location.Z = heights[index] * WTSR->UnrealScale;
 				location.X = location.X * WTSR->UnrealScale + WTSR->HalfUnrealScale;
 				location.Y = location.Y * WTSR->UnrealScale + WTSR->HalfUnrealScale;
@@ -124,8 +124,8 @@ void FPathfindingTask::AdjustPathWithActualVoxelHeights(Path* path) {
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("PATH AFTER ADJUSTMENT"));
-	path->print();
+	/*UE_LOG(LogTemp, Warning, TEXT("PATH AFTER ADJUSTMENT"));
+	path->print();*/
 }
 
 void FPathfindingTask::PrintHeights(const TArray<int>& heights) {
