@@ -79,6 +79,16 @@ Path* BestFirstSearchProblem::search() {
                     *FString(startState->toString().c_str()),
                     *FString(goalState->toString().c_str())
                 );
+            
+			// Fail search if too many nodes are explored
+            if (nodeVisited % failSearchThreshold == 0) {
+                UE_LOG(LogTemp, Error, TEXT("Could not find path after %d nodes explored. Trying to search from start state: %s to goal state: %s"),
+                    failSearchThreshold,
+                    * FString(startState->toString().c_str()),
+                    *FString(goalState->toString().c_str())
+                );
+                return nullptr;
+            }
 
             ActionStatePair* child = childrenNodes[i];
             Action* action = child->action;

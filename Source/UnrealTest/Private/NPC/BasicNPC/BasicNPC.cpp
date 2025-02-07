@@ -49,38 +49,52 @@ void ABasicNPC::spawnNPC() {
     }
 
     // Load the animation asset
-    UAnimSequence* LoadedAnim = LoadObject<UAnimSequence>(nullptr, *Animations[0]);
-    if (LoadedAnim) {
-        SkeletalMesh->PlayAnimation(LoadedAnim, true);
-    }
+    PlayAnimation(TEXT("idleA"));
 
     currentLocation = GetActorLocation();
 }
 
 void ABasicNPC::buildAnimationsList() {
-    Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Idle_A.Panda_Animations_Anim_Idle_A'"));
-    Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Bounce.Panda_Animations_Anim_Bounce'"));
-    Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Clicked.Panda_Animations_Anim_Clicked'"));
-    Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Death.Panda_Animations_Anim_Death'"));
-    Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Eat.Panda_Animations_Anim_Eat'"));
-    Animations.Emplace(FString("AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Fly.Panda_Animations_Anim_Fly'"));
+    const TArray<FString> AnimationNames = {
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Idle_A.Panda_Animations_Anim_Idle_A'",
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Bounce.Panda_Animations_Anim_Bounce'",
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Clicked.Panda_Animations_Anim_Clicked'",
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Death.Panda_Animations_Anim_Death'",
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Eat.Panda_Animations_Anim_Eat'",
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Fly.Panda_Animations_Anim_Fly'",
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Walk.Panda_Animations_Anim_Walk'",
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Jump.Panda_Animations_Anim_Jump'"
+    };
+
+    const TArray<FString> AnimationKeys = {
+        "idleA",
+        "bounce",
+        "clicked",
+        "death",
+        "eat",
+        "fly",
+        "walk",
+        "jump"
+    };
+
+    for (int x = 0; x < AnimationNames.Num(); x++) {
+        UAnimSequence* LoadedAnim = LoadObject<UAnimSequence>(nullptr, *AnimationNames[x]);
+        Animations.Add(AnimationKeys[x], LoadedAnim);
+    }
 }
 
-void ABasicNPC::PlayRandomAnimation() {
-    // Play a new random animation
-    if (animationFrameCounter >= animationChangeAfterFrames) {
-
-        FString& Animation = Animations[FMath::RandRange(0, Animations.Num() - 1)];
-
-        UAnimSequence* LoadedAnim = LoadObject<UAnimSequence>(nullptr, *Animation);
-        if (LoadedAnim) {
-            SkeletalMesh->PlayAnimation(LoadedAnim, true);
-        }
-
-        animationFrameCounter = 0;
+void ABasicNPC::PlayAnimation(const FString& type) {
+    if (currentAnimPlaying == type) {
+        return;
     }
 
-    animationFrameCounter++;
+    currentAnimPlaying = type;
+
+    UAnimSequence** AnimationPtr = Animations.Find(type);
+
+    if (AnimationPtr) {
+        SkeletalMesh->PlayAnimation(*AnimationPtr, true);
+    }
 }
 
 void ABasicNPC::RequestPathToPlayer() {
@@ -91,24 +105,67 @@ void ABasicNPC::RequestPathToPlayer() {
 }
 
 void ABasicNPC::ConsumePathAndMoveToLocation() {
-    if (pathToPlayer && !pathToPlayer->path.empty()) {
-        // Get the first item
-        ActionStatePair* firstItem = pathToPlayer->path.front();
-        FVector targetPosition = firstItem->state->getPosition();
-
-        // Interpolate smoothly from the current location to the target using VInterpTo
-        float deltaTime = GetWorld()->GetDeltaSeconds();
-        FVector newPosition = FMath::VInterpTo(GetActorLocation(), targetPosition, deltaTime, movementSpeed);
-        SetActorLocation(newPosition);
-
-        // If the NPC is close enough to the target, consider it reached and move to the next point
-        if (FVector::Dist(newPosition, targetPosition) < 10.0f) {
-            pathToPlayer->path.pop_front();
-            currentLocation = targetPosition;
-        }
-    } else {
+    if (pathToPlayer->path.empty()) {
         pathToPlayer = nullptr;
         pathIsReady = false;
+        return;
+    }
+
+    // Get the first item
+    ActionStatePair* firstItem = pathToPlayer->path.front();
+    FVector targetPosition = firstItem->state->getPosition();
+
+    // Interpolate smoothly from the current location to the target using VInterpTo
+    float deltaTime = GetWorld()->GetDeltaSeconds();
+    FVector actorLocation = GetActorLocation();
+
+    // Only jump if there is a difference between the actor and the target
+    bool isJumpNeeded = FMath::Abs(actorLocation.Z - targetPosition.Z) > 5.0f;
+    if (isJumpNeeded) {
+        // Start jump if moving in X/Y direction and not already jumping
+        bool isMovingOnXY = FVector::Dist2D(actorLocation, targetPosition) > 10.0f;
+
+        if (!isJumping && isMovingOnXY) {
+            isJumping = true;
+            jumpProgress = 0.0f;
+            jumpStart = actorLocation;
+            jumpEnd = targetPosition;
+        }
+    }
+
+    FVector newPosition;
+
+    if (isJumping) {
+        PlayAnimation(TEXT("jump"));
+        // Linear interpolation for X & Y movement
+        newPosition = FMath::Lerp(jumpStart, jumpEnd, jumpProgress);
+
+        // Parabolic arc for Z movement (ensuring start and end match)
+        float midPointZ = FMath::Max(jumpStart.Z, jumpEnd.Z) + jumpHeight;
+        newPosition.Z = FMath::Lerp(FMath::Lerp(jumpStart.Z, midPointZ, jumpProgress),
+            FMath::Lerp(midPointZ, jumpEnd.Z, jumpProgress),
+            jumpProgress);
+
+        jumpProgress += deltaTime * jumpSpeed;
+
+        // End jump when progress reaches 1
+        if (jumpProgress >= 1.0f) {
+            isJumping = false;
+            // Ensuring the NPC lands exactly at target
+            newPosition = jumpEnd; 
+        }
+    } else {
+        PlayAnimation(TEXT("walk"));
+        // Move normally when not jumping
+        newPosition = FMath::VInterpTo(actorLocation, targetPosition, deltaTime, movementSpeed);
+    }
+
+    SetActorLocation(newPosition);
+
+    // If the NPC is close enough to the target, consider it reached and move to the next point
+    if (FVector::Dist(newPosition, targetPosition) < 10.0f) {
+        pathToPlayer->path.pop_front();
+        currentLocation = targetPosition;
     }
 }
 
@@ -134,7 +191,7 @@ void ABasicNPC::BeginPlay() {
         AIController->Possess(this);
     }
 
-    PlayRandomAnimation();
+    PlayAnimation(TEXT("idleA"));
 }
 
 void ABasicNPC::Tick(float DeltaSeconds) {
@@ -147,6 +204,8 @@ void ABasicNPC::Tick(float DeltaSeconds) {
     }
 
     if (pathToPlayer == nullptr) {
+        PlayAnimation(TEXT("idleA"));
+
         RequestPathToPlayer();
     }
 

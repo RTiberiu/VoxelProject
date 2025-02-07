@@ -39,7 +39,7 @@ private:
 	void spawnNPC();
 	void buildAnimationsList();
 
-	void PlayRandomAnimation();
+	void PlayAnimation(const FString& type);
 
 	void RequestPathToPlayer();
 	Path* pathToPlayer;
@@ -59,13 +59,22 @@ private:
 	static constexpr int animationChangeAfterFrames = 180;
 	int animationFrameCounter = 0;
 
-	TArray<FString> Animations;
+	// TArray<FString> Animations;
+	TMap<FString, UAnimSequence*> Animations;
 
 	FVector currentLocation;
 	FVector timelineStartPos;
 	FVector timeLineEndPos;
 
 	float movementSpeed;
+
+	bool isJumping;
+	float jumpProgress;
+	FVector jumpStart;
+	FVector jumpEnd;
+	const float jumpHeight = 60.0f;
+	const float jumpSpeed = 2.0f;
+	FString currentAnimPlaying;
 
 	// TESTING TICK CALLS
 	float DelayBeforeFirstPathRequest;

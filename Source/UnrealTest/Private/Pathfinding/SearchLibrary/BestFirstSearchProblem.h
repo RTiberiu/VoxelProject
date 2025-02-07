@@ -29,6 +29,8 @@ private:
     VoxelSearchState* startState;
     int nodeVisited;
 
+    const int failSearchThreshold = 6000;
+
     FThreadSafeBool stopSearching;
 };
 

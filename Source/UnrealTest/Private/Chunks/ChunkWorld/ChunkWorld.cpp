@@ -783,13 +783,14 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 100) { // TODO TESTING Spawning just one NPC to test path adjustment
+		if (WTSR->NPCCount < 50) { // TODO TESTING Spawning just one NPC to test path adjustment
 			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
+
 		WTSR->NPCCount++;
 
 		// Print the NPC count every 50
-		/*if (WTSR->NPCCount % 50 == 0) {
+		/*if (WTSR->NPCCount % 200 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount);
 		}*/
 
