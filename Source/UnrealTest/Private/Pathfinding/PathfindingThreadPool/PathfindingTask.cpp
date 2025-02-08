@@ -24,7 +24,10 @@ void FPathfindingTask::DoThreadedWork() {
 
 	Path* path = GetPathToEndLocation();
 
-	AdjustPathWithActualVoxelHeights(path);
+	// Only adjust if path is not a nullptr
+	if (path) {
+		AdjustPathWithActualVoxelHeights(path);
+	}
 
 	// Notify the NPC that the path is ready
 	NPCRef->SetPathToPlayerAndNotify(path);

@@ -186,7 +186,10 @@ void ABasicNPC::TimelineProgress(float Value) {
 
 void ABasicNPC::SetPathToPlayerAndNotify(Path* InPathToPlayer) {
 	pathToPlayer = InPathToPlayer;
-    pathIsReady = true;
+
+    if (pathToPlayer) {
+        pathIsReady = true;
+    }
 }
 
 void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime) {

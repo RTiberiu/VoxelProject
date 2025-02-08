@@ -265,11 +265,7 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 	ABasicNPC* SpawnedNPCActor = GetWorld()->SpawnActorDeferred<ABasicNPC>(NPC, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 	if (SpawnedNPCActor) {
-		// Add references to BinaryChunk and pass the computed mesh data
-		/*SpawnedTreeActor->SetWorldTerrainSettings(WTSR);
-		SpawnedTreeActor->SetPerlinNoiseSettings(PNSR);
-		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
-		SpawnedTreeActor->SetTreeWorldLocation(ChunkLocationData.ObjectWorldCoords);*/
+		// Add references to the NPC and pass the pathfinding manager for making requests
 		SpawnedNPCActor->SetWorldTerrainSettings(WTSR);
 		SpawnedNPCActor->SetPathfindingManager(PathfindingManager);
 		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
@@ -783,7 +779,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 50) { // TODO TESTING Spawning just one NPC to test path adjustment
+		if (WTSR->NPCCount < 100) { // TODO TESTING Spawning just one NPC to test path adjustment
 			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 
