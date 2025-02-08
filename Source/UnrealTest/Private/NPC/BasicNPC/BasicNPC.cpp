@@ -46,7 +46,13 @@ void ABasicNPC::spawnNPC() {
     if (LoadedMesh) {
         SkeletalMesh->SetSkeletalMesh(LoadedMesh);
         SkeletalMesh->SetWorldScale3D(FVector(0.65f, 0.65f, 0.65f)); // TODO I might want to scale this in the editor only once
+        
+        // Set up simplified collision
+        /*SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        SkeletalMesh->SetCollisionResponseToAllChannels(ECR_Block);
+        SkeletalMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);*/
     }
+
 
     // Load the animation asset
     PlayAnimation(TEXT("idleA"));
@@ -63,7 +69,8 @@ void ABasicNPC::buildAnimationsList() {
         "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Eat.Panda_Animations_Anim_Eat'",
         "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Fly.Panda_Animations_Anim_Fly'",
         "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Walk.Panda_Animations_Anim_Walk'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Jump.Panda_Animations_Anim_Jump'"
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Jump.Panda_Animations_Anim_Jump'",
+        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Run.Panda_Animations_Anim_Run'",
     };
 
     const TArray<FString> AnimationKeys = {
@@ -74,7 +81,8 @@ void ABasicNPC::buildAnimationsList() {
         "eat",
         "fly",
         "walk",
-        "jump"
+        "jump",
+        "run"
     };
 
     for (int x = 0; x < AnimationNames.Num(); x++) {
@@ -111,13 +119,15 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
         return;
     }
 
-    // Get the first item
+    // Get the first item in the path
     ActionStatePair* firstItem = pathToPlayer->path.front();
     FVector targetPosition = firstItem->state->getPosition();
 
-    // Interpolate smoothly from the current location to the target using VInterpTo
+    // Interpolating smoothly from the current location to the target
     float deltaTime = GetWorld()->GetDeltaSeconds();
     FVector actorLocation = GetActorLocation();
+
+    AdjustRotationTowardsNextLocation(actorLocation, targetPosition, deltaTime);
 
     // Only jump if there is a difference between the actor and the target
     bool isJumpNeeded = FMath::Abs(actorLocation.Z - targetPosition.Z) > 5.0f;
@@ -137,7 +147,7 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
 
     if (isJumping) {
         PlayAnimation(TEXT("jump"));
-        // Linear interpolation for X & Y movement
+        // Linear interpolation for X and Y movement
         newPosition = FMath::Lerp(jumpStart, jumpEnd, jumpProgress);
 
         // Parabolic arc for Z movement (ensuring start and end match)
@@ -177,6 +187,29 @@ void ABasicNPC::TimelineProgress(float Value) {
 void ABasicNPC::SetPathToPlayerAndNotify(Path* InPathToPlayer) {
 	pathToPlayer = InPathToPlayer;
     pathIsReady = true;
+}
+
+void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime) {
+    // Calculating direction and yaw angle
+    FVector direction = (targetPosition - actorLocation).GetSafeNormal();
+    float targetYaw = FMath::Atan2(direction.Y, direction.X) * 180.0f / PI;  // Converting radians to degrees
+
+    // Offset for correct NPC direction
+    targetYaw -= 90.0f;
+
+    FRotator currentRotation = GetActorRotation();
+
+    // Normalizing the angles manually (wrapping between -180 to 180 degrees)
+    float deltaYaw = FMath::Fmod(targetYaw - currentRotation.Yaw + 180.0f, 360.0f) - 180.0f;
+
+    // If the rotation is already close to the target, skip interpolation
+    if (FMath::Abs(deltaYaw) > 1.0f) {
+        FRotator targetRotation(0.0f, targetYaw, 0.0f);
+
+        // Smoothly interpolating the yaw rotation and apply rotation
+        FRotator newRotation = FMath::RInterpTo(currentRotation, targetRotation, deltaTime, movementSpeed);
+        SetActorRotation(newRotation);
+    }
 }
 
 void ABasicNPC::BeginPlay() {

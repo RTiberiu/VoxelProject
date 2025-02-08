@@ -68,6 +68,8 @@ private:
 
 	float movementSpeed;
 
+	void AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime);
+
 	bool isJumping;
 	float jumpProgress;
 	FVector jumpStart;
