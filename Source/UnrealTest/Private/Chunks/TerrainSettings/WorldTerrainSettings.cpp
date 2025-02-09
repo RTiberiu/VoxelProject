@@ -13,6 +13,7 @@ UWorldTerrainSettings::UWorldTerrainSettings() :
 	TreeMapSemaphore(new FairSemaphore(1)),
 	GrassMapSemaphore(new FairSemaphore(1)),
 	FlowerMapSemaphore(new FairSemaphore(1)),
+	NpcMapSemaphore(new FairSemaphore(1)),
 	DrawDistanceSemaphore(new FairSemaphore(1)),
 	AddCollisionTreesSemaphore(new FairSemaphore(1)),
 	RemoveCollisionTreesSemaphore(new FairSemaphore(1)),
@@ -30,6 +31,7 @@ UWorldTerrainSettings::~UWorldTerrainSettings() {
 	delete TreeMapSemaphore;
 	delete GrassMapSemaphore;
 	delete FlowerMapSemaphore;
+	delete NpcMapSemaphore;
 	delete DrawDistanceSemaphore;
 
 	delete AddCollisionTreesSemaphore;
@@ -307,7 +309,7 @@ void UWorldTerrainSettings::AddSpawnedGrass(const FIntPoint& GrassWorldCoordinat
 void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, UProceduralMeshComponent* FlowerActor) {
 	FlowerMapSemaphore->Acquire();
 
-	// If it exists, add the new flower to the existing array
+	// If the coordinate of the chunk exists, add the new flower to the existing array
 	if (SpawnedFlowerMap.Contains(FlowerWorldCoordinates)) {
 		SpawnedFlowerMap[FlowerWorldCoordinates].Add(FlowerActor);
 	} else {
@@ -316,6 +318,20 @@ void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordin
 	}
 
 	FlowerMapSemaphore->Release();
+}
+
+void UWorldTerrainSettings::AddSpawnedNpc(const FIntPoint& npcWorldCoordinates, ABasicNPC* npcActor) {
+	NpcMapSemaphore->Acquire();
+
+	// If the coordinate of the chunk exists, add the new NPC to the existing array
+	if (SpawnedNpcMap.Contains(npcWorldCoordinates)) {
+		SpawnedNpcMap[npcWorldCoordinates].Add(npcActor);
+	} else {
+		// If not, create a new array with the new NPC
+		SpawnedNpcMap.Add(npcWorldCoordinates, TArray<ABasicNPC*>({ npcActor }));
+	}
+
+	NpcMapSemaphore->Release();
 }
 
 const TMap<FIntPoint, TArray<ATree*>>& UWorldTerrainSettings::GetSpawnedTreesMap() const {
@@ -372,6 +388,23 @@ TArray<UProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveFlowerFromM
 
 	FlowerMapSemaphore->Release();
 	return RemovedFlower;
+}
+
+TArray<ABasicNPC*> UWorldTerrainSettings::GetAndRemoveNpcFromMap(const FIntPoint& npcWorldCoordinates) {
+	TArray<ABasicNPC*> RemovedNpcs;  // Array to hold the remaining NPCs at the location
+
+	NpcMapSemaphore->Acquire();
+
+	// Check if the map contains the chunk world coordinates
+	if (SpawnedNpcMap.Contains(npcWorldCoordinates)) {
+		// Get and remove the array of NPCs at this location if it's not empty
+		if (!SpawnedNpcMap[npcWorldCoordinates].IsEmpty()) {
+			RemovedNpcs = SpawnedNpcMap.FindAndRemoveChecked(npcWorldCoordinates);
+		}
+	}
+
+	NpcMapSemaphore->Release();
+	return RemovedNpcs;
 }
 
 void UWorldTerrainSettings::RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates) {

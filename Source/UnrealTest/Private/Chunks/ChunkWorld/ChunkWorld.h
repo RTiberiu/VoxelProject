@@ -104,6 +104,7 @@ private:
 	void DestroyTreeActors();
 	void DestroyGrassActors();
 	void DestroyFlowerActors();
+	void DestroyNpcActors();
 
 	// Tree actors to be destroyed and settings
 	TArray<ATree*> TreeActorsToRemove;
@@ -126,8 +127,12 @@ private:
 	TArray<FVoxelObjectLocationData> FlowerPositionsToSpawn;
 	const int flowerToSpawnPerFrame = 3;
 
+	// NPC actors to be destroyed and settings
 	TArray<FVoxelObjectLocationData> NPCPositionsToSpawn;
 	const int npcToSpawnPerFrame = 2;
+
+	TArray<ABasicNPC*> NpcActorsToRemove;
+	const int npcToRemovePerFrame = 2;
 
 	bool spawnedTreesThisFrame;
 	bool spawnedChunksThisFrame;

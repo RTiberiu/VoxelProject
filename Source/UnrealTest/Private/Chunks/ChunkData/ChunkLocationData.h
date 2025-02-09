@@ -61,6 +61,9 @@ public:
     bool AddUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
     bool GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* InFlowerToDestroy);
 
+    bool AddUnspawnedNpcToDestroy(ABasicNPC* InNpcToDestroy);
+    bool GetUnspawnedNpcToDestroy(ABasicNPC* InNpcToDestroy);
+
 	void AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints, const TArray<FVector2D>& avoidPoints);
 	void RemoveSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition);
     TMap<FIntPoint, TArray<int>> GetSurfaceVoxelPoints();
@@ -85,10 +88,12 @@ private:
     TQueue<ATree*> unspawnedTreesToDestroy;
     TQueue<UProceduralMeshComponent*> unspawnedGrassToDestroy;
     TQueue<UProceduralMeshComponent*> unspawnedFlowerToDestroy;
+    TQueue<ABasicNPC*> unspawnedNpcsToDestroy;
 
     TQueue<FIntPoint> treesToDestroy;
     TQueue<FIntPoint> grassToDestroy;
     TQueue<FIntPoint> flowersToDestroy;
+    TQueue<FIntPoint> npcsToDestroy;
 
     // Queue for storing chunks mesh data
     TQueue<FVoxelObjectLocationData> locationDataForComputedMeshes;

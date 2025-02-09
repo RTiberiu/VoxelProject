@@ -288,10 +288,11 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 		// Finish spawning the chunk actor
 		UGameplayStatics::FinishSpawningActor(SpawnedNPCActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
 
+		// This occupies the current voxel where the NPC is spawned (used for collision avoidance during pathfinding)
 		CLDR->AddOccupiedVoxelPosition(ChunkLocationData.ObjectPosition, SpawnedNPCActor);
 
-		// TODO Add the tree actor to a map so I can update the collision and remove it later on
-		// WTSR->AddSpawnedTrees(ChunkLocationData.ObjectWorldCoords, SpawnedTreeActor);
+		// Add the NPC actor to a map so I can update the collision and remove it later on
+		WTSR->AddSpawnedNpc(ChunkLocationData.ObjectWorldCoords, SpawnedNPCActor);
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn NPC Actor!"));
 	}
@@ -333,9 +334,21 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 		return Item.ObjectWorldCoords == destroyPosition;
 		});
 
-	// Add spawned flower to a remove list to remove over multiple frames
+	// Add spawned flowers to a remove list to remove over multiple frames
 	TArray<UProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(destroyPosition);
 	FlowerActorsToRemove.Append(flowerToRemove);
+
+	// Remove remaining NPC to spawn position at current chunk destroyed
+	CLDR->RemoveNPCSpawnPosition(destroyPosition);
+
+	// Remove NPCs to spawn in the ChunkWorld cache
+	NPCPositionsToSpawn.RemoveAll([&](const FVoxelObjectLocationData& Item) {
+		return Item.ObjectWorldCoords == destroyPosition;
+		});
+
+	// Add spawned NPCs to a remove list to remove over multiple frames
+	TArray<ABasicNPC*> npcsToRemove = WTSR->GetAndRemoveNpcFromMap(destroyPosition);
+	NpcActorsToRemove.Append(npcsToRemove);
 }
 
 void AChunkWorld::DestroyTreeActors() {
@@ -384,7 +397,6 @@ void AChunkWorld::DestroyGrassActors() {
 		if (grassToRemove) {
 			grassToRemove->UnregisterComponent();
 			grassToRemove->DestroyComponent();
-			//grassToRemove->Destroy();
 			WTSR->GrassCount--;
 		} else {
 			CLDR->AddUnspawnedGrassToDestroy(grassToRemove);
@@ -441,6 +453,40 @@ void AChunkWorld::DestroyFlowerActors() {
 		} else {
 			// Add back to the list and wait for the flower to be spawned.
 			CLDR->AddUnspawnedFlowerToDestroy(unspawnedFlower);
+		}
+	}
+}
+
+void AChunkWorld::DestroyNpcActors() {
+	// Remove NPC actors
+	int removedNpcCounter = 0;
+	for (int32 npcIndex = 0; npcIndex < NpcActorsToRemove.Num();) {
+		if (removedNpcCounter >= npcToRemovePerFrame) {
+			break;
+		}
+
+		ABasicNPC* npcToRemove = NpcActorsToRemove[npcIndex];
+		if (npcToRemove) {
+			npcToRemove->Destroy();
+			WTSR->NPCCount--;
+		} else {
+			CLDR->AddUnspawnedNpcToDestroy(npcToRemove);
+		}
+
+		NpcActorsToRemove.RemoveAt(npcIndex);
+		removedNpcCounter++;
+	}
+
+	// Check for any previously unspawned NPC that could be now destroyed 
+	ABasicNPC* unspawnedNpc = nullptr;
+	CLDR->AddUnspawnedNpcToDestroy(unspawnedNpc);
+	if (unspawnedNpc) {
+		// Destroy if it's valid and part of the world
+		if (IsValid(unspawnedNpc) && unspawnedNpc->IsActorInitialized()) {
+			unspawnedNpc->Destroy();
+		} else {
+			// Add back to the list and wait for the NPC to be spawned.
+			CLDR->AddUnspawnedNpcToDestroy(unspawnedNpc);
 		}
 	}
 }
@@ -546,11 +592,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		UE_LOG(LogTemp, Error, TEXT("WTSR is nullptr!"));
 		return;
 	}
-
-	// Attempt pathfinding // TODO THIS IS JUST TESTING. Will eventually call this from the NPC class. 
-	/*FVector startLocation = FVector(0, 0, 0);
-	FVector endLocation = FVector(100, 100, 0);
-	PathfindingManager->AddPathfindingTask(startLocation, endLocation);*/
 
 	FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
@@ -800,6 +841,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	// Destroy a few vegetation aactors
 	DestroyGrassActors();
 	DestroyFlowerActors();
+	DestroyNpcActors();
 	
 	// Enabling and disabling collision for chunks and trees
 	ATree* removeCollisionTree = WTSR->GetTreeToRemoveCollision();

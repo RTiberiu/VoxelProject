@@ -13,6 +13,7 @@
 #include "CoreMinimal.h"
 #include <Chunks/SingleChunk/BinaryChunk.h>
 #include <Chunks/Vegetation/Trees/Tree.h>
+#include "..\..\NPC\BasicNPC\BasicNPC.h"
 #include "WorldTerrainSettings.generated.h"
 
 class FastNoiseLite;
@@ -179,10 +180,12 @@ public:
 	void AddSpawnedTrees(const FIntPoint& TreeWorldCoordinates, ATree* TreeActor);
 	void AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, UProceduralMeshComponent* GrassActor);
 	void AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, UProceduralMeshComponent* FlowerActor);
+	void AddSpawnedNpc(const FIntPoint& npcWorldCoordinates, ABasicNPC* npcActor);
 	const TMap<FIntPoint, TArray<ATree*>>& GetSpawnedTreesMap() const;
 	TArray<ATree*> GetAndRemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
 	TArray<UProceduralMeshComponent*> GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates);
 	TArray<UProceduralMeshComponent*> GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates);
+	TArray<ABasicNPC*> GetAndRemoveNpcFromMap(const FIntPoint& npcWorldCoordinates);
 	void RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
 
 	void AddChunkToRemoveCollision(ABinaryChunk* actor);
@@ -218,6 +221,7 @@ private:
 	FairSemaphore* TreeMapSemaphore;
 	FairSemaphore* GrassMapSemaphore;
 	FairSemaphore* FlowerMapSemaphore;
+	FairSemaphore* NpcMapSemaphore;
 	FairSemaphore* DrawDistanceSemaphore;
 	FairSemaphore* AddCollisionTreesSemaphore;
 	FairSemaphore* RemoveCollisionTreesSemaphore;
@@ -231,6 +235,7 @@ private:
 	TMap<FIntPoint, TArray<ATree*>> SpawnedTreesMap;
 	TMap<FIntPoint, TArray<UProceduralMeshComponent*>> SpawnedGrassMap;
 	TMap<FIntPoint, TArray<UProceduralMeshComponent*>> SpawnedFlowerMap;
+	TMap<FIntPoint, TArray<ABasicNPC*>> SpawnedNpcMap;
 
 	// Arrays to update collision for actors (chunks and trees)
 	TArray<ABinaryChunk*> RemoveCollisionChunks;

@@ -280,6 +280,14 @@ bool UChunkLocationData::GetUnspawnedFlowerToDestroy(UProceduralMeshComponent* I
 	return unspawnedFlowerToDestroy.Dequeue(InFlowerToDestroy);
 }
 
+bool UChunkLocationData::AddUnspawnedNpcToDestroy(ABasicNPC* InNpcToDestroy) {
+	return unspawnedNpcsToDestroy.Enqueue(InNpcToDestroy);
+}
+
+bool UChunkLocationData::GetUnspawnedNpcToDestroy(ABasicNPC* InNpcToDestroy) {
+	return unspawnedNpcsToDestroy.Dequeue(InNpcToDestroy);
+}
+
 void UChunkLocationData::AddSurfaceVoxelPointsForChunk(const FIntPoint& chunkPosition, const TArray<int>& voxelPoints, const TArray<FVector2D>& avoidPoints) {
 	SurfaceVoxelPointsSemaphore->Acquire();
 	surfaceVoxelPoints.Add(chunkPosition, voxelPoints);
