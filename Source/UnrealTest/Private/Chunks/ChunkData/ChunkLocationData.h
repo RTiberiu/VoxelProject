@@ -7,9 +7,11 @@
 #include "..\DataStructures\VoxelObjectMeshData.h"
 #include "..\DataStructures\VoxelObjectLocationData.h"
 #include "Containers/Queue.h"
+#include "..\..\NPC\BasicNPC\BasicNPC.h"
 #include "Misc/ScopeLock.h"
 #include "ChunkLocationData.generated.h"
 
+class ABasicNPC;
 
 UCLASS()
 class  UChunkLocationData : public UObject {
@@ -65,9 +67,12 @@ public:
 
     bool IsSurfacePointValid(const double& X, const double& Z);
 
+    bool IsLocationOccupied(const FVector& currentPosition, const FVector& nextPosition, ABasicNPC* npcAtLocation);
+    void AddOccupiedVoxelPosition(const FVector& position, ABasicNPC* npcAtLocation);
+
 private:
 
-    const int chunkSize{ 62 };
+    const int chunkSize{ 62 }; 
 
     // Queue for storing chunks position that need to be spawned
     TQueue<FVoxelObjectLocationData> chunksToSpawnPositions;
@@ -114,4 +119,7 @@ private:
     // FIntPoint represents the tile of the chunk
     // TArray<FVector2D> represents each 2D coordinate inside the chunk that is occupied (currently just a tree)
     TMap<FIntPoint, TArray<FVector2D>> surfaceAvoidPoints;
+
+    // Map used for avoiding overlapping NPCs during pathfinding and movement
+    TMap<FIntPoint, ABasicNPC*> OccupiedVoxels; 
 };

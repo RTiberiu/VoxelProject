@@ -267,6 +267,7 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 	if (SpawnedNPCActor) {
 		// Add references to the NPC and pass the pathfinding manager for making requests
 		SpawnedNPCActor->SetWorldTerrainSettings(WTSR);
+		SpawnedNPCActor->SetChunkLocationData(CLDR);
 		SpawnedNPCActor->SetPathfindingManager(PathfindingManager);
 		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
 
@@ -286,6 +287,8 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 
 		// Finish spawning the chunk actor
 		UGameplayStatics::FinishSpawningActor(SpawnedNPCActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
+
+		CLDR->AddOccupiedVoxelPosition(ChunkLocationData.ObjectPosition, SpawnedNPCActor);
 
 		// TODO Add the tree actor to a map so I can update the collision and remove it later on
 		// WTSR->AddSpawnedTrees(ChunkLocationData.ObjectWorldCoords, SpawnedTreeActor);
@@ -779,7 +782,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 100) { // TODO TESTING Spawning just one NPC to test path adjustment
+		if (WTSR->NPCCount < 50) { // TODO TESTING Spawning just one NPC to test path adjustment
 			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 

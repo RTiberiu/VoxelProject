@@ -25,12 +25,16 @@ public:
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPathfindingManager(PathfindingThreadManager* InPathfindingManager);
+	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 
 	void SetPathToPlayerAndNotify(Path* InPathToPlayer);
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
+
+	UChunkLocationData* ChunkLocationDataRef;
+	UChunkLocationData*& CLDR = ChunkLocationDataRef;
 
 	PathfindingThreadManager* PathfindingManager;
 
@@ -46,6 +50,9 @@ private:
 	bool pathIsReady;
 
 	void ConsumePathAndMoveToLocation();
+
+	void SetTargetLocation();
+	bool IsTargetLocationAvailable();
 
 	void TimelineProgress(float Value);
 
@@ -63,8 +70,11 @@ private:
 	TMap<FString, UAnimSequence*> Animations;
 
 	FVector currentLocation;
+	FVector* targetLocation;
 	FVector timelineStartPos;
 	FVector timeLineEndPos;
+
+	bool targetLocationIsAvailable;
 
 	float movementSpeed;
 
@@ -77,6 +87,10 @@ private:
 	const float jumpHeight = 60.0f;
 	const float jumpSpeed = 2.0f;
 	FString currentAnimPlaying;
+
+	bool waitForNextPositionCheck;
+	float OccupiedDelayTimer = 0.0f; // Accumulates time when target location is occupied by another NPC
+	const float OccupiedDelayThreshold = 0.5f; // Delay in seconds before trying again to move to the next location
 
 	// TESTING TICK CALLS
 	float DelayBeforeFirstPathRequest;

@@ -14,6 +14,9 @@ ABasicNPC::ABasicNPC() {
 
     pathToPlayer = nullptr;
     pathIsReady = false;
+    waitForNextPositionCheck = false;
+    targetLocationIsAvailable = false;
+    targetLocation = nullptr;
 
     UPawnMovementComponent* MovementComponent = FindComponentByClass<UPawnMovementComponent>();
     if (!MovementComponent) {
@@ -36,6 +39,10 @@ void ABasicNPC::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSet
 
 void ABasicNPC::SetPathfindingManager(PathfindingThreadManager* InPathfindingManager) {
 	PathfindingManager = InPathfindingManager;
+}
+
+void ABasicNPC::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
+    ChunkLocationDataRef = InChunkLocationData;
 }
 
 void ABasicNPC::spawnNPC() {
@@ -113,33 +120,24 @@ void ABasicNPC::RequestPathToPlayer() {
 }
 
 void ABasicNPC::ConsumePathAndMoveToLocation() {
-    if (pathToPlayer->path.empty()) {
-        pathToPlayer = nullptr;
-        pathIsReady = false;
-        return;
-    }
-
-    // Get the first item in the path
-    ActionStatePair* firstItem = pathToPlayer->path.front();
-    FVector targetPosition = firstItem->state->getPosition();
+    float deltaTime = GetWorld()->GetDeltaSeconds();
 
     // Interpolating smoothly from the current location to the target
-    float deltaTime = GetWorld()->GetDeltaSeconds();
     FVector actorLocation = GetActorLocation();
 
-    AdjustRotationTowardsNextLocation(actorLocation, targetPosition, deltaTime);
+    AdjustRotationTowardsNextLocation(actorLocation, *targetLocation, deltaTime);
 
     // Only jump if there is a difference between the actor and the target
-    bool isJumpNeeded = FMath::Abs(actorLocation.Z - targetPosition.Z) > 5.0f;
+    bool isJumpNeeded = FMath::Abs(actorLocation.Z - targetLocation->Z) > 5.0f;
     if (isJumpNeeded) {
         // Start jump if moving in X/Y direction and not already jumping
-        bool isMovingOnXY = FVector::Dist2D(actorLocation, targetPosition) > 10.0f;
+        bool isMovingOnXY = FVector::Dist2D(actorLocation, *targetLocation) > 10.0f;
 
         if (!isJumping && isMovingOnXY) {
             isJumping = true;
             jumpProgress = 0.0f;
             jumpStart = actorLocation;
-            jumpEnd = targetPosition;
+            jumpEnd = *targetLocation;
         }
     }
 
@@ -167,17 +165,66 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
     } else {
         PlayAnimation(TEXT("walk"));
         // Move normally when not jumping
-        newPosition = FMath::VInterpTo(actorLocation, targetPosition, deltaTime, movementSpeed);
+        newPosition = FMath::VInterpTo(actorLocation, *targetLocation, deltaTime, movementSpeed);
     }
 
     SetActorLocation(newPosition);
 
     // If the NPC is close enough to the target, consider it reached and move to the next point
-    if (FVector::Dist(newPosition, targetPosition) < 10.0f) {
+    if (FVector::Dist(newPosition, *targetLocation) < 10.0f) {
         pathToPlayer->path.pop_front();
-        currentLocation = targetPosition;
+        currentLocation = *targetLocation;
+
+        targetLocationIsAvailable = false;
+
+        SetTargetLocation();
     }
 }
+
+void ABasicNPC::SetTargetLocation() {
+    if (pathToPlayer->path.empty()) {
+        pathIsReady = false;
+        pathToPlayer = nullptr;
+        targetLocation = nullptr;
+        return;
+    }
+
+    // Get the first item in the path
+    ActionStatePair* firstItem = pathToPlayer->path.front();
+
+    if (firstItem) {
+        targetLocation = &firstItem->state->getPosition();
+
+        // Trigger a position check for the new target location
+        waitForNextPositionCheck = true;
+
+        // Make sure the first check happens immediately
+        OccupiedDelayTimer = OccupiedDelayThreshold + 1;
+    }
+}
+
+bool ABasicNPC::IsTargetLocationAvailable() {
+    // Wait longer before checking if the next position is still occupied.
+    if (waitForNextPositionCheck) {
+        if (OccupiedDelayTimer > OccupiedDelayThreshold) {
+            OccupiedDelayTimer = 0.0f;
+            waitForNextPositionCheck = false;
+        } else {
+            float deltaTime = GetWorld()->GetDeltaSeconds();
+            OccupiedDelayTimer += deltaTime;
+            return false;
+        }
+    }
+
+    bool isLocationOccupied = CLDR->IsLocationOccupied(currentLocation, *targetLocation, this);
+    if (isLocationOccupied) {
+        waitForNextPositionCheck = true;
+        return false;
+    }
+
+    return true;
+}
+
 
 void ABasicNPC::TimelineProgress(float Value) {
     FVector CurrentPosition = FMath::Lerp(timelineStartPos, timeLineEndPos, Value);
@@ -188,6 +235,7 @@ void ABasicNPC::SetPathToPlayerAndNotify(Path* InPathToPlayer) {
 	pathToPlayer = InPathToPlayer;
 
     if (pathToPlayer) {
+        SetTargetLocation();
         pathIsReady = true;
     }
 }
@@ -248,6 +296,14 @@ void ABasicNPC::Tick(float DeltaSeconds) {
     TimeSinceLastCall += DeltaSeconds;
 
     if (pathIsReady) {
-        ConsumePathAndMoveToLocation();
+        // Making sure the next position is not occupied by another NPC
+        if (waitForNextPositionCheck) {
+            targetLocationIsAvailable = IsTargetLocationAvailable();
+        }
+
+        // Smoothly move to the next location (happens over multiple frames)
+        if (targetLocationIsAvailable) {
+            ConsumePathAndMoveToLocation();
+        }
     }
 }
