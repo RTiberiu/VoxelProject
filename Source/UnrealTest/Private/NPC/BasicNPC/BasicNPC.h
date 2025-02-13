@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include <Components/SphereComponent.h>
 #include <GameFramework/FloatingPawnMovement.h>
 #include <Runtime/AIModule/Classes/AIController.h>
 
@@ -26,6 +27,8 @@ public:
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPathfindingManager(PathfindingThreadManager* InPathfindingManager);
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
+
+	void InitializeBrain();
 
 	void SetPathToPlayerAndNotify(Path* InPathToPlayer);
 
@@ -95,6 +98,26 @@ private:
 	// TESTING TICK CALLS
 	float DelayBeforeFirstPathRequest;
 	float TimeSinceLastCall;
+
+	// Collision sphere settings for updating objects "visible" to the NPC
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
+	USphereComponent* CollisionNpcDetectionSphere;
+
+	// Overlap event functions
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+		const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	// Store objects in the NPC's perceptation sphere 
+	TArray<ABasicNPC*> ThreatsInRange;
+	TArray<ABasicNPC*> AlliesInRange;
+	TArray<ABasicNPC*> FoodNpcInRange;
+	TArray<UProceduralMeshComponent*> FoodSourceInRange;
 
 protected:
 	// Called when the game starts or when spawned

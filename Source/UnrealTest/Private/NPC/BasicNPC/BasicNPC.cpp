@@ -23,6 +23,20 @@ ABasicNPC::ABasicNPC() {
         FloatingMovement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("FloatingMovement"));
     }
 
+    // Creating the collision sphere that detects NPCs
+    CollisionNpcDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionNpcDetectionSphere"));
+    CollisionNpcDetectionSphere->InitSphereRadius(300.0f); // TODO MAKE THIS A PARAMETER
+    CollisionNpcDetectionSphere->SetupAttachment(RootComponent);
+    CollisionNpcDetectionSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+    // Binding the overlap events for the NPC detection collision sphere
+    CollisionNpcDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &ABasicNPC::OnOverlapBegin);
+    CollisionNpcDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &ABasicNPC::OnOverlapEnd);
+
+    // Debugging // TODO Remove this when done debugging 
+    CollisionNpcDetectionSphere->SetHiddenInGame(false);
+    CollisionNpcDetectionSphere->SetVisibility(true);
+
     movementSpeed = 8.0f;
 }
 
@@ -43,6 +57,9 @@ void ABasicNPC::SetPathfindingManager(PathfindingThreadManager* InPathfindingMan
 
 void ABasicNPC::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
     ChunkLocationDataRef = InChunkLocationData;
+}
+
+void ABasicNPC::InitializeBrain() {
 }
 
 void ABasicNPC::spawnNPC() {
@@ -261,6 +278,14 @@ void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, 
         FRotator newRotation = FMath::RInterpTo(currentRotation, targetRotation, deltaTime, movementSpeed);
         SetActorRotation(newRotation);
     }
+}
+
+void ABasicNPC::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
+    // TODO Add object to its correct list (ally, threat, food, etc)
+}
+
+void ABasicNPC::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
+    // TODO Remove object from its correct list (ally, threat, food, etc)
 }
 
 void ABasicNPC::BeginPlay() {
