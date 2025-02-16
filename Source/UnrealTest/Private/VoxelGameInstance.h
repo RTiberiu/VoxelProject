@@ -6,6 +6,7 @@
 #include "Chunks\TerrainSettings\WorldTerrainSettings.h"
 #include "Chunks\ChunkData\ChunkLocationData.h"
 #include "Chunks\ChunkWorld\ChunkWorld.h"
+#include "NPC/SettingsNPC/AnimationSettingsNPC.h"
 
 #include "CoreMinimal.h"
 //#include "Engine/GameInstance.h"
@@ -24,6 +25,7 @@ private:
 	UChunkLocationData* chunkLocationData;
 	AChunkWorld* chunkWorld;
 	APerlinNoiseSettings* perlinNoiseSettings;
+	UAnimationSettingsNPC* animationSettingsNpcRef;
 
 protected:
 	// Called when the game starts or when spawned

@@ -11,6 +11,8 @@
 #include "..\ChunkMeshThreads\ChunkMeshDataRunnable.h"
 #include "..\ChunkData\ChunkLocationData.h"
 
+#include "..\..\NPC\SettingsNPC\AnimationSettingsNPC.h"
+
 #include "Pathfinding/PathfindingThreadPool/PathfindingThreadManager.h"
 
 #include <chrono>
@@ -32,11 +34,12 @@ class AChunkWorld : public AActor {
 public:
 	// Sets default values for this actor's properties
 	AChunkWorld();
-	
 
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
+	void SetAnimationSettingsNpc(UAnimationSettingsNPC* InAnimationSettingsRef);
+
 	void InitializePathfindingManager();
 
 	PathfindingThreadManager* PathfindingManager;
@@ -49,6 +52,9 @@ private:
 
 	UChunkLocationData* ChunkLocationDataRef;
 	UChunkLocationData*& CLDR = ChunkLocationDataRef; // creating an alias for the chunk location data ref
+
+	UAnimationSettingsNPC* AnimationSettingsRef;
+	UAnimationSettingsNPC*& AnimS = AnimationSettingsRef; // creating an alias for the animation settings ref
 
 	TSubclassOf<AActor> Chunk;
 
@@ -143,6 +149,9 @@ private:
 
 	// Control variable for printing the chunk mesh compute time 
 	int lastLoggedChunkCount = 0;
+
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

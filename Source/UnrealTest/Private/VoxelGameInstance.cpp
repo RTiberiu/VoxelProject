@@ -19,10 +19,12 @@ void AVoxelGameInstance::BeginPlay() {
 
     chunkLocationData = NewObject<UChunkLocationData>();
     worldTerrainSettings = NewObject<UWorldTerrainSettings>();
-
+    animationSettingsNpcRef = NewObject<UAnimationSettingsNPC>();
+         
     // Ensuring there is not premature garbage collection on the object
     worldTerrainSettings->AddToRoot();
     chunkLocationData->AddToRoot();
+    animationSettingsNpcRef->AddToRoot();
 
     // Spawn PerlinNoiseSettings for allowing value changes in the editor
     perlinNoiseSettings = GetWorld()->SpawnActor<APerlinNoiseSettings>(
@@ -49,6 +51,7 @@ void AVoxelGameInstance::BeginPlay() {
         chunkWorld->SetChunkLocationData(chunkLocationData);
         chunkWorld->SetWorldTerrainSettings(worldTerrainSettings);
         chunkWorld->SetPerlinNoiseSettings(perlinNoiseSettings);
+        chunkWorld->SetAnimationSettingsNpc(animationSettingsNpcRef);
         chunkWorld->InitializePathfindingManager();
 
         // Finish spawning the chunk world
@@ -64,6 +67,11 @@ void AVoxelGameInstance::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     if (worldTerrainSettings) {
         worldTerrainSettings->RemoveFromRoot();
         worldTerrainSettings = nullptr;
+    }
+
+    if (animationSettingsNpcRef) {
+        animationSettingsNpcRef->RemoveFromRoot();
+        animationSettingsNpcRef = nullptr;
     }
 
     if (chunkLocationData) {

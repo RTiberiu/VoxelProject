@@ -47,6 +47,10 @@ void AChunkWorld::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSett
 	WTSR->SetPerlinNoiseSettings(InPerlinNoiseSettings);
 }
 
+void AChunkWorld::SetAnimationSettingsNpc(UAnimationSettingsNPC* InAnimationSettingsRef) {
+	AnimationSettingsRef = InAnimationSettingsRef;
+}
+
 void AChunkWorld::InitializePathfindingManager() {
 	// Initialize thread pool for the NPC pathfinding
 	const int PathfindingThreads = 3;
@@ -268,9 +272,10 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 		// Add references to the NPC and pass the pathfinding manager for making requests
 		SpawnedNPCActor->SetWorldTerrainSettings(WTSR);
 		SpawnedNPCActor->SetChunkLocationData(CLDR);
+		SpawnedNPCActor->SetAnimationSettingsNPC(AnimS);
 		SpawnedNPCActor->SetPathfindingManager(PathfindingManager);
 		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
-
+		SpawnedNPCActor->InitializeBrain("Tiger");
 		// Define the boundaries for the collision check
 		//float minX = PlayerPosition.X - WTSR->VegetationCollisionDistance;
 		//float maxX = PlayerPosition.X + WTSR->VegetationCollisionDistance;
@@ -540,6 +545,10 @@ void AChunkWorld::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 	if (ChunkLocationDataRef) {
 		ChunkLocationDataRef = nullptr;
 	}
+
+	if (AnimationSettingsRef) {
+		AnimationSettingsRef = nullptr;
+	}
 }
 
 FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
@@ -551,6 +560,8 @@ FIntPoint AChunkWorld::GetChunkCoordinates(FVector Position) const {
 // Called every frame
 void AChunkWorld::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
+
+	// TODO Re-think the order of per-frame actions. For example, the collision of trees might not update because there are too many chunks and trees to spawn. 
 
 	spawnedTreesThisFrame = false;
 	spawnedChunksThisFrame = false;

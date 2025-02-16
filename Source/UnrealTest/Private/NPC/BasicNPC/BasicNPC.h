@@ -6,6 +6,8 @@
 #include <GameFramework/FloatingPawnMovement.h>
 #include <Runtime/AIModule/Classes/AIController.h>
 
+#include "..\SettingsNPC\AnimationSettingsNPC.h"
+
 #include "..\..\Pathfinding\SearchLibrary\Path.h"
 #include "..\..\Pathfinding\PathfindingThreadPool\PathfindingThreadManager.h"
 
@@ -27,8 +29,9 @@ public:
 	void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 	void SetPathfindingManager(PathfindingThreadManager* InPathfindingManager);
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
+	void SetAnimationSettingsNPC(UAnimationSettingsNPC* InAnimationSettingsNPCRef); 
 
-	void InitializeBrain();
+	void InitializeBrain(const FString& animalType);
 
 	void SetPathToPlayerAndNotify(Path* InPathToPlayer);
 
@@ -39,14 +42,19 @@ private:
 	UChunkLocationData* ChunkLocationDataRef;
 	UChunkLocationData*& CLDR = ChunkLocationDataRef;
 
+	UAnimationSettingsNPC* AnimationSettingsNPCRef;
+	UAnimationSettingsNPC*& AnimS = AnimationSettingsNPCRef;
+
 	PathfindingThreadManager* PathfindingManager;
 
 	AAIController* AIController;
 
+	FString npcType;
+
 	void spawnNPC();
 	void buildAnimationsList();
 
-	void PlayAnimation(const FString& type);
+	void PlayAnimation(const FString& animationtype);
 
 	void RequestPathToPlayer();
 	Path* pathToPlayer;

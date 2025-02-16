@@ -37,7 +37,7 @@ struct BasicNpcAttributes {
 
 	uint8_t reactionSpeed;			// How fast should the NPC react to the environment. This determines how quickly the should intrerupt their current action and replace it with another (for example fleeing from an enemy).
 
-	uint8_t willignessToBecomeAlly; // How willing is the NPC to become someone else's ally and become a pack
+	uint8_t willingnessToBecomeAlly; // How willing is the NPC to become someone else's ally and become a pack
 
 	uint8_t desireToRecruitAllies;	// How willing is the animal to trade food from the food pouch to attempt to recruit allies
 };
@@ -54,8 +54,59 @@ struct MemoryNpcAttributes {
 
 	uint8_t positiveDesireToHoardFoodBonus;		// Rate for increasing food hoarding desire if animal gets too close to dying
 
-	// TODO Should find a reason to decrease hoarding desire (maybe animal becomes slower?)
+	// TODO Should find a reason to decrease hoarding desire (maybe animal becomes slower?) 
+};
 
+BasicNpcAttributes TigerBasicAttributes = {
+	100,  // totalHp
+	30,   // hitDamage
+	5,    // attackSpeed
+	8,    // movementSpeed
+	80,   // totalStamina
+	5,    // staminaDepletionRate
+	10,   // staminaRecoveryRate
+	100,  // totalHunger
+	2,    // hungerDepletionRate
+	20,   // hungerRecoveryBasic
+	30,   // hungerRecoveryImproved
+	1,    // eatingSpeedRateBasic
+	3,    // eatingSpeedRateImproved
+	3,    // restAfterFoodBasic
+	5,    // restAfterFoodImproved
+	4,    // mealsUntilRestIsNeeded
+	0,    // foodPouch
+	10,   // desireToHoardFood
+	90,   // chaseDesire
+	500,  // awarenessRadius
+	700,  // fleeingRadius
+	6,    // reactionSpeed
+	10,   // willingnessToBecomeAlly
+	5    // desireToRecruitAllies
+};
 
-
+BasicNpcAttributes TapirBasicAttributes = {
+	100,  // totalHp
+	10,   // hitDamage
+	3,    // attackSpeed
+	5,    // movementSpeed
+	60,   // totalStamina
+	5,    // staminaDepletionRate
+	10,   // staminaRecoveryRate
+	100,  // totalHunger
+	2,    // hungerDepletionRate
+	20,   // hungerRecoveryBasic
+	30,   // hungerRecoveryImproved
+	1,    // eatingSpeedRateBasic
+	3,    // eatingSpeedRateImproved
+	3,    // restAfterFoodBasic
+	5,    // restAfterFoodImproved
+	4,    // mealsUntilRestIsNeeded
+	0,    // foodPouch
+	10,   // desireToHoardFood
+	90,   // chaseDesire
+	900,  // awarenessRadius
+	900,  // fleeingRadius
+	6,    // reactionSpeed
+	60,   // willingnessToBecomeAlly
+	30    // desireToRecruitAllies
 };

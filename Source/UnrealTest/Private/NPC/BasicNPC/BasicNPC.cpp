@@ -37,7 +37,7 @@ ABasicNPC::ABasicNPC() {
     CollisionNpcDetectionSphere->SetHiddenInGame(false);
     CollisionNpcDetectionSphere->SetVisibility(true);
 
-    movementSpeed = 8.0f;
+    movementSpeed = 15.0f;
 }
 
 ABasicNPC::~ABasicNPC() {
@@ -59,12 +59,19 @@ void ABasicNPC::SetChunkLocationData(UChunkLocationData* InChunkLocationData) {
     ChunkLocationDataRef = InChunkLocationData;
 }
 
-void ABasicNPC::InitializeBrain() {
+void ABasicNPC::SetAnimationSettingsNPC(UAnimationSettingsNPC* InAnimationSettingsNPCRef) {
+    AnimationSettingsNPCRef = InAnimationSettingsNPCRef;
+}
+
+void ABasicNPC::InitializeBrain(const FString& animalType) {
+    npcType = animalType;
+
+    // TODO CREATE HERE THE DECISION SYSTEM
 }
 
 void ABasicNPC::spawnNPC() {
-    FString MeshPath = TEXT("SkeletalMesh'/Game/Characters/Animals/Panda/Animations/Panda_Animations.Panda_Animations'");
-
+    FString MeshPath = AnimS->GetSkeletalMeshPath(npcType);;
+    
     // Load the skeletal mesh
     USkeletalMesh* LoadedMesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath);
     if (LoadedMesh) {
@@ -77,55 +84,23 @@ void ABasicNPC::spawnNPC() {
         SkeletalMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);*/
     }
 
-
     // Load the animation asset
     PlayAnimation(TEXT("idleA"));
 
     currentLocation = GetActorLocation();
 }
 
-void ABasicNPC::buildAnimationsList() {
-    const TArray<FString> AnimationNames = {
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Idle_A.Panda_Animations_Anim_Idle_A'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Bounce.Panda_Animations_Anim_Bounce'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Clicked.Panda_Animations_Anim_Clicked'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Death.Panda_Animations_Anim_Death'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Eat.Panda_Animations_Anim_Eat'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Fly.Panda_Animations_Anim_Fly'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Walk.Panda_Animations_Anim_Walk'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Jump.Panda_Animations_Anim_Jump'",
-        "AnimSequence'/Game/Characters/Animals/Panda/Animations/Panda_Animations_Anim_Run.Panda_Animations_Anim_Run'",
-    };
-
-    const TArray<FString> AnimationKeys = {
-        "idleA",
-        "bounce",
-        "clicked",
-        "death",
-        "eat",
-        "fly",
-        "walk",
-        "jump",
-        "run"
-    };
-
-    for (int x = 0; x < AnimationNames.Num(); x++) {
-        UAnimSequence* LoadedAnim = LoadObject<UAnimSequence>(nullptr, *AnimationNames[x]);
-        Animations.Add(AnimationKeys[x], LoadedAnim);
-    }
-}
-
-void ABasicNPC::PlayAnimation(const FString& type) {
-    if (currentAnimPlaying == type) {
+void ABasicNPC::PlayAnimation(const FString& animationtype) {
+    if (currentAnimPlaying == animationtype) {
         return;
     }
 
-    currentAnimPlaying = type;
+    currentAnimPlaying = animationtype;
 
-    UAnimSequence** AnimationPtr = Animations.Find(type);
-
+    
+    UAnimSequence* AnimationPtr = AnimS->GetAnimation(npcType, animationtype);
     if (AnimationPtr) {
-        SkeletalMesh->PlayAnimation(*AnimationPtr, true);
+        SkeletalMesh->PlayAnimation(AnimationPtr, true);
     }
 }
 
@@ -188,7 +163,7 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
     SetActorLocation(newPosition);
 
     // If the NPC is close enough to the target, consider it reached and move to the next point
-    if (FVector::Dist(newPosition, *targetLocation) < 10.0f) {
+    if (FVector::Dist(newPosition, *targetLocation) < 1.0f) {
         pathToPlayer->path.pop_front();
         currentLocation = *targetLocation;
 
@@ -291,8 +266,6 @@ void ABasicNPC::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* O
 void ABasicNPC::BeginPlay() {
 	Super::BeginPlay();
 
-    buildAnimationsList();
-	
     spawnNPC();
 
     AIController = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass());
