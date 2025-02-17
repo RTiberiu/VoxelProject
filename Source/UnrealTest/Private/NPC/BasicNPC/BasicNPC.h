@@ -32,9 +32,14 @@ public:
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 	void SetAnimationSettingsNPC(UAnimationSettingsNPC* InAnimationSettingsNPCRef); 
 
-	void InitializeBrain(const FString& animalType);
+	void InitializeBrain(const AnimalType& animalType);
 
 	void SetPathToPlayerAndNotify(Path* InPathToPlayer);
+
+	const AnimalType& GetType();
+	const AnimalType& GetNpcFoodRelationships();
+	const AnimalType& GetAlliesRelationships();
+	const AnimalType& GetEnemiesRelationships();
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
@@ -52,7 +57,8 @@ private:
 
 	UDecisionSystemNPC* DecisionSys;
 
-	FString npcType;
+	AnimalType NpcType;
+	AnimalRelationships Relationships;
 
 	void spawnNPC();
 
@@ -125,11 +131,17 @@ private:
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	void AddOverlappingNpcToVisionList(ABasicNPC* OverlappingNpc);
+	void RemoveOverlappingNpcFromVisionList(ABasicNPC* OverlappingNpc);
+
+	void AddOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood);
+	void RemoveOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood);
+
 	// Store objects in the NPC's perceptation sphere 
 	TArray<ABasicNPC*> ThreatsInRange;
 	TArray<ABasicNPC*> AlliesInRange;
 	TArray<ABasicNPC*> FoodNpcInRange;
-	TArray<UProceduralMeshComponent*> FoodSourceInRange;
+	TArray<UPrimitiveComponent*> FoodSourceInRange;
 
 protected:
 	// Called when the game starts or when spawned

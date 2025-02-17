@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "RelationshipSettingsNPC.h"
 #include "AnimationSettingsNPC.generated.h"
 
 UCLASS()
@@ -13,30 +14,37 @@ public:
 	UAnimationSettingsNPC();
 	~UAnimationSettingsNPC();
 
-	UAnimSequence* GetAnimation(const FString& animal, const FString& animationType);
+	UAnimSequence* GetAnimation(const AnimalType& animal, const FString& animationType);
 
-	FString GetSkeletalMeshPath(const FString& animal);
+	FString GetSkeletalMeshPath(const AnimalType& animal);
 
 private:
 	void LoadAnimationsForAllAnimals();
 
-	TMap<FString, UAnimSequence*>* GetAnimalAnimationList(const FString& animal);
+	TMap<FString, UAnimSequence*>* GetAnimalAnimationList(const AnimalType& animal);
 
-	const TArray<FString> Animals = {
-		"Tiger", "Tapir", "Gorilla", "Bat", "Sloth", "Cobra", "Peacock", "Panda"
+	const TArray<AnimalType> Animals = {
+			AnimalType::Tiger,
+			AnimalType::Tapir,
+			AnimalType::Gorilla,
+			AnimalType::Bat,
+			AnimalType::Sloth,
+			AnimalType::Cobra,
+			AnimalType::Peacock,
+			AnimalType::Panda
 	};
 
 	const FString BaseSkeletalMeshPath = "SkeletalMesh'/Game/Characters/Animals/";
 
-    const TMap<FString, FString> SkeletalPath = {
-        {"Tiger", "Tiger/Tiger_Animations.Tiger_Animations'"},
-		{ "Tapir", "Tapir/Tapir_Animations.Tapir_Animations'" },
-		{ "Gorilla", "Gorilla/Gorilla_Animations.Gorilla_Animations'" },
-		{ "Bat", "Bat/Bat_Animations.Bat_Animations'" },
-		{ "Sloth", "Sloth/Sloth_Animations.Sloth_Animations'" },
-		{ "Cobra", "Cobra/Cobra_Animations.Cobra_Animations'" },
-		{ "Peacock", "Peacock/Peacock_Animations.Peacock_Animations'" },
-		{ "Panda", "Panda/Panda_Animations.Panda_Animations'" }
+    const TMap<AnimalType, FString> SkeletalPath = {
+		{AnimalType::Tiger,   "Tiger/Tiger_Animations.Tiger_Animations'"},
+		{AnimalType::Tapir,   "Tapir/Tapir_Animations.Tapir_Animations'"},
+		{AnimalType::Gorilla, "Gorilla/Gorilla_Animations.Gorilla_Animations'"},
+		{AnimalType::Bat,     "Bat/Bat_Animations.Bat_Animations'"},
+		{AnimalType::Sloth,   "Sloth/Sloth_Animations.Sloth_Animations'"},
+		{AnimalType::Cobra,   "Cobra/Cobra_Animations.Cobra_Animations'"},
+		{AnimalType::Peacock, "Peacock/Peacock_Animations.Peacock_Animations'"},
+		{AnimalType::Panda,   "Panda/Panda_Animations.Panda_Animations'"}
     };
 
 	// Every other animation path for an NPC should follow this structure 
@@ -75,15 +83,15 @@ private:
 	TMap<FString, UAnimSequence*> PeacockLoadedAnimations;
 	TMap<FString, UAnimSequence*> PandaLoadedAnimations;
 
-	TMap<FString, TMap<FString, UAnimSequence*>*> AnimalAnimationMap = {
-			{"Tiger", &TigerLoadedAnimations},
-			{"Tapir", &TapirLoadedAnimations},
-			{"Gorilla", &GorillaLoadedAnimations},
-			{"Bat", &BatLoadedAnimations},
-			{"Sloth", &SlothLoadedAnimations},
-			{"Cobra", &CobraLoadedAnimations},
-			{"Peacock", &PeacockLoadedAnimations},
-			{"Panda", &PandaLoadedAnimations}
+	TMap<AnimalType, TMap<FString, UAnimSequence*>*> AnimalAnimationMap = {
+		{AnimalType::Tiger,   &TigerLoadedAnimations},
+		{AnimalType::Tapir,   &TapirLoadedAnimations},
+		{AnimalType::Gorilla, &GorillaLoadedAnimations},
+		{AnimalType::Bat,     &BatLoadedAnimations},
+		{AnimalType::Sloth,   &SlothLoadedAnimations},
+		{AnimalType::Cobra,   &CobraLoadedAnimations},
+		{AnimalType::Peacock, &PeacockLoadedAnimations},
+		{AnimalType::Panda,   &PandaLoadedAnimations}
 	};
 };
 

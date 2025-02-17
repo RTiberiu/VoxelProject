@@ -3,17 +3,24 @@
 #include <cstdint>
 #include <type_traits>
 
+// Setting the bit for each of the type of animal
 enum class AnimalType : uint16_t {
-	RedPanda,
-	Tiger,
-	Tapir,
-	Sloth,
-	Cobra,
-	Bat,
-	Peacock,
-	Gorilla,
-	Panda,
-	None
+    RedPanda    = 1 << 0,
+    Tiger       = 1 << 1,
+    Tapir       = 1 << 2,
+    Sloth       = 1 << 3,
+    Cobra       = 1 << 4,
+    Bat         = 1 << 5,
+    Peacock     = 1 << 6,
+    Gorilla     = 1 << 7,
+    Panda       = 1 << 8,
+    None        = 0
+};
+
+struct AnimalRelationships {
+	AnimalType FoodType;
+	AnimalType Allies;
+	AnimalType Enemies;
 };
 
 using enum AnimalType;
@@ -24,9 +31,15 @@ constexpr AnimalType operator|(AnimalType lhs, AnimalType rhs) noexcept {
 	return static_cast<AnimalType>(static_cast<T>(lhs) | static_cast<T>(rhs));
 }
 
+// Overloading the & operator for bitwise operations between AnimalType objects
+constexpr AnimalType operator&(AnimalType lhs, AnimalType rhs) noexcept {
+	using T = std::underlying_type_t<AnimalType>;
+	return static_cast<AnimalType>(static_cast<T>(lhs) & static_cast<T>(rhs));
+}
+
 // Tiger settings
 constexpr AnimalType TigerFoodType = RedPanda | Sloth | Tapir;
-constexpr AnimalType TigerAllies = Gorilla | Panda;
+constexpr AnimalType TigerAllies = Gorilla | Panda | Tiger;
 constexpr AnimalType TigerEnemies = None;
 
 // Tapir settings
@@ -64,4 +77,6 @@ constexpr AnimalType PandaFoodType = None;
 constexpr AnimalType PandaAllies = Tiger | Tapir | RedPanda | Sloth | Cobra | Bat | Peacock | Gorilla;
 constexpr AnimalType PandaEnemies = None;
 
-// TODO CONTINUE AND ADJUST THE RELATIONSHIPS 
+extern TMap<AnimalType, FString> TypeToName;
+extern TMap<AnimalType, AnimalRelationships> AnimalsRelationships;
+

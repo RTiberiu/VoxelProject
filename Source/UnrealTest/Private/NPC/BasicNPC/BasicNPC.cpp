@@ -48,8 +48,9 @@ void ABasicNPC::SetAnimationSettingsNPC(UAnimationSettingsNPC* InAnimationSettin
     AnimationSettingsNPCRef = InAnimationSettingsNPCRef;
 }
 
-void ABasicNPC::InitializeBrain(const FString& animalType) {
-    npcType = animalType;
+void ABasicNPC::InitializeBrain(const AnimalType& animalType) {
+    NpcType = animalType;
+    Relationships = AnimalsRelationships[NpcType];
 
     // Create the decision system and initialize it
     DecisionSys = NewObject<UDecisionSystemNPC>();
@@ -60,7 +61,7 @@ void ABasicNPC::InitializeBrain(const FString& animalType) {
 }
 
 void ABasicNPC::spawnNPC() {
-    FString MeshPath = AnimS->GetSkeletalMeshPath(npcType);;
+    FString MeshPath = AnimS->GetSkeletalMeshPath(NpcType);;
     
     // Load the skeletal mesh
     USkeletalMesh* LoadedMesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath);
@@ -88,7 +89,7 @@ void ABasicNPC::PlayAnimation(const FString& animationtype) {
     currentAnimPlaying = animationtype;
 
     
-    UAnimSequence* AnimationPtr = AnimS->GetAnimation(npcType, animationtype);
+    UAnimSequence* AnimationPtr = AnimS->GetAnimation(NpcType, animationtype);
     if (AnimationPtr) {
         SkeletalMesh->PlayAnimation(AnimationPtr, true);
     }
@@ -240,6 +241,22 @@ void ABasicNPC::SetPathToPlayerAndNotify(Path* InPathToPlayer) {
     }
 }
 
+const AnimalType& ABasicNPC::GetType() {
+    return NpcType;
+}
+
+const AnimalType& ABasicNPC::GetNpcFoodRelationships() {
+    return Relationships.FoodType;
+}
+
+const AnimalType& ABasicNPC::GetAlliesRelationships() {
+    return Relationships.Allies;
+}
+
+const AnimalType& ABasicNPC::GetEnemiesRelationships() {
+    return Relationships.Enemies;
+}
+
 void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime) {
     // Calculating direction and yaw angle
     FVector direction = (targetPosition - actorLocation).GetSafeNormal();
@@ -264,11 +281,118 @@ void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, 
 }
 
 void ABasicNPC::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
-    // TODO Add object to its correct list (ally, threat, food, etc)
+
+    // Check if the OtherActor is of type ABasicNPC and add to vision list
+    if (OtherActor->IsA(ABasicNPC::StaticClass())) {
+        // Get type and decide on where to place in the list
+        ABasicNPC* OverlappingNPC = Cast<ABasicNPC>(OtherActor);
+        if (OverlappingNPC) {
+            AddOverlappingNpcToVisionList(OverlappingNPC);
+        }
+
+    }
+
+    // Attempt to remove the component from the food source vision list if it's a flower or grass
+    if (OtherComp) {
+        AddOverlappingBasicFoodSource(OtherComp);
+    }
 }
 
 void ABasicNPC::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
-    // TODO Remove object from its correct list (ally, threat, food, etc)
+
+    if (OtherActor->IsA(ABasicNPC::StaticClass())) {
+        // Get type and decide from which vision list to remove it from
+        ABasicNPC* OverlappingNPC = Cast<ABasicNPC>(OtherActor);
+        if (OverlappingNPC) {
+            RemoveOverlappingNpcFromVisionList(OverlappingNPC);
+        }
+
+    }
+
+    // Attempt to remove the component from the food source vision list if it's a flower or grass
+    if (OtherComp) {
+        RemoveOverlappingBasicFoodSource(OtherComp);
+    }
+}
+
+void ABasicNPC::AddOverlappingNpcToVisionList(ABasicNPC* OverlappingNpc) {
+    const AnimalType& OverlappingNpcType = OverlappingNpc->GetType();
+
+    // Check if it's food 
+    if ((Relationships.FoodType & OverlappingNpcType) == OverlappingNpcType) {
+        UE_LOG(LogTemp, Warning, TEXT("Added %s to the FOOD NPC vision list."), *OverlappingNpc->GetName())
+        FoodNpcInRange.Add(OverlappingNpc);
+        return;
+    }
+
+    // Check if it's ally
+    if ((Relationships.Allies & OverlappingNpcType) == OverlappingNpcType) {
+        UE_LOG(LogTemp, Warning, TEXT("Added %s to the ALLIES vision list."), *OverlappingNpc->GetName())
+        AlliesInRange.Add(OverlappingNpc);
+        return;
+    }
+
+    // Check if it's threat
+    if ((Relationships.Enemies & OverlappingNpcType) == OverlappingNpcType) {
+        UE_LOG(LogTemp, Warning, TEXT("Added %s to the THREATS vision list."), *OverlappingNpc->GetName())
+        ThreatsInRange.Add(OverlappingNpc);
+        return;
+    }
+}
+
+void ABasicNPC::RemoveOverlappingNpcFromVisionList(ABasicNPC* OverlappingNpc) {
+    const AnimalType& OverlappingNpcType = OverlappingNpc->GetType();
+
+    // Check if it's food 
+    if ((Relationships.FoodType & OverlappingNpcType) == OverlappingNpcType) {
+        UE_LOG(LogTemp, Warning, TEXT("Removed %s from the FOOD NPC vision list."), *OverlappingNpc->GetName())
+        FoodNpcInRange.Remove(OverlappingNpc);
+        return;
+    }
+
+    // Check if it's ally
+    if ((Relationships.Allies & OverlappingNpcType) == OverlappingNpcType) {
+        UE_LOG(LogTemp, Warning, TEXT("Removed %s from the ALLIES vision list."), *OverlappingNpc->GetName())
+        AlliesInRange.Remove(OverlappingNpc);
+        return;
+    }
+
+    // Check if it's threat
+    if ((Relationships.Enemies & OverlappingNpcType) == OverlappingNpcType) {
+        UE_LOG(LogTemp, Warning, TEXT("Removed %s from the THREATS vision list."), *OverlappingNpc->GetName())
+        ThreatsInRange.Remove(OverlappingNpc);
+        return;
+    }
+}
+
+// Add component to food source vision list if it's grass or flower
+void ABasicNPC::AddOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood) {
+    if (OverlappingFood->ComponentTags.Contains(TEXT("Grass"))) {
+        UE_LOG(LogTemp, Warning, TEXT("Added GRASS to FOOD SOURCE vision list."));
+        FoodSourceInRange.Add(OverlappingFood);
+        return;
+    }
+
+    if (OverlappingFood->ComponentTags.Contains(TEXT("Flower"))) {
+        UE_LOG(LogTemp, Warning, TEXT("Added FLOWER to FOOD SOURCE vision list."));
+        FoodSourceInRange.Add(OverlappingFood);
+        return;
+    }
+}
+
+// Remoive component from food source vision list if it's grass or flower
+void ABasicNPC::RemoveOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood) {
+    if (OverlappingFood->ComponentTags.Contains(TEXT("Grass"))) {
+        UE_LOG(LogTemp, Warning, TEXT("Removed GRASS to FOOD SOURCE vision list."));
+        FoodSourceInRange.Remove(OverlappingFood);
+        return;
+    }
+
+    if (OverlappingFood->ComponentTags.Contains(TEXT("Flower"))) {
+        UE_LOG(LogTemp, Warning, TEXT("Removed FLOWER to FOOD SOURCE vision list."));
+        FoodSourceInRange.Remove(OverlappingFood);
+        return;
+    }
 }
 
 void ABasicNPC::BeginPlay() {

@@ -8,7 +8,7 @@ UAnimationSettingsNPC::UAnimationSettingsNPC() {
 // Destroy all the loaded animation objects and empty the maps for all the NPCs
 UAnimationSettingsNPC::~UAnimationSettingsNPC() {
     UE_LOG(LogTemp, Warning, TEXT("Destroying the Animation Settings NPC"));
-    for (const FString& animal : Animals) {
+    for (const AnimalType& animal : Animals) {
         TMap<FString, UAnimSequence*>* animalList = GetAnimalAnimationList(animal);
         if (animalList) {
             animalList->Empty();
@@ -16,20 +16,20 @@ UAnimationSettingsNPC::~UAnimationSettingsNPC() {
     }
 }
 
-UAnimSequence* UAnimationSettingsNPC::GetAnimation(const FString& animal, const FString& animationType) {
+UAnimSequence* UAnimationSettingsNPC::GetAnimation(const AnimalType& animal, const FString& animationType) {
     TMap<FString, UAnimSequence*>* animalList = GetAnimalAnimationList(animal);
     return (*animalList)[animationType];
 }
 
-FString UAnimationSettingsNPC::GetSkeletalMeshPath(const FString& animal) {
+FString UAnimationSettingsNPC::GetSkeletalMeshPath(const AnimalType& animal) {
     return BaseSkeletalMeshPath + SkeletalPath[animal];
 }
 
 void UAnimationSettingsNPC::LoadAnimationsForAllAnimals() {
-    for (const FString& animal : Animals) {
-        for (int32 i = 0; i < AnimationKeys.Num(); ++i) {
+    for (const AnimalType& animal : Animals) {
+        for (int32 i = 0; i < AnimationKeys.Num(); i++) {
 
-            FString animationPath = BaseAnimationPath + animal + AnimationNamesPath[i];
+            FString animationPath = BaseAnimationPath + TypeToName[animal] + AnimationNamesPath[i];
             UAnimSequence* animSequence = LoadObject<UAnimSequence>(nullptr, *animationPath);
             if (animSequence) {
                 TMap<FString, UAnimSequence*>* animalList = GetAnimalAnimationList(animal);
@@ -38,7 +38,7 @@ void UAnimationSettingsNPC::LoadAnimationsForAllAnimals() {
         }
     }
 }
-TMap<FString, UAnimSequence*>* UAnimationSettingsNPC::GetAnimalAnimationList(const FString& animal) {
+TMap<FString, UAnimSequence*>* UAnimationSettingsNPC::GetAnimalAnimationList(const AnimalType& animal) {
     if (AnimalAnimationMap.Contains(animal)) {
         return AnimalAnimationMap[animal];
     }

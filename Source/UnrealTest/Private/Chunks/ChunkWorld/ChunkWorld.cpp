@@ -8,6 +8,7 @@
 #include "..\..\NPC\BasicNPC\BasicNPC.h"
 #include "GameFramework/DefaultPawn.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "..\..\NPC\SettingsNPC\RelationshipSettingsNPC.h"
 #include <Kismet/GameplayStatics.h>
 
 #include "ProceduralMeshComponent.h" // MAYBE
@@ -215,13 +216,14 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector
 	Mesh->SetCastShadow(false);
 
 	FVoxelObjectMeshData* MeshData = WTSR->GetRandomGrassMeshData();
-	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), false);
+	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), true);
 
 	// Set up simplified collision
-	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Mesh->SetCollisionResponseToAllChannels(ECR_Block);
-	Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	Mesh->SetCollisionResponseToAllChannels(ECR_Overlap);
 
+	Mesh->ComponentTags.Add(TEXT("Grass"));
+	
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
 
@@ -243,12 +245,14 @@ void AChunkWorld::SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVecto
 	Mesh->SetCastShadow(false);
 
 	FVoxelObjectMeshData* MeshData = WTSR->GetRandomFlowerMeshData();
-	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), false);
+	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), true);
 
 	// Set up simplified collision
-	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Mesh->SetCollisionResponseToAllChannels(ECR_Block);
-	Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	// Set up simplified collision
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	Mesh->SetCollisionResponseToAllChannels(ECR_Overlap);
+
+	Mesh->ComponentTags.Add(TEXT("Flower"));
 
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
@@ -275,7 +279,9 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 		SpawnedNPCActor->SetAnimationSettingsNPC(AnimS);
 		SpawnedNPCActor->SetPathfindingManager(PathfindingManager);
 		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
-		SpawnedNPCActor->InitializeBrain("Tiger");
+		SpawnedNPCActor->InitializeBrain(AnimalType::Tiger);
+
+		//SpawnedNPCActor->tag
 		// Define the boundaries for the collision check
 		//float minX = PlayerPosition.X - WTSR->VegetationCollisionDistance;
 		//float maxX = PlayerPosition.X + WTSR->VegetationCollisionDistance;
@@ -834,7 +840,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 50) { // TODO TESTING Spawning just one NPC to test path adjustment
+		if (WTSR->NPCCount < 2) { // TODO TESTING Spawning just one NPC to test path adjustment
 			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 
