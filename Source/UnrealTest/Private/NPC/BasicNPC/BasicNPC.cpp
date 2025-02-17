@@ -22,25 +22,10 @@ ABasicNPC::ABasicNPC() {
     if (!MovementComponent) {
         FloatingMovement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("FloatingMovement"));
     }
-
-    // Creating the collision sphere that detects NPCs
-    CollisionNpcDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionNpcDetectionSphere"));
-    CollisionNpcDetectionSphere->InitSphereRadius(300.0f); // TODO MAKE THIS A PARAMETER
-    CollisionNpcDetectionSphere->SetupAttachment(RootComponent);
-    CollisionNpcDetectionSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-
-    // Binding the overlap events for the NPC detection collision sphere
-    CollisionNpcDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &ABasicNPC::OnOverlapBegin);
-    CollisionNpcDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &ABasicNPC::OnOverlapEnd);
-
-    // Debugging // TODO Remove this when done debugging 
-    CollisionNpcDetectionSphere->SetHiddenInGame(false);
-    CollisionNpcDetectionSphere->SetVisibility(true);
-
-    movementSpeed = 15.0f;
 }
 
 ABasicNPC::~ABasicNPC() {
+    // TODO Cleanup here
 }
 
 void ABasicNPC::SetNPCWorldLocation(FIntPoint InNPCWorldLocation) {
@@ -66,7 +51,12 @@ void ABasicNPC::SetAnimationSettingsNPC(UAnimationSettingsNPC* InAnimationSettin
 void ABasicNPC::InitializeBrain(const FString& animalType) {
     npcType = animalType;
 
-    // TODO CREATE HERE THE DECISION SYSTEM
+    // Create the decision system and initialize it
+    DecisionSys = NewObject<UDecisionSystemNPC>();
+    DecisionSys->Initialize(animalType);
+
+    // Assign the sphere radius from the 
+    InitializeVisionCollisionSphere(DecisionSys->AnimalAttributes.awarenessRadius);
 }
 
 void ABasicNPC::spawnNPC() {
@@ -102,6 +92,24 @@ void ABasicNPC::PlayAnimation(const FString& animationtype) {
     if (AnimationPtr) {
         SkeletalMesh->PlayAnimation(AnimationPtr, true);
     }
+}
+
+void ABasicNPC::InitializeVisionCollisionSphere(const float& radius) {
+    // Creating the collision sphere that detects NPCs
+    CollisionNpcDetectionSphere = NewObject<USphereComponent>(this, USphereComponent::StaticClass(), TEXT("CollisionNpcDetectionSphere"));
+    CollisionNpcDetectionSphere->InitSphereRadius(radius);
+    CollisionNpcDetectionSphere->SetupAttachment(RootComponent);
+    CollisionNpcDetectionSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+    CollisionNpcDetectionSphere->RegisterComponent();
+
+    // Binding the overlap events for the NPC detection collision sphere
+    CollisionNpcDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &ABasicNPC::OnOverlapBegin);
+    CollisionNpcDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &ABasicNPC::OnOverlapEnd);
+
+    // Debugging // TODO Remove this when done debugging 
+    CollisionNpcDetectionSphere->SetHiddenInGame(false);
+    CollisionNpcDetectionSphere->SetVisibility(true);
 }
 
 void ABasicNPC::RequestPathToPlayer() {
@@ -157,7 +165,7 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
     } else {
         PlayAnimation(TEXT("walk"));
         // Move normally when not jumping
-        newPosition = FMath::VInterpTo(actorLocation, *targetLocation, deltaTime, movementSpeed);
+        newPosition = FMath::VInterpTo(actorLocation, *targetLocation, deltaTime, DecisionSys->AnimalAttributes.movementSpeed);
     }
 
     SetActorLocation(newPosition);
@@ -250,7 +258,7 @@ void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, 
         FRotator targetRotation(0.0f, targetYaw, 0.0f);
 
         // Smoothly interpolating the yaw rotation and apply rotation
-        FRotator newRotation = FMath::RInterpTo(currentRotation, targetRotation, deltaTime, movementSpeed);
+        FRotator newRotation = FMath::RInterpTo(currentRotation, targetRotation, deltaTime, DecisionSys->AnimalAttributes.movementSpeed);
         SetActorRotation(newRotation);
     }
 }

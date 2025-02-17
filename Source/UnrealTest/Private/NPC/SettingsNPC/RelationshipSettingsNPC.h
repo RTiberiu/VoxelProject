@@ -46,8 +46,8 @@ constexpr AnimalType CobraEnemies = None;
 
 // Bat settings
 constexpr AnimalType BatFoodType = None;
-constexpr AnimalType CobraAllies = Peacock | Tapir | Gorilla | Panda | Sloth;
-constexpr AnimalType CobraEnemies = Cobra;
+constexpr AnimalType BatAllies = Peacock | Tapir | Gorilla | Panda | Sloth;
+constexpr AnimalType BatEnemies = Cobra;
 
 // Peacock settings
 constexpr AnimalType PeacockFoodType = None;
@@ -60,8 +60,8 @@ constexpr AnimalType GorillaAllies = Tiger | Tapir | RedPanda | Sloth | Cobra | 
 constexpr AnimalType GorillaEnemies = None;
 
 // Panda settings
-constexpr AnimalType GorillaFoodType = None;
-constexpr AnimalType GorillaAllies = Tiger | Tapir | RedPanda | Sloth | Cobra | Bat | Peacock | Gorilla;
-constexpr AnimalType GorillaEnemies = None;
+constexpr AnimalType PandaFoodType = None;
+constexpr AnimalType PandaAllies = Tiger | Tapir | RedPanda | Sloth | Cobra | Bat | Peacock | Gorilla;
+constexpr AnimalType PandaEnemies = None;
 
 // TODO CONTINUE AND ADJUST THE RELATIONSHIPS 

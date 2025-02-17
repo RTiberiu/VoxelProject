@@ -7,6 +7,7 @@
 #include <Runtime/AIModule/Classes/AIController.h>
 
 #include "..\SettingsNPC\AnimationSettingsNPC.h"
+#include "DecisionSystemNPC.h"
 
 #include "..\..\Pathfinding\SearchLibrary\Path.h"
 #include "..\..\Pathfinding\PathfindingThreadPool\PathfindingThreadManager.h"
@@ -22,7 +23,7 @@ class ABasicNPC : public APawn {
 
 public:
 	ABasicNPC();
-	~ABasicNPC();
+	~ABasicNPC(); 
 
 	void SetNPCWorldLocation(FIntPoint InNPCWorldLocation);
 
@@ -49,12 +50,15 @@ private:
 
 	AAIController* AIController;
 
+	UDecisionSystemNPC* DecisionSys;
+
 	FString npcType;
 
 	void spawnNPC();
-	void buildAnimationsList();
 
 	void PlayAnimation(const FString& animationtype);
+
+	void InitializeVisionCollisionSphere(const float& radius);
 
 	void RequestPathToPlayer();
 	Path* pathToPlayer;

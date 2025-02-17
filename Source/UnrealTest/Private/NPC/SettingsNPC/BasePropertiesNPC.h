@@ -1,8 +1,6 @@
 #pragma once
 #include <cstdint>
 
-// TODO ASSIGN BASE PROPERTIES FOR EACH TYPE OF NPC
-
 struct BasicNpcAttributes {
 	uint8_t totalHp;
 	uint8_t hitDamage;				// Damage point when attacking another NPC
@@ -31,7 +29,7 @@ struct BasicNpcAttributes {
 
 	uint8_t chaseDesire;			// How willing is the animal to chase other targets (animal food sources)
 	
-	uint16_t awarenessRadius;		// The sphere radius that determines which NPCs or objects are being tracked by the NPC
+	float awarenessRadius;		// The sphere radius that determines which NPCs or objects are being tracked by the NPC
 	
 	uint16_t fleeingRadius;			// The radius around the NPC from which to pick a point to run towards when being chased.
 
@@ -57,7 +55,7 @@ struct MemoryNpcAttributes {
 	// TODO Should find a reason to decrease hoarding desire (maybe animal becomes slower?) 
 };
 
-BasicNpcAttributes TigerBasicAttributes = {
+const BasicNpcAttributes TigerBasicAttributes = {
 	100,  // totalHp
 	30,   // hitDamage
 	5,    // attackSpeed
@@ -77,14 +75,22 @@ BasicNpcAttributes TigerBasicAttributes = {
 	0,    // foodPouch
 	10,   // desireToHoardFood
 	90,   // chaseDesire
-	500,  // awarenessRadius
+	500.0f,  // awarenessRadius
 	700,  // fleeingRadius
 	6,    // reactionSpeed
 	10,   // willingnessToBecomeAlly
-	5    // desireToRecruitAllies
+	5	  // desireToRecruitAllies
 };
 
-BasicNpcAttributes TapirBasicAttributes = {
+const MemoryNpcAttributes TigerMemoryAttributes = {
+	5,  // negativeChaseDesireBonus
+	10, // positiveChaseDesireBonus
+	8,  // positiveDesireToRecruitAlliesBonus
+	3,  // negativeDesireToRecruitAlliesBonus
+	7   // positiveDesireToHoardFoodBonus
+};
+
+const BasicNpcAttributes TapirBasicAttributes = {
 	100,  // totalHp
 	10,   // hitDamage
 	3,    // attackSpeed
@@ -104,9 +110,17 @@ BasicNpcAttributes TapirBasicAttributes = {
 	0,    // foodPouch
 	10,   // desireToHoardFood
 	90,   // chaseDesire
-	900,  // awarenessRadius
+	900.0f,  // awarenessRadius
 	900,  // fleeingRadius
 	6,    // reactionSpeed
 	60,   // willingnessToBecomeAlly
 	30    // desireToRecruitAllies
+};
+
+const MemoryNpcAttributes TapirMemoryAttributes = {
+	3,  // negativeChaseDesireBonus
+	6,  // positiveChaseDesireBonus
+	5,  // positiveDesireToRecruitAlliesBonus
+	2,  // negativeDesireToRecruitAlliesBonus
+	4   // positiveDesireToHoardFoodBonus
 };
