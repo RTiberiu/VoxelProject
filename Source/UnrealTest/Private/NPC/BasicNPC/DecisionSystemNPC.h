@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "..\SettingsNPC\BasePropertiesNPC.h"
 #include "..\SettingsNPC\RelationshipSettingsNPC.h"
+#include "BasicNPC.h"
 #include "DecisionSystemNPC.generated.h"
 
 UCLASS()
@@ -13,12 +14,22 @@ public:
 	UDecisionSystemNPC();
 	~UDecisionSystemNPC();
 
-	void Initialize(const AnimalType& animalType);
+	void Initialize(const ABasicNPC* InOwner, const AnimalType& animalType);
+
+	void GetAction();
 
 	BasicNpcAttributes AnimalAttributes;
 	MemoryNpcAttributes MemoryAttributes;
 
 private:
+	const ABasicNPC* Owner; 
+
+	// How often the NPC should check if their current action should be interrupted and replaced with another action
+	FTimerHandle DecisionTimer;
+	void ShouldActionBeInterrupted();
+
+	void NotifyNpcOfNewAction();
+
 	// Base and memory attributes for all the animal types
 	const TMap<AnimalType, const BasicNpcAttributes*> AnimalsBaseAttributes = {
 		{AnimalType::Tiger, &TigerBasicAttributes},

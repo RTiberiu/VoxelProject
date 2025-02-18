@@ -54,7 +54,7 @@ void ABasicNPC::InitializeBrain(const AnimalType& animalType) {
 
     // Create the decision system and initialize it
     DecisionSys = NewObject<UDecisionSystemNPC>();
-    DecisionSys->Initialize(animalType);
+    DecisionSys->Initialize(this, animalType);
 
     // Assign the sphere radius from the 
     InitializeVisionCollisionSphere(DecisionSys->AnimalAttributes.awarenessRadius);

@@ -33,7 +33,7 @@ struct BasicNpcAttributes {
 	
 	uint16_t fleeingRadius;			// The radius around the NPC from which to pick a point to run towards when being chased.
 
-	uint8_t reactionSpeed;			// How fast should the NPC react to the environment. This determines how quickly the should intrerupt their current action and replace it with another (for example fleeing from an enemy).
+	float reactionSpeed;			// How fast should the NPC react to the environment. This determines how quickly the should intrerupt their current action and replace it with another (for example fleeing from an enemy). In reality, this is the time in seconds the NPC will make decisions
 
 	uint8_t willingnessToBecomeAlly; // How willing is the NPC to become someone else's ally and become a pack
 
@@ -77,7 +77,7 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	90,   // chaseDesire
 	500.0f,  // awarenessRadius
 	700,  // fleeingRadius
-	6,    // reactionSpeed
+	0.5f,    // reactionSpeed
 	10,   // willingnessToBecomeAlly
 	5	  // desireToRecruitAllies
 };
@@ -112,7 +112,7 @@ const BasicNpcAttributes TapirBasicAttributes = {
 	90,   // chaseDesire
 	900.0f,  // awarenessRadius
 	900,  // fleeingRadius
-	6,    // reactionSpeed
+	1.0f,    // reactionSpeed
 	60,   // willingnessToBecomeAlly
 	30    // desireToRecruitAllies
 };
