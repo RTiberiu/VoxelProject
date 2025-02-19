@@ -1,6 +1,7 @@
 #include "BasicNPC.h"
 
 #include "..\..\Chunks\TerrainSettings\WorldTerrainSettings.h"
+#include "DecisionSystemNPC.h"
 
 #include "GameFramework/PawnMovementComponent.h"
 
@@ -76,12 +77,12 @@ void ABasicNPC::spawnNPC() {
     }
 
     // Load the animation asset
-    PlayAnimation(TEXT("idleA"));
+    PlayAnimation(AnimationType::IdleA);
 
     currentLocation = GetActorLocation();
 }
 
-void ABasicNPC::PlayAnimation(const FString& animationtype) {
+void ABasicNPC::PlayAnimation(const AnimationType& animationtype) {
     if (currentAnimPlaying == animationtype) {
         return;
     }
@@ -145,7 +146,7 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
     FVector newPosition;
 
     if (isJumping) {
-        PlayAnimation(TEXT("jump"));
+        PlayAnimation(AnimationType::Jump);
         // Linear interpolation for X and Y movement
         newPosition = FMath::Lerp(jumpStart, jumpEnd, jumpProgress);
 
@@ -164,7 +165,7 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
             newPosition = jumpEnd; 
         }
     } else {
-        PlayAnimation(TEXT("walk"));
+        PlayAnimation(AnimationType::Walk);
         // Move normally when not jumping
         newPosition = FMath::VInterpTo(actorLocation, *targetLocation, deltaTime, DecisionSys->AnimalAttributes.movementSpeed);
     }
@@ -271,6 +272,29 @@ bool ABasicNPC::IsFoodNpcInRange() {
 
 bool ABasicNPC::IsFoodSourceInRange() {
     return FoodSourceInRange.Num() > 0;
+}
+
+std::variant<ABasicNPC*, UPrimitiveComponent*> ABasicNPC::GetClosestInVisionList(VisionList list) {
+    switch (list) {
+    case Threat:
+        return GetClosestInList(ThreatsInRange);
+        break;
+    case Allies:
+        return GetClosestInList(AlliesInRange);
+        break;
+    case NpcFood:
+        return GetClosestInList(FoodNpcInRange);
+        break;
+    case FoodSource:
+        return GetClosestInList(FoodSourceInRange);
+        break;
+    }
+
+    return std::variant<ABasicNPC*, UPrimitiveComponent*>();
+}
+
+FVector& ABasicNPC::GetCurrentLocation() {
+    return currentLocation;
 }
 
 void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime) {
@@ -411,6 +435,18 @@ void ABasicNPC::RemoveOverlappingBasicFoodSource(UPrimitiveComponent* Overlappin
     }
 }
 
+ABasicNPC* ABasicNPC::GetClosestInList(const TArray<ABasicNPC*>& list) {
+    return GetClosestInListGeneric<ABasicNPC>(list, [](ABasicNPC* npc) -> FVector {
+        return npc->GetCurrentLocation();
+        });
+}
+
+UPrimitiveComponent* ABasicNPC::GetClosestInList(const TArray<UPrimitiveComponent*>& list) {
+    return GetClosestInListGeneric<UPrimitiveComponent>(list, [](UPrimitiveComponent* comp) -> FVector {
+        return comp->GetComponentLocation();
+        });
+}
+
 void ABasicNPC::BeginPlay() {
 	Super::BeginPlay();
 
@@ -421,7 +457,7 @@ void ABasicNPC::BeginPlay() {
         AIController->Possess(this);
     }
 
-    PlayAnimation(TEXT("idleA"));
+    PlayAnimation(AnimationType::IdleA);
 }
 
 void ABasicNPC::Tick(float DeltaSeconds) {
@@ -434,7 +470,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
     }
 
     if (pathToPlayer == nullptr) {
-        PlayAnimation(TEXT("idleA"));
+        PlayAnimation(AnimationType::IdleA);
 
         RequestPathToPlayer();
     }

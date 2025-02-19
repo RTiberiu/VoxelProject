@@ -7,15 +7,23 @@
 #include <Runtime/AIModule/Classes/AIController.h>
 
 #include "..\SettingsNPC\AnimationSettingsNPC.h"
-#include "DecisionSystemNPC.h"
+//#include "DecisionSystemNPC.h"
 
+#include <variant>
 #include "..\..\Pathfinding\SearchLibrary\Path.h"
 #include "..\..\Pathfinding\PathfindingThreadPool\PathfindingThreadManager.h"
-
 #include "BasicNPC.generated.h"
 
+class UDecisionSystemNPC;
 class PathfindingThreadManager;
 class UWorldTerrainSettings;
+
+enum VisionList {
+	Threat,
+	Allies,
+	NpcFood,
+	FoodSource
+};
 
 UCLASS()
 class ABasicNPC : public APawn {
@@ -46,6 +54,11 @@ public:
 	bool IsFoodNpcInRange();
 	bool IsFoodSourceInRange();
 
+
+	std::variant<ABasicNPC*, UPrimitiveComponent*> GetClosestInVisionList(VisionList list);
+
+	FVector& GetCurrentLocation();
+
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
@@ -67,7 +80,7 @@ private:
 
 	void spawnNPC();
 
-	void PlayAnimation(const FString& animationtype);
+	void PlayAnimation(const AnimationType& animationtype);
 
 	void InitializeVisionCollisionSphere(const float& radius);
 
@@ -112,7 +125,7 @@ private:
 	FVector jumpEnd;
 	const float jumpHeight = 60.0f;
 	const float jumpSpeed = 2.0f;
-	FString currentAnimPlaying;
+	AnimationType currentAnimPlaying;
 
 	bool waitForNextPositionCheck;
 	float OccupiedDelayTimer = 0.0f; // Accumulates time when target location is occupied by another NPC
@@ -141,6 +154,32 @@ private:
 
 	void AddOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood);
 	void RemoveOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood);
+
+	// Helper functions to get the closest item in the vision lists
+	ABasicNPC* GetClosestInList(const TArray<ABasicNPC*>& list);
+	UPrimitiveComponent* GetClosestInList(const TArray<UPrimitiveComponent*>& list);
+
+	// Avoid repeating the same compare the closest object logic
+	template<typename T>
+	T* GetClosestInListGeneric(const TArray<T*>& list, TFunctionRef<FVector(T*)> GetLocation) const {
+		if (list.Num() == 0) {
+			return nullptr;
+		}
+
+		T* closest = nullptr;
+		float closestDistance = FLT_MAX;
+
+		for (T* element : list) {
+			if (element) {
+				float distance = FVector::Dist(currentLocation, GetLocation(element));
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closest = element;
+				}
+			}
+		}
+		return closest;
+	}
 
 	// Store objects in the NPC's perceptation sphere 
 	TArray<ABasicNPC*> ThreatsInRange;

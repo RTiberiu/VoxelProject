@@ -3,8 +3,15 @@
 #include "CoreMinimal.h"
 #include "..\SettingsNPC\BasePropertiesNPC.h"
 #include "..\SettingsNPC\RelationshipSettingsNPC.h"
-#include "BasicNPC.h"
+#include "..\SettingsNPC\AnimationSettingsNPC.h"
 #include "DecisionSystemNPC.generated.h"
+
+class ABasicNPC;
+
+struct NpcAction {
+	FVector TargetLocation;
+	AnimationType AnimationToRunAtTarget;
+};
 
 UCLASS()
 class UDecisionSystemNPC : public UObject {
@@ -14,9 +21,9 @@ public:
 	UDecisionSystemNPC();
 	~UDecisionSystemNPC();
 
-	void Initialize(const ABasicNPC* InOwner, const AnimalType& animalType);
+	void Initialize(ABasicNPC* InOwner, const AnimalType& animalType);
 
-	void GetAction();
+	NpcAction GetAction();
 
 	BasicNpcAttributes AnimalAttributes;
 	MemoryNpcAttributes MemoryAttributes;

@@ -1,5 +1,7 @@
 #include "DecisionSystemNPC.h"
 
+#include "BasicNPC.h"
+
 UDecisionSystemNPC::UDecisionSystemNPC() {
 }
 
@@ -7,7 +9,7 @@ UDecisionSystemNPC::~UDecisionSystemNPC() {
 }
 
 // TODO ADD NOISE TO INFLUENCE THE BASE AND MEMORY ATTRIBUTES
-void UDecisionSystemNPC::Initialize(const ABasicNPC* InOwner, const AnimalType& animalType) {
+void UDecisionSystemNPC::Initialize(ABasicNPC* InOwner, const AnimalType& animalType) {
 	Owner = InOwner;
 	AnimalAttributes = *AnimalsBaseAttributes[animalType];
 	MemoryAttributes = *AnimalsMemoryAttributes[animalType];
@@ -19,7 +21,7 @@ void UDecisionSystemNPC::Initialize(const ABasicNPC* InOwner, const AnimalType& 
 	}
 }
 
-void UDecisionSystemNPC::GetAction() {
+NpcAction UDecisionSystemNPC::GetAction() {
 	// Action order :
 	// 
 	// 1. Enemy around or chasing->Run
@@ -36,6 +38,8 @@ void UDecisionSystemNPC::GetAction() {
 	// action. 
 	// Similar attribute checks might be needed.
 
+	// TODO Should check if the locations given (for roam and others) are valid first. This is a maybe.
+
 	const float RandomNo = FMath::Rand();
 
 	// Check if NPC should flee from enemies if they exist
@@ -43,24 +47,27 @@ void UDecisionSystemNPC::GetAction() {
 		const bool runFromEnemy = RandomNo < AnimalAttributes.survivalInstinct;
 	
 		if (runFromEnemy) {
-			// TODO Find point to flee 
-			return;
+			// TODO Get the opposite direction of the enemy to not run in the enemy's direction
+			
+			FVector& CurrentLoc = Owner->GetCurrentLocation();
+			FVector fleeingLocation = FVector(CurrentLoc.X + AnimalAttributes.fleeingRadius, CurrentLoc.Y + AnimalAttributes.fleeingRadius, CurrentLoc.Z);
+			return NpcAction(fleeingLocation, AnimationType::IdleA);
 		}
 	}
 
 	// TODO Check if NPC should rest after food meals
 	const bool shouldRestAfterBasicMeal = AnimalAttributes.basicMealsCounter >= AnimalAttributes.restAfterFoodBasic;
 	if (shouldRestAfterBasicMeal) {
-		// TODO Rest
+		
 		AnimalAttributes.basicMealsCounter = 0;
-		return;
+		return NpcAction(Owner->GetCurrentLocation(), AnimationType::Sit);
 	}
 
 	const bool shouldRestAfterImprovedMeal = AnimalAttributes.improvedMealsCounter >= AnimalAttributes.restAfterFoodImproved;
 	if (shouldRestAfterImprovedMeal) {
 		// TODO Rest
 		AnimalAttributes.improvedMealsCounter = 0;
-		return;
+		return NpcAction(Owner->GetCurrentLocation(), AnimationType::Sit);
 	}
 
 	// TODO Check if NPC should chase for food 
@@ -68,8 +75,8 @@ void UDecisionSystemNPC::GetAction() {
 		const bool shouldChasePrey = RandomNo < AnimalAttributes.chaseDesire;
 
 		if (shouldChasePrey) {
-			// TODO Chase prey
-			return;
+			ABasicNPC* TargetPrey = std::get<ABasicNPC*>(Owner->GetClosestInVisionList(VisionList::NpcFood));
+			return NpcAction(TargetPrey->GetCurrentLocation(), AnimationType::Attack);
 		}
 	}
 
@@ -79,7 +86,8 @@ void UDecisionSystemNPC::GetAction() {
 	
 	if (isHungry || wantsToHoard) {
 		// TODO Find food 
-		return; 
+		UPrimitiveComponent* TargetFood = std::get<UPrimitiveComponent*>(Owner->GetClosestInVisionList(VisionList::FoodSource));
+		return NpcAction(TargetFood->GetComponentLocation(), AnimationType::Attack);
 	}
 
 	// Check if NPC should share food for allies
@@ -89,12 +97,15 @@ void UDecisionSystemNPC::GetAction() {
 
 		if (shouldGiveFood && hasEnoughFoodToShare) {
 			// TODO Share food with ally in range
-			return;
+			ABasicNPC* TargetAlly = std::get<ABasicNPC*>(Owner->GetClosestInVisionList(VisionList::Allies));
+			return NpcAction(TargetAlly->GetCurrentLocation(), AnimationType::Spin);
 		}
 	}
 
-	// TODO The NPC should roam 
-	return;
+	// TODO The NPC should 
+	FVector& CurrentLoc = Owner->GetCurrentLocation();
+	FVector RoamLocation = FVector(CurrentLoc.X + AnimalAttributes.roamRadius, CurrentLoc.Y + AnimalAttributes.roamRadius, CurrentLoc.Z);
+	return NpcAction(RoamLocation, AnimationType::IdleA);
 }
 
 void UDecisionSystemNPC::ShouldActionBeInterrupted() {
