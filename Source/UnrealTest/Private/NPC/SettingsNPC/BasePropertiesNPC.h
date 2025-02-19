@@ -23,11 +23,14 @@ struct BasicNpcAttributes {
 
 	uint8_t mealsUntilRestIsNeeded; // After how many meals the NPC should rest.
 
+	uint8_t basicMealsCounter;		// This value resets after resting.
+	uint8_t improvedMealsCounter;	// This value resets after resting.
+
 	int foodPouch;					// How much food is stored in the food pouch. This is an overflow that an NPC can store and use as a reserve or for trading.
 
-	uint8_t desireToHoardFood;		// How much should the NPC want to keep collecting food after the total hunger is satisfied
+	float desireToHoardFood;		// (0 - 1) - How much should the NPC want to keep collecting food after the total hunger is satisfied
 
-	uint8_t chaseDesire;			// How willing is the animal to chase other targets (animal food sources)
+	float chaseDesire;			// How willing is the animal to chase other targets (animal food sources)
 	
 	float awarenessRadius;		// The sphere radius that determines which NPCs or objects are being tracked by the NPC
 	
@@ -37,7 +40,11 @@ struct BasicNpcAttributes {
 
 	uint8_t willingnessToBecomeAlly; // How willing is the NPC to become someone else's ally and become a pack
 
-	uint8_t desireToRecruitAllies;	// How willing is the animal to trade food from the food pouch to attempt to recruit allies
+	float desireToRecruitAllies;	// (0-1) - How willing is the animal to trade food from the food pouch to attempt to recruit allies
+
+	float survivalInstinct; // (0-1) - Probability to run when a threat is close.
+
+	uint8_t foodOfferAmount; // (10-50) How much food should it offer to an NPC to convince to become ally.
 };
 
 // Values that change the BasicNpcAttributes based on the outcome of certain actions
@@ -56,30 +63,34 @@ struct MemoryNpcAttributes {
 };
 
 const BasicNpcAttributes TigerBasicAttributes = {
-	100,  // totalHp
-	30,   // hitDamage
-	5,    // attackSpeed
-	8,    // movementSpeed
-	80,   // totalStamina
-	5,    // staminaDepletionRate
-	10,   // staminaRecoveryRate
-	100,  // totalHunger
-	2,    // hungerDepletionRate
-	20,   // hungerRecoveryBasic
-	30,   // hungerRecoveryImproved
-	1,    // eatingSpeedRateBasic
-	3,    // eatingSpeedRateImproved
-	3,    // restAfterFoodBasic
-	5,    // restAfterFoodImproved
-	4,    // mealsUntilRestIsNeeded
-	0,    // foodPouch
-	10,   // desireToHoardFood
-	90,   // chaseDesire
-	500.0f,  // awarenessRadius
-	700,  // fleeingRadius
-	0.5f,    // reactionSpeed
-	10,   // willingnessToBecomeAlly
-	5	  // desireToRecruitAllies
+	100,	// totalHp
+	30,		// hitDamage
+	5,		// attackSpeed
+	8,		// movementSpeed
+	80,		// totalStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// totalHunger
+	2,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	1,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.9f,   // desireToHoardFood
+	0.9f,	// chaseDesire
+	500.0f, // awarenessRadius
+	700,	// fleeingRadius
+	0.5f,   // reactionSpeed
+	10,		// willingnessToBecomeAlly
+	0.1f,	// desireToRecruitAllies
+	1.0f,	// survivalInstinct
+	30		// foodOfferAmount
 };
 
 const MemoryNpcAttributes TigerMemoryAttributes = {
@@ -91,30 +102,34 @@ const MemoryNpcAttributes TigerMemoryAttributes = {
 };
 
 const BasicNpcAttributes TapirBasicAttributes = {
-	100,  // totalHp
-	10,   // hitDamage
-	3,    // attackSpeed
-	5,    // movementSpeed
-	60,   // totalStamina
-	5,    // staminaDepletionRate
-	10,   // staminaRecoveryRate
-	100,  // totalHunger
-	2,    // hungerDepletionRate
-	20,   // hungerRecoveryBasic
-	30,   // hungerRecoveryImproved
-	1,    // eatingSpeedRateBasic
-	3,    // eatingSpeedRateImproved
-	3,    // restAfterFoodBasic
-	5,    // restAfterFoodImproved
-	4,    // mealsUntilRestIsNeeded
-	0,    // foodPouch
-	10,   // desireToHoardFood
-	90,   // chaseDesire
-	900.0f,  // awarenessRadius
-	900,  // fleeingRadius
-	1.0f,    // reactionSpeed
-	60,   // willingnessToBecomeAlly
-	30    // desireToRecruitAllies
+	100,	// totalHp
+	10,		// hitDamage
+	3,		// attackSpeed
+	5,		// movementSpeed
+	60,		// totalStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// totalHunger
+	2,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	1,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.5f,   // desireToHoardFood
+	0.1f,	// chaseDesire
+	900.0f, // awarenessRadius
+	900,	// fleeingRadius
+	1.0f,   // reactionSpeed
+	60,		// willingnessToBecomeAlly
+	0.5,	// desireToRecruitAllies
+	0.7f,	// survivalInstinct
+	20		// foodOfferAmount
 };
 
 const MemoryNpcAttributes TapirMemoryAttributes = {

@@ -22,7 +22,7 @@ public:
 	MemoryNpcAttributes MemoryAttributes;
 
 private:
-	const ABasicNPC* Owner; 
+	ABasicNPC* Owner; 
 
 	// How often the NPC should check if their current action should be interrupted and replaced with another action
 	FTimerHandle DecisionTimer;

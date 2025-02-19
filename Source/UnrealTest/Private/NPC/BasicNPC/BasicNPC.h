@@ -41,6 +41,11 @@ public:
 	const AnimalType& GetAlliesRelationships();
 	const AnimalType& GetEnemiesRelationships();
 
+	bool IsThreatInRange();
+	bool IsAllyInRange();
+	bool IsFoodNpcInRange();
+	bool IsFoodSourceInRange();
+
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;

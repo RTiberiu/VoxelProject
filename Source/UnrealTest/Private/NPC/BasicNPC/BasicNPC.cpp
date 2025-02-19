@@ -257,6 +257,22 @@ const AnimalType& ABasicNPC::GetEnemiesRelationships() {
     return Relationships.Enemies;
 }
 
+bool ABasicNPC::IsThreatInRange() {
+    return ThreatsInRange.Num() > 0;
+}
+
+bool ABasicNPC::IsAllyInRange() {
+    return AlliesInRange.Num() > 0;
+}
+
+bool ABasicNPC::IsFoodNpcInRange() {
+    return FoodNpcInRange.Num() > 0;
+}
+
+bool ABasicNPC::IsFoodSourceInRange() {
+    return FoodSourceInRange.Num() > 0;
+}
+
 void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime) {
     // Calculating direction and yaw angle
     FVector direction = (targetPosition - actorLocation).GetSafeNormal();

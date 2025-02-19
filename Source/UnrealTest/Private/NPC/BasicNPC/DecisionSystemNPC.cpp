@@ -30,16 +30,71 @@ void UDecisionSystemNPC::GetAction() {
 	// TODO Make decision based on current attributes and the vision lists
 	// Pass decision to the NPC
 	 
-	
-	// TODO Find an efficient way to check multiple attributes when making a decision
-	// Check for hunger 
-	if (AnimalAttributes.totalHunger > 50) {
-		// Roam
-	} else {
-		// Find food 
+	// TODO Inside the NPC, they should handle their own attributes
+	// like depleting the stamina. In this example, they should 
+	// stop and rest when it reaches zero, and then continue with their
+	// action. 
+	// Similar attribute checks might be needed.
 
+	const float RandomNo = FMath::Rand();
+
+	// Check if NPC should flee from enemies if they exist
+	if (Owner->IsThreatInRange()) {
+		const bool runFromEnemy = RandomNo < AnimalAttributes.survivalInstinct;
+	
+		if (runFromEnemy) {
+			// TODO Find point to flee 
+			return;
+		}
 	}
 
+	// TODO Check if NPC should rest after food meals
+	const bool shouldRestAfterBasicMeal = AnimalAttributes.basicMealsCounter >= AnimalAttributes.restAfterFoodBasic;
+	if (shouldRestAfterBasicMeal) {
+		// TODO Rest
+		AnimalAttributes.basicMealsCounter = 0;
+		return;
+	}
+
+	const bool shouldRestAfterImprovedMeal = AnimalAttributes.improvedMealsCounter >= AnimalAttributes.restAfterFoodImproved;
+	if (shouldRestAfterImprovedMeal) {
+		// TODO Rest
+		AnimalAttributes.improvedMealsCounter = 0;
+		return;
+	}
+
+	// TODO Check if NPC should chase for food 
+	if (Owner->IsFoodNpcInRange()) {
+		const bool shouldChasePrey = RandomNo < AnimalAttributes.chaseDesire;
+
+		if (shouldChasePrey) {
+			// TODO Chase prey
+			return;
+		}
+	}
+
+	// Check if NPC should gather food 
+	const bool isHungry = AnimalAttributes.totalHunger > 50;
+	const bool wantsToHoard = RandomNo < AnimalAttributes.desireToHoardFood;
+	
+	if (isHungry || wantsToHoard) {
+		// TODO Find food 
+		return; 
+	}
+
+	// Check if NPC should share food for allies
+	if (Owner->IsAllyInRange()) {
+		const bool shouldGiveFood = RandomNo < AnimalAttributes.desireToRecruitAllies;
+		const bool hasEnoughFoodToShare = AnimalAttributes.foodPouch >= AnimalAttributes.foodOfferAmount;
+
+		if (shouldGiveFood && hasEnoughFoodToShare) {
+			// TODO Share food with ally in range
+			return;
+		}
+	}
+
+	// TODO The NPC should roam 
+	return;
 }
 
 void UDecisionSystemNPC::ShouldActionBeInterrupted() {
