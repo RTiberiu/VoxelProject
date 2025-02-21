@@ -211,7 +211,7 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 }
 
 void AChunkWorld::SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
-	UProceduralMeshComponent* Mesh = NewObject<UProceduralMeshComponent>(this);
+	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
 	Mesh->SetCastShadow(false);
 
@@ -222,7 +222,11 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	Mesh->SetCollisionResponseToAllChannels(ECR_Overlap);
 
-	Mesh->ComponentTags.Add(TEXT("Grass"));
+	//Mesh->ComponentTags.Add(TEXT("Grass"));
+
+	// Setting custom data 
+	Mesh->MeshType = MeshType::Grass;
+	Mesh->ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 	
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
@@ -240,7 +244,7 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector
 
 // TODO Combine spawngrass and spawnflower into one method
 void AChunkWorld::SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
-	UProceduralMeshComponent* Mesh = NewObject<UProceduralMeshComponent>(this);
+	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
 	Mesh->SetCastShadow(false);
 
@@ -252,7 +256,11 @@ void AChunkWorld::SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVecto
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	Mesh->SetCollisionResponseToAllChannels(ECR_Overlap);
 
-	Mesh->ComponentTags.Add(TEXT("Flower"));
+	//Mesh->ComponentTags.Add(TEXT("Flower"));
+
+	// Setting custom data 
+	Mesh->MeshType = MeshType::Flower;
+	Mesh->ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
@@ -334,7 +342,7 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 		});
 
 	// Add spawned grass to a remove list to remove over multiple frames
-	TArray<UProceduralMeshComponent*> grassToRemove = WTSR->GetAndRemoveGrassFromMap(destroyPosition);
+	TArray<UCustomProceduralMeshComponent*> grassToRemove = WTSR->GetAndRemoveGrassFromMap(destroyPosition);
 	GrassActorsToRemove.Append(grassToRemove);
 
 	// Remove remaining flower to spawn position at current chunk destroyed
@@ -346,7 +354,7 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 		});
 
 	// Add spawned flowers to a remove list to remove over multiple frames
-	TArray<UProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(destroyPosition);
+	TArray<UCustomProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(destroyPosition);
 	FlowerActorsToRemove.Append(flowerToRemove);
 
 	// Remove remaining NPC to spawn position at current chunk destroyed
@@ -404,7 +412,7 @@ void AChunkWorld::DestroyGrassActors() {
 			break;
 		}
 
-		UProceduralMeshComponent* grassToRemove = GrassActorsToRemove[grassIndex];
+		UCustomProceduralMeshComponent* grassToRemove = GrassActorsToRemove[grassIndex];
 		if (grassToRemove) {
 			grassToRemove->UnregisterComponent();
 			grassToRemove->DestroyComponent();
@@ -418,7 +426,7 @@ void AChunkWorld::DestroyGrassActors() {
 	}
 
 	// Check for any previously unspawned grass that could be now destroyed 
-	UProceduralMeshComponent* unspawnedGrass = nullptr;
+	UCustomProceduralMeshComponent* unspawnedGrass = nullptr;
 	CLDR->AddUnspawnedGrassToDestroy(unspawnedGrass);
 	if (unspawnedGrass) {
 		// Destroy if it's valid and part of the world
@@ -440,7 +448,7 @@ void AChunkWorld::DestroyFlowerActors() {
 			break;
 		}
 
-		UProceduralMeshComponent* flowerToRemove = FlowerActorsToRemove[flowerIndex];
+		UCustomProceduralMeshComponent* flowerToRemove = FlowerActorsToRemove[flowerIndex];
 		if (flowerToRemove) {
 			flowerToRemove->UnregisterComponent();
 			flowerToRemove->DestroyComponent();
@@ -454,7 +462,7 @@ void AChunkWorld::DestroyFlowerActors() {
 	}
 
 	// Check for any previously unspawned flower that could be now destroyed 
-	UProceduralMeshComponent* unspawnedFlower = nullptr;
+	UCustomProceduralMeshComponent* unspawnedFlower = nullptr;
 	CLDR->AddUnspawnedFlowerToDestroy(unspawnedFlower);
 	if (unspawnedFlower) {
 		// Destroy if it's valid and part of the world
@@ -840,7 +848,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 2) { // TODO TESTING Spawning just one NPC to test path adjustment
+		if (WTSR->NPCCount < 1) { // TODO TESTING Spawning just one NPC to test path adjustment
 			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 

@@ -1,6 +1,7 @@
 #include "BasicNPC.h"
 
 #include "..\..\Chunks\TerrainSettings\WorldTerrainSettings.h"
+#include "DecisionSystemNPC.h"
 
 #include "GameFramework/PawnMovementComponent.h"
 
@@ -12,11 +13,17 @@ ABasicNPC::ABasicNPC() {
 	
     SkeletalMesh->SetCastShadow(false);
 
-    pathToPlayer = nullptr;
+    pathToTarget = nullptr;
     pathIsReady = false;
-    waitForNextPositionCheck = false;
+    waitForNextPositionCheck = true;
     targetLocationIsAvailable = false;
-    targetLocation = nullptr;
+    runTargetAnimation = false;
+    isTargetSet = false;
+
+    ThreatsInRange = TArray<ABasicNPC*>();
+    AlliesInRange = TArray<ABasicNPC*>();
+    FoodNpcInRange = TArray<ABasicNPC*>();
+    FoodSourceInRange = TArray<UCustomProceduralMeshComponent*>();
 
     UPawnMovementComponent* MovementComponent = FindComponentByClass<UPawnMovementComponent>();
     if (!MovementComponent) {
@@ -76,18 +83,17 @@ void ABasicNPC::spawnNPC() {
     }
 
     // Load the animation asset
-    PlayAnimation(TEXT("idleA"));
+    PlayAnimation(AnimationType::IdleA);
 
     currentLocation = GetActorLocation();
 }
 
-void ABasicNPC::PlayAnimation(const FString& animationtype) {
+void ABasicNPC::PlayAnimation(const AnimationType& animationtype) {
     if (currentAnimPlaying == animationtype) {
         return;
     }
 
     currentAnimPlaying = animationtype;
-
     
     UAnimSequence* AnimationPtr = AnimS->GetAnimation(NpcType, animationtype);
     if (AnimationPtr) {
@@ -126,26 +132,26 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
     // Interpolating smoothly from the current location to the target
     FVector actorLocation = GetActorLocation();
 
-    AdjustRotationTowardsNextLocation(actorLocation, *targetLocation, deltaTime);
+    AdjustRotationTowardsNextLocation(actorLocation, targetLocation, deltaTime);
 
     // Only jump if there is a difference between the actor and the target
-    bool isJumpNeeded = FMath::Abs(actorLocation.Z - targetLocation->Z) > 5.0f;
+    bool isJumpNeeded = FMath::Abs(actorLocation.Z - targetLocation.Z) > 5.0f;
     if (isJumpNeeded) {
         // Start jump if moving in X/Y direction and not already jumping
-        bool isMovingOnXY = FVector::Dist2D(actorLocation, *targetLocation) > 10.0f;
+        bool isMovingOnXY = FVector::Dist2D(actorLocation, targetLocation) > 10.0f;
 
         if (!isJumping && isMovingOnXY) {
             isJumping = true;
             jumpProgress = 0.0f;
             jumpStart = actorLocation;
-            jumpEnd = *targetLocation;
+            jumpEnd = targetLocation;
         }
     }
 
     FVector newPosition;
 
     if (isJumping) {
-        PlayAnimation(TEXT("jump"));
+        PlayAnimation(AnimationType::Jump);
         // Linear interpolation for X and Y movement
         newPosition = FMath::Lerp(jumpStart, jumpEnd, jumpProgress);
 
@@ -164,17 +170,17 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
             newPosition = jumpEnd; 
         }
     } else {
-        PlayAnimation(TEXT("walk"));
+        PlayAnimation(AnimationType::Walk);
         // Move normally when not jumping
-        newPosition = FMath::VInterpTo(actorLocation, *targetLocation, deltaTime, DecisionSys->AnimalAttributes.movementSpeed);
+        newPosition = FMath::VInterpTo(actorLocation, targetLocation, deltaTime, DecisionSys->AnimalAttributes.movementSpeed);
     }
 
     SetActorLocation(newPosition);
 
     // If the NPC is close enough to the target, consider it reached and move to the next point
-    if (FVector::Dist(newPosition, *targetLocation) < 1.0f) {
-        pathToPlayer->path.pop_front();
-        currentLocation = *targetLocation;
+    if (FVector::Dist(newPosition, targetLocation) < 1.0f) {
+        pathToTarget->path.pop_front();
+        currentLocation = targetLocation;
 
         targetLocationIsAvailable = false;
 
@@ -183,18 +189,19 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
 }
 
 void ABasicNPC::SetTargetLocation() {
-    if (pathToPlayer->path.empty()) {
+    if (pathToTarget->path.empty()) {
         pathIsReady = false;
-        pathToPlayer = nullptr;
-        targetLocation = nullptr;
+        pathToTarget = nullptr;
+        isTargetSet = false;
+        runTargetAnimation = true; // Trigger the final animation
         return;
     }
 
     // Get the first item in the path
-    ActionStatePair* firstItem = pathToPlayer->path.front();
+    ActionStatePair* firstItem = pathToTarget->path.front();
 
     if (firstItem) {
-        targetLocation = &firstItem->state->getPosition();
+        targetLocation = firstItem->state->getPosition();
 
         // Trigger a position check for the new target location
         waitForNextPositionCheck = true;
@@ -217,7 +224,7 @@ bool ABasicNPC::IsTargetLocationAvailable() {
         }
     }
 
-    bool isLocationOccupied = CLDR->IsLocationOccupied(currentLocation, *targetLocation, this);
+    bool isLocationOccupied = CLDR->IsLocationOccupied(currentLocation, targetLocation, this);
     if (isLocationOccupied) {
         waitForNextPositionCheck = true;
         return false;
@@ -232,10 +239,10 @@ void ABasicNPC::TimelineProgress(float Value) {
     SetActorLocation(CurrentPosition);
 }
 
-void ABasicNPC::SetPathToPlayerAndNotify(Path* InPathToPlayer) {
-	pathToPlayer = InPathToPlayer;
+void ABasicNPC::SetPathToTargetAndNotify(Path* InPathToTarget) {
+	pathToTarget = InPathToTarget;
 
-    if (pathToPlayer) {
+    if (pathToTarget) {
         SetTargetLocation();
         pathIsReady = true;
     }
@@ -273,6 +280,92 @@ bool ABasicNPC::IsFoodSourceInRange() {
     return FoodSourceInRange.Num() > 0;
 }
 
+const FIntPoint& ABasicNPC::GetNpcWorldLocation() {
+    return NPCWorldLocation;
+}
+
+std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ABasicNPC::GetClosestInVisionList(VisionList list) {
+    switch (list) {
+    case Threat:
+        return GetClosestInList(ThreatsInRange);
+        break;
+    case Allies:
+        return GetClosestInList(AlliesInRange);
+        break;
+    case NpcFood:
+        return GetClosestInList(FoodNpcInRange);
+        break;
+    case FoodSource:
+        return GetClosestInList(FoodSourceInRange);
+        break;
+    }
+
+    return std::variant<ABasicNPC*, UCustomProceduralMeshComponent*>();
+}
+
+FVector& ABasicNPC::GetCurrentLocation() {
+    return currentLocation;
+}
+
+void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
+    PlayAnimation(animationToRunAtTarget);
+    
+    // TODO Check the type of action and decide what to do
+
+    // TODO NEXT: Update NpcAction to pass the type of action doing now, and the object to be removed (npc or flower/grass)
+    // Remember to use the WTSR remove single object functions afterwards
+    // Update all the attributes too 
+    // For example, if the NPC runs out of stamina, they should just run the sit animation to rest, and recover stamina
+    // before continuing
+        
+
+    switch (actionType) {
+    case ActionType::AttackNpc:
+        break;
+    case ActionType::AttackFoodSource:
+        EatingCounter += DeltaSeconds;
+
+        if (EatingCounter > DecisionSys->AnimalAttributes.eatingSpeedRateBasic) {
+            // Remove the object when done eating
+            RemoveFoodTargetFromMapAndDestroy();
+            
+            // Update the food attributes
+            UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryBasic, true);
+
+            // Trigger end of action and reset counter
+            runTargetAnimation = false;
+            EatingCounter = 0.0f;
+        }
+        break;
+    case ActionType::Rest:
+        RestCounter += DeltaSeconds;
+
+        PlayAnimation(animationToRunAtTarget);
+
+        // TODO Update stamina too
+        if (RestCounter > DecisionSys->AnimalAttributes.restAfterFoodBasic) {
+            // Trigger end of action and reset counter
+            runTargetAnimation = false;
+            pathIsReady = false;
+            pathToTarget = nullptr;
+            isTargetSet = false;
+            RestCounter = 0.0f;
+        }
+
+        break;
+    case ActionType::TradeFood:
+        break;
+    case ActionType::Roam:
+        break;
+    case ActionType::Flee:
+        break;
+    }
+
+    // TODO Update attributes
+
+    // TODO Set the runTargetAnimation to false when done
+}
+
 void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime) {
     // Calculating direction and yaw angle
     FVector direction = (targetPosition - actorLocation).GetSafeNormal();
@@ -296,6 +389,50 @@ void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, 
     }
 }
 
+void ABasicNPC::RemoveFoodTargetFromMapAndDestroy() {
+    // Remove from the spawned map in WTSR
+    UCustomProceduralMeshComponent* FoodObject = static_cast<UCustomProceduralMeshComponent*>(actionTarget);
+    if (FoodObject->MeshType == MeshType::Flower) {
+        WTSR->RemoveSingleFlowerFromMap(FoodObject);
+    } else if (FoodObject->MeshType == MeshType::Grass) {
+        WTSR->RemoveSingleGrassFromMap(FoodObject);
+    }
+
+    // TODO Potentially also remove from vision list if it doesn't update automatically
+    
+    // Destroy object
+    FoodObject->UnregisterComponent();
+    FoodObject->DestroyComponent();
+    WTSR->GrassCount--;
+}
+
+// Update current hunger and food pouch if current hunger reaches the max value
+void ABasicNPC::UpdateFoodAttributes(const uint8& hungerRecovered, bool ateBasicFood) {
+    if (DecisionSys->AnimalAttributes.currentHunger < DecisionSys->AnimalAttributes.maxHunger) {
+        uint8_t updatedHunger = DecisionSys->AnimalAttributes.currentHunger + hungerRecovered;
+
+        if (updatedHunger > DecisionSys->AnimalAttributes.maxHunger) {
+            // Add the hunger overflow in the pouch and set current hunger to max
+            uint8_t remainder = updatedHunger - DecisionSys->AnimalAttributes.maxHunger;
+            DecisionSys->AnimalAttributes.currentHunger = DecisionSys->AnimalAttributes.maxHunger;
+            DecisionSys->AnimalAttributes.foodPouch += remainder;
+        } else {
+            // Update the current hunger
+            DecisionSys->AnimalAttributes.currentHunger = updatedHunger;
+        }
+    } else {
+        // Add directly to the food pouch 
+        DecisionSys->AnimalAttributes.foodPouch += hungerRecovered;
+    }
+    
+    // Update meals counter
+    if (ateBasicFood) {
+        DecisionSys->AnimalAttributes.basicMealsCounter += 1;
+    } else {
+        DecisionSys->AnimalAttributes.improvedMealsCounter += 1;
+    }
+}
+
 void ABasicNPC::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 
     // Check if the OtherActor is of type ABasicNPC and add to vision list
@@ -315,14 +452,12 @@ void ABasicNPC::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor*
 }
 
 void ABasicNPC::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
-
     if (OtherActor->IsA(ABasicNPC::StaticClass())) {
         // Get type and decide from which vision list to remove it from
         ABasicNPC* OverlappingNPC = Cast<ABasicNPC>(OtherActor);
         if (OverlappingNPC) {
             RemoveOverlappingNpcFromVisionList(OverlappingNPC);
         }
-
     }
 
     // Attempt to remove the component from the food source vision list if it's a flower or grass
@@ -383,32 +518,32 @@ void ABasicNPC::RemoveOverlappingNpcFromVisionList(ABasicNPC* OverlappingNpc) {
 
 // Add component to food source vision list if it's grass or flower
 void ABasicNPC::AddOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood) {
-    if (OverlappingFood->ComponentTags.Contains(TEXT("Grass"))) {
-        UE_LOG(LogTemp, Warning, TEXT("Added GRASS to FOOD SOURCE vision list."));
-        FoodSourceInRange.Add(OverlappingFood);
-        return;
-    }
-
-    if (OverlappingFood->ComponentTags.Contains(TEXT("Flower"))) {
-        UE_LOG(LogTemp, Warning, TEXT("Added FLOWER to FOOD SOURCE vision list."));
-        FoodSourceInRange.Add(OverlappingFood);
-        return;
+    if (UCustomProceduralMeshComponent* CustomMesh = Cast<UCustomProceduralMeshComponent>(OverlappingFood)) {
+        if (CustomMesh->MeshType == Flower || CustomMesh->MeshType == Grass) {
+            FoodSourceInRange.Add(CustomMesh);
+        }
     }
 }
 
 // Remoive component from food source vision list if it's grass or flower
 void ABasicNPC::RemoveOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood) {
-    if (OverlappingFood->ComponentTags.Contains(TEXT("Grass"))) {
-        UE_LOG(LogTemp, Warning, TEXT("Removed GRASS to FOOD SOURCE vision list."));
-        FoodSourceInRange.Remove(OverlappingFood);
-        return;
+    if (UCustomProceduralMeshComponent* CustomMesh = Cast<UCustomProceduralMeshComponent>(OverlappingFood)) {
+        if (CustomMesh->MeshType == Flower || CustomMesh->MeshType == Grass) {
+            FoodSourceInRange.Remove(CustomMesh);
+        }
     }
+}
 
-    if (OverlappingFood->ComponentTags.Contains(TEXT("Flower"))) {
-        UE_LOG(LogTemp, Warning, TEXT("Removed FLOWER to FOOD SOURCE vision list."));
-        FoodSourceInRange.Remove(OverlappingFood);
-        return;
-    }
+ABasicNPC* ABasicNPC::GetClosestInList(const TArray<ABasicNPC*>& list) {
+    return GetClosestInListGeneric<ABasicNPC>(list, [](ABasicNPC* npc) -> FVector {
+        return npc->GetCurrentLocation();
+        });
+}
+
+UCustomProceduralMeshComponent* ABasicNPC::GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list) {
+    return GetClosestInListGeneric<UCustomProceduralMeshComponent>(list, [](UCustomProceduralMeshComponent* comp) -> FVector {
+        return comp->GetComponentLocation();
+        });
 }
 
 void ABasicNPC::BeginPlay() {
@@ -421,26 +556,18 @@ void ABasicNPC::BeginPlay() {
         AIController->Possess(this);
     }
 
-    PlayAnimation(TEXT("idleA"));
+    PlayAnimation(AnimationType::IdleA);
 }
 
 void ABasicNPC::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
 
-    DelayBeforeFirstPathRequest += DeltaSeconds;
-
-    if (DelayBeforeFirstPathRequest < 8.0f) {
+    // TESTING ONLY -- PREVENTING THE NPC TO MAKE ANY MOVES FOR THE FIRST N SECONDS
+    if (DelayBeforeFirstPathRequest < 5.0f) {
+        DelayBeforeFirstPathRequest += DeltaSeconds;
         return;
     }
-
-    if (pathToPlayer == nullptr) {
-        PlayAnimation(TEXT("idleA"));
-
-        RequestPathToPlayer();
-    }
-
-    TimeSinceLastCall += DeltaSeconds;
-
+    
     if (pathIsReady) {
         // Making sure the next position is not occupied by another NPC
         if (waitForNextPositionCheck) {
@@ -452,4 +579,62 @@ void ABasicNPC::Tick(float DeltaSeconds) {
             ConsumePathAndMoveToLocation();
         }
     }
+
+    
+    if (!isTargetSet) {
+        isTargetSet = true;
+
+        // TODO Tomorrow:
+        // Inside the NpcAction, I should also maybe pass the Object
+        // and the vision list it came from. I should then remove the Object
+        // from the vision list and from the actual list and destroy it.
+        // 
+        // In fact, I think that by removing it from the spawned map and destroying the object,
+        // this might remove it from the vision map too, since it might trigger the OverlapEnd.
+        //
+        // Two options of doing this, either pass a UObject for both flower/grass and the NPC,
+        // and then cast them when attempting to remove them.
+        // 
+        // The other option is to have another structure that can contain both types, and pass
+        // the actual object, thus avoiding casting. (I think this is the better option)
+        // 
+        // NEXT STEP AFTER REMOVING THEM FROM SPAWNED MAP AND VISION LIST:
+        // 
+        // In SetTargetLocation(), set a variable like "runTargetAnim" to true
+        // and inside the Tick(), run that animation over multiple frames,
+        // depending on the eating or killing speed attributes. 
+        // 
+        // This "runTargetAnim" will in fact trigger another function that will handle all
+        // of this, updating attributes and running the animation. In the case where,
+        // an animal is attacked, this function also updates that NPC's attributes.
+
+        // Request action and set the target
+        NpcAction NextAction = DecisionSys->GetAction();
+        targetLocation = NextAction.TargetLocation;
+        animationToRunAtTarget = NextAction.AnimationToRunAtTarget;
+        actionType = NextAction.ActionType;
+        actionTarget = NextAction.Target;
+
+        // Adjust location for grass and flower, otherwise the pathfinding will go for the adjacent voxel
+        if (actionType == ActionType::AttackFoodSource) {
+            targetLocation = FVector(targetLocation.X + WTSR->HalfUnrealScale, targetLocation.Y + WTSR->HalfUnrealScale, targetLocation.Z);
+        }
+
+        // If resting, avoid triggering a pathfinding request and return early
+		if (actionType == ActionType::Rest) {
+            runTargetAnimation = true;
+            return;
+		}
+
+        // TODO Don't trigger a new pathfinding task if the action is to do something at the current location
+        // For example, resting.
+        // In those cases, I should just trigger the runTargetAnimation. 
+
+        PathfindingManager->AddPathfindingTask(this, currentLocation, targetLocation);
+    }
+
+    if (runTargetAnimation) {
+        RunTargetAnimationAndUpdateAttributes(DeltaSeconds);
+    }
+
 }

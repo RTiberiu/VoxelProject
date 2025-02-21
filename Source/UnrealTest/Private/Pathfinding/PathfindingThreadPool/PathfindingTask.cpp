@@ -30,7 +30,7 @@ void FPathfindingTask::DoThreadedWork() {
 	}
 
 	// Notify the NPC that the path is ready
-	NPCRef->SetPathToPlayerAndNotify(path);
+	NPCRef->SetPathToTargetAndNotify(path);
 }
 
 void FPathfindingTask::Abandon() {

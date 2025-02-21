@@ -7,15 +7,25 @@
 #include <Runtime/AIModule/Classes/AIController.h>
 
 #include "..\SettingsNPC\AnimationSettingsNPC.h"
-#include "DecisionSystemNPC.h"
+#include "..\SettingsNPC\ActionStructures.h"
+//#include "DecisionSystemNPC.h"
 
+#include "..\..\Utils\CustomMesh\CustomProceduralMeshComponent.h"
+#include <variant>
 #include "..\..\Pathfinding\SearchLibrary\Path.h"
 #include "..\..\Pathfinding\PathfindingThreadPool\PathfindingThreadManager.h"
-
 #include "BasicNPC.generated.h"
 
+class UDecisionSystemNPC;
 class PathfindingThreadManager;
 class UWorldTerrainSettings;
+
+enum VisionList {
+	Threat,
+	Allies,
+	NpcFood,
+	FoodSource
+};
 
 UCLASS()
 class ABasicNPC : public APawn {
@@ -34,7 +44,7 @@ public:
 
 	void InitializeBrain(const AnimalType& animalType);
 
-	void SetPathToPlayerAndNotify(Path* InPathToPlayer);
+	void SetPathToTargetAndNotify(Path* InPathToTarget);
 
 	const AnimalType& GetType();
 	const AnimalType& GetNpcFoodRelationships();
@@ -45,6 +55,12 @@ public:
 	bool IsAllyInRange();
 	bool IsFoodNpcInRange();
 	bool IsFoodSourceInRange();
+
+	const FIntPoint& GetNpcWorldLocation();
+
+	std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> GetClosestInVisionList(VisionList list);
+
+	FVector& GetCurrentLocation();
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
@@ -67,12 +83,12 @@ private:
 
 	void spawnNPC();
 
-	void PlayAnimation(const FString& animationtype);
+	void PlayAnimation(const AnimationType& animationtype);
 
 	void InitializeVisionCollisionSphere(const float& radius);
 
 	void RequestPathToPlayer();
-	Path* pathToPlayer;
+	Path* pathToTarget;
 	bool pathIsReady;
 
 	void ConsumePathAndMoveToLocation();
@@ -96,9 +112,22 @@ private:
 	TMap<FString, UAnimSequence*> Animations;
 
 	FVector currentLocation;
-	FVector* targetLocation;
+
+	void RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds);
+
+	bool runTargetAnimation;
+	bool isTargetSet;
+	FVector targetLocation;
+	AnimationType animationToRunAtTarget;
+	ActionType actionType;
+	UObject* actionTarget;
+
 	FVector timelineStartPos;
 	FVector timeLineEndPos;
+
+	// Counters for actions
+	float EatingCounter;
+	float RestCounter;
 
 	bool targetLocationIsAvailable;
 
@@ -112,7 +141,12 @@ private:
 	FVector jumpEnd;
 	const float jumpHeight = 60.0f;
 	const float jumpSpeed = 2.0f;
-	FString currentAnimPlaying;
+	AnimationType currentAnimPlaying;
+
+	void RemoveFoodTargetFromMapAndDestroy();
+	
+	// Methods to update the NPC attributes
+	void UpdateFoodAttributes(const uint8& hungerRecovered, bool ateBasicFood);
 
 	bool waitForNextPositionCheck;
 	float OccupiedDelayTimer = 0.0f; // Accumulates time when target location is occupied by another NPC
@@ -120,7 +154,6 @@ private:
 
 	// TESTING TICK CALLS
 	float DelayBeforeFirstPathRequest;
-	float TimeSinceLastCall;
 
 	// Collision sphere settings for updating objects "visible" to the NPC
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
@@ -142,11 +175,37 @@ private:
 	void AddOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood);
 	void RemoveOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood);
 
+	// Helper functions to get the closest item in the vision lists
+	ABasicNPC* GetClosestInList(const TArray<ABasicNPC*>& list);
+	UCustomProceduralMeshComponent* GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list);
+
+	// Avoid repeating the same compare the closest object logic
+	template<typename T>
+	T* GetClosestInListGeneric(const TArray<T*>& list, TFunctionRef<FVector(T*)> GetLocation) const {
+		if (list.Num() == 0) {
+			return nullptr;
+		}
+
+		T* closest = nullptr;
+		float closestDistance = FLT_MAX;
+
+		for (T* element : list) {
+			if (element) {
+				float distance = FVector::Dist(currentLocation, GetLocation(element));
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closest = element;
+				}
+			}
+		}
+		return closest;
+	}
+
 	// Store objects in the NPC's perceptation sphere 
 	TArray<ABasicNPC*> ThreatsInRange;
 	TArray<ABasicNPC*> AlliesInRange;
 	TArray<ABasicNPC*> FoodNpcInRange;
-	TArray<UPrimitiveComponent*> FoodSourceInRange;
+	TArray<UCustomProceduralMeshComponent*> FoodSourceInRange;
 
 protected:
 	// Called when the game starts or when spawned

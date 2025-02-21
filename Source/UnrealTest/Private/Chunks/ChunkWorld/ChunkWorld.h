@@ -15,6 +15,8 @@
 
 #include "Pathfinding/PathfindingThreadPool/PathfindingThreadManager.h"
 
+#include "..\..\Utils\CustomMesh\CustomProceduralMeshComponent.h"
+
 #include <chrono>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -120,14 +122,14 @@ private:
 	const int treesToSpawnPerFrame = 1;
 
 	// Grass actors to be destroyed and settings
-	TArray<UProceduralMeshComponent*> GrassActorsToRemove;
+	TArray<UCustomProceduralMeshComponent*> GrassActorsToRemove;
 	const int grassToRemovePerFrame = 3;
 
 	TArray<FVoxelObjectLocationData> GrassPositionsToSpawn;
 	const int grassToSpawnPerFrame = 3;
 
 	// Flower actors to be destroyed and settings
-	TArray<UProceduralMeshComponent*> FlowerActorsToRemove;
+	TArray<UCustomProceduralMeshComponent*> FlowerActorsToRemove;
 	const int flowerToRemovePerFrame = 3;
 
 	TArray<FVoxelObjectLocationData> FlowerPositionsToSpawn;

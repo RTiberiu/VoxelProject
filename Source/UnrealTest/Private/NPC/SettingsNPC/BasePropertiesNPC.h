@@ -11,7 +11,8 @@ struct BasicNpcAttributes {
 	uint8_t totalStamina;
 	uint8_t staminaDepletionRate;
 	uint8_t staminaRecoveryRate;	
-	uint8_t totalHunger;			// Certain NPCs can have a larger hunger bar, storing more food			
+	uint8_t currentHunger;			// The current hunger value
+	uint8_t maxHunger;				// The total hunger bar
 	uint8_t hungerDepletionRate;
 	uint8_t hungerRecoveryBasic;	// How much hunger is restored. Used for basic food sources, like grass or flowers. 
 	uint8_t hungerRecoveryImproved;	// How much hunger is restored. Used for improved food sources, like other animals.
@@ -34,7 +35,7 @@ struct BasicNpcAttributes {
 	
 	float awarenessRadius;		// The sphere radius that determines which NPCs or objects are being tracked by the NPC
 	
-	uint16_t fleeingRadius;			// The radius around the NPC from which to pick a point to run towards when being chased.
+	uint16_t fleeingRadius;			// (60 * N) - The radius around the NPC from which to pick a point to run towards when being chased. It has to be a multiply of the UnrealScale chosen
 
 	float reactionSpeed;			// How fast should the NPC react to the environment. This determines how quickly the should intrerupt their current action and replace it with another (for example fleeing from an enemy). In reality, this is the time in seconds the NPC will make decisions
 
@@ -45,6 +46,8 @@ struct BasicNpcAttributes {
 	float survivalInstinct; // (0-1) - Probability to run when a threat is close.
 
 	uint8_t foodOfferAmount; // (10-50) How much food should it offer to an NPC to convince to become ally.
+
+	uint16_t roamRadius; // (60 * N) - How far away should the NPC roam from its current location. It has to be a multiply of the UnrealScale chosen
 };
 
 // Values that change the BasicNpcAttributes based on the outcome of certain actions
@@ -70,14 +73,15 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	80,		// totalStamina
 	5,		// staminaDepletionRate
 	10,		// staminaRecoveryRate
-	100,	// totalHunger
+	100,	// currentHunger
+	100,	// maxHunger
 	2,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
 	30,		// hungerRecoveryImproved
-	1,		// eatingSpeedRateBasic
+	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
-	3,		// restAfterFoodBasic
-	5,		// restAfterFoodImproved
+	4,		// restAfterFoodBasic
+	6,		// restAfterFoodImproved
 	4,		// mealsUntilRestIsNeeded
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
@@ -85,12 +89,13 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	0.9f,   // desireToHoardFood
 	0.9f,	// chaseDesire
 	500.0f, // awarenessRadius
-	700,	// fleeingRadius
+	3000,	// fleeingRadius
 	0.5f,   // reactionSpeed
 	10,		// willingnessToBecomeAlly
 	0.1f,	// desireToRecruitAllies
 	1.0f,	// survivalInstinct
-	30		// foodOfferAmount
+	30,		// foodOfferAmount
+	1500,	// roamRadius
 };
 
 const MemoryNpcAttributes TigerMemoryAttributes = {
@@ -109,11 +114,12 @@ const BasicNpcAttributes TapirBasicAttributes = {
 	60,		// totalStamina
 	5,		// staminaDepletionRate
 	10,		// staminaRecoveryRate
-	100,	// totalHunger
+	100,	// currentHunger
+	100,	// maxHunger
 	2,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
 	30,		// hungerRecoveryImproved
-	1,		// eatingSpeedRateBasic
+	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
 	3,		// restAfterFoodBasic
 	5,		// restAfterFoodImproved
@@ -124,12 +130,13 @@ const BasicNpcAttributes TapirBasicAttributes = {
 	0.5f,   // desireToHoardFood
 	0.1f,	// chaseDesire
 	900.0f, // awarenessRadius
-	900,	// fleeingRadius
+	3000,	// fleeingRadius
 	1.0f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
 	0.7f,	// survivalInstinct
-	20		// foodOfferAmount
+	20,		// foodOfferAmount
+	1500,	// roamRadius
 };
 
 const MemoryNpcAttributes TapirMemoryAttributes = {

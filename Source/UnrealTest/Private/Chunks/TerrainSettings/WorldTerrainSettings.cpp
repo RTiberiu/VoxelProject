@@ -292,7 +292,7 @@ void UWorldTerrainSettings::AddSpawnedTrees(const FIntPoint& TreeWorldCoordinate
 	TreeMapSemaphore->Release();
 }
 
-void UWorldTerrainSettings::AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, UProceduralMeshComponent* GrassActor) {
+void UWorldTerrainSettings::AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, UCustomProceduralMeshComponent* GrassActor) {
 	GrassMapSemaphore->Acquire();
 
 	// If it exists, add the new grass to the existing array
@@ -300,13 +300,13 @@ void UWorldTerrainSettings::AddSpawnedGrass(const FIntPoint& GrassWorldCoordinat
 		SpawnedGrassMap[GrassWorldCoordinates].Add(GrassActor);
 	} else {
 		// If not, create a new array with the new grass
-		SpawnedGrassMap.Add(GrassWorldCoordinates, TArray<UProceduralMeshComponent*>({ GrassActor }));
+		SpawnedGrassMap.Add(GrassWorldCoordinates, TArray<UCustomProceduralMeshComponent*>({ GrassActor }));
 	}
 
 	GrassMapSemaphore->Release();
 }
 
-void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, UProceduralMeshComponent* FlowerActor) {
+void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, UCustomProceduralMeshComponent* FlowerActor) {
 	FlowerMapSemaphore->Acquire();
 
 	// If the coordinate of the chunk exists, add the new flower to the existing array
@@ -314,7 +314,7 @@ void UWorldTerrainSettings::AddSpawnedFlower(const FIntPoint& FlowerWorldCoordin
 		SpawnedFlowerMap[FlowerWorldCoordinates].Add(FlowerActor);
 	} else {
 		// If not, create a new array with the new flower
-		SpawnedFlowerMap.Add(FlowerWorldCoordinates, TArray<UProceduralMeshComponent*>({ FlowerActor }));
+		SpawnedFlowerMap.Add(FlowerWorldCoordinates, TArray<UCustomProceduralMeshComponent*>({ FlowerActor }));
 	}
 
 	FlowerMapSemaphore->Release();
@@ -356,8 +356,8 @@ TArray<ATree*> UWorldTerrainSettings::GetAndRemoveTreeFromMap(const FIntPoint& T
 	return RemovedTrees;
 }
 
-TArray<UProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates) {
-	TArray<UProceduralMeshComponent*> RemovedGrass;  // Array to hold the remaining grass at the location
+TArray<UCustomProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates) {
+	TArray<UCustomProceduralMeshComponent*> RemovedGrass;  // Array to hold the remaining grass at the location
 
 	GrassMapSemaphore->Acquire();
 
@@ -373,8 +373,8 @@ TArray<UProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveGrassFromMa
 	return RemovedGrass;
 }
 
-TArray<UProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates) {
-	TArray<UProceduralMeshComponent*> RemovedFlower;  // Array to hold the remaining flower at the location
+TArray<UCustomProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates) {
+	TArray<UCustomProceduralMeshComponent*> RemovedFlower;  // Array to hold the remaining flower at the location
 
 	FlowerMapSemaphore->Acquire();
 
@@ -415,6 +415,48 @@ void UWorldTerrainSettings::RemoveTreeFromMap(const FIntPoint& TreeWorldCoordina
 	}
 
 	TreeMapSemaphore->Release();
+}
+
+void UWorldTerrainSettings::RemoveSingleGrassFromMap(UCustomProceduralMeshComponent* grass) {
+    GrassMapSemaphore->Acquire();
+
+    if (SpawnedGrassMap.Contains(grass->ObjectWorldCoords)) {
+        TArray<UCustomProceduralMeshComponent*>& GrassArray = SpawnedGrassMap[grass->ObjectWorldCoords];
+        GrassArray.Remove(grass);
+        if (GrassArray.Num() == 0) {
+            SpawnedGrassMap.Remove(grass->ObjectWorldCoords);
+        }
+    }
+
+    GrassMapSemaphore->Release();
+}
+
+void UWorldTerrainSettings::RemoveSingleFlowerFromMap(UCustomProceduralMeshComponent* flower) {
+	FlowerMapSemaphore->Acquire();
+
+	if (SpawnedFlowerMap.Contains(flower->ObjectWorldCoords)) {
+		TArray<UCustomProceduralMeshComponent*>& FlowerArray = SpawnedFlowerMap[flower->ObjectWorldCoords];
+		FlowerArray.Remove(flower);
+		if (FlowerArray.Num() == 0) {
+			SpawnedFlowerMap.Remove(flower->ObjectWorldCoords);
+		}
+	}
+
+	FlowerMapSemaphore->Release();
+}
+
+void UWorldTerrainSettings::RemoveSingleNpcFromMap(ABasicNPC* npc) {
+	NpcMapSemaphore->Acquire();
+
+	if (SpawnedNpcMap.Contains(npc->GetNpcWorldLocation())) {
+		TArray<ABasicNPC*>& NpcArray = SpawnedNpcMap[npc->GetNpcWorldLocation()];
+		NpcArray.Remove(npc);
+		if (NpcArray.Num() == 0) {
+			SpawnedNpcMap.Remove(npc->GetNpcWorldLocation());
+		}
+	}
+
+	NpcMapSemaphore->Release();
 }
 
 void UWorldTerrainSettings::AddChunkToRemoveCollision(ABinaryChunk* actor) {

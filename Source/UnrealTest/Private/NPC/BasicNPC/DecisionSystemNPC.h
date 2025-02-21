@@ -3,8 +3,11 @@
 #include "CoreMinimal.h"
 #include "..\SettingsNPC\BasePropertiesNPC.h"
 #include "..\SettingsNPC\RelationshipSettingsNPC.h"
-#include "BasicNPC.h"
+#include "..\SettingsNPC\AnimationSettingsNPC.h"
+#include "..\SettingsNPC\ActionStructures.h"
 #include "DecisionSystemNPC.generated.h"
+
+class ABasicNPC;
 
 UCLASS()
 class UDecisionSystemNPC : public UObject {
@@ -14,9 +17,9 @@ public:
 	UDecisionSystemNPC();
 	~UDecisionSystemNPC();
 
-	void Initialize(const ABasicNPC* InOwner, const AnimalType& animalType);
+	void Initialize(ABasicNPC* InOwner, const AnimalType& animalType);
 
-	void GetAction();
+	NpcAction GetAction();
 
 	BasicNpcAttributes AnimalAttributes;
 	MemoryNpcAttributes MemoryAttributes;
@@ -48,6 +51,18 @@ private:
 		{"TapirFood", &TapirFoodType},
 		{"TapirAllies", &TapirAllies},
 		{"TapirEnemies", &TapirEnemies}
+	};
+
+	// Used for roam random directions
+	const TArray<FVector> Directions = {
+		FVector(1, 0, 0),   // +X
+		FVector(-1, 0, 0),  // -X
+		FVector(0, 1, 0),   // +Y
+		FVector(0, -1, 0),  // -Y
+		FVector(1, 1, 0),   // +X, +Y
+		FVector(-1, 1, 0),  // -X, +Y
+		FVector(1, -1, 0),  // +X, -Y
+		FVector(-1, -1, 0)  // -X, -Y
 	};
 
 protected:
