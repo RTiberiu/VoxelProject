@@ -5,21 +5,20 @@
 #include "RelationshipSettingsNPC.h"
 #include "AnimationSettingsNPC.generated.h"
 
-// Setting the bit for each of the type of animal
-enum class AnimationType : uint16_t {
-	IdleA = 1 << 0,
-	Bounce = 1 << 1,
-	Clicked = 1 << 2,
-	Death = 1 << 3,
-	Eat = 1 << 4,
-	Fly = 1 << 5,
-	Walk = 1 << 6,
-	Jump = 1 << 7,
-	Run = 1 << 8,
-	Sit = 1 << 9,
-	Hit = 1 << 10,
-	Spin = 1 << 11,
-	Attack = 1 << 12
+enum class AnimationType {
+	IdleA,
+	Bounce,
+	Clicked,
+	Death,
+	Eat,
+	Fly,
+	Walk,
+	Jump,
+	Run,
+	Sit,
+	Hit,
+	Spin,
+	Attack
 };
 
 UCLASS()
@@ -74,7 +73,11 @@ private:
 		AnimationType::Fly,
 		AnimationType::Walk,
 		AnimationType::Jump,
-		AnimationType::Run
+		AnimationType::Run,
+		AnimationType::Sit,
+		AnimationType::Hit,
+		AnimationType::Spin,
+		AnimationType::Attack
 	};
 	
 	const FString BaseAnimationPath = "/Script/Engine.AnimSequence'/Game/Characters/Animals/";
@@ -92,7 +95,7 @@ private:
 			"/Sit.Sit'",
 			"/Hit.Hit'",
 			"/Spin.Spin'",
-			"/Attack.Attack'",
+			"/Attack.Attack'"
 	};
 
 	TMap<AnimationType, UAnimSequence*> TigerLoadedAnimations;

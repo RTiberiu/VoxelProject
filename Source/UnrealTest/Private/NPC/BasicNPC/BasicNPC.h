@@ -7,8 +7,10 @@
 #include <Runtime/AIModule/Classes/AIController.h>
 
 #include "..\SettingsNPC\AnimationSettingsNPC.h"
+#include "..\SettingsNPC\ActionStructures.h"
 //#include "DecisionSystemNPC.h"
 
+#include "..\..\Utils\CustomMesh\CustomProceduralMeshComponent.h"
 #include <variant>
 #include "..\..\Pathfinding\SearchLibrary\Path.h"
 #include "..\..\Pathfinding\PathfindingThreadPool\PathfindingThreadManager.h"
@@ -42,7 +44,7 @@ public:
 
 	void InitializeBrain(const AnimalType& animalType);
 
-	void SetPathToPlayerAndNotify(Path* InPathToPlayer);
+	void SetPathToTargetAndNotify(Path* InPathToTarget);
 
 	const AnimalType& GetType();
 	const AnimalType& GetNpcFoodRelationships();
@@ -54,8 +56,9 @@ public:
 	bool IsFoodNpcInRange();
 	bool IsFoodSourceInRange();
 
+	const FIntPoint& GetNpcWorldLocation();
 
-	std::variant<ABasicNPC*, UPrimitiveComponent*> GetClosestInVisionList(VisionList list);
+	std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> GetClosestInVisionList(VisionList list);
 
 	FVector& GetCurrentLocation();
 
@@ -85,7 +88,7 @@ private:
 	void InitializeVisionCollisionSphere(const float& radius);
 
 	void RequestPathToPlayer();
-	Path* pathToPlayer;
+	Path* pathToTarget;
 	bool pathIsReady;
 
 	void ConsumePathAndMoveToLocation();
@@ -109,13 +112,25 @@ private:
 	TMap<FString, UAnimSequence*> Animations;
 
 	FVector currentLocation;
-	FVector* targetLocation;
+
+	void RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds);
+
+	bool runTargetAnimation;
+	bool isTargetSet;
+	FVector targetLocation;
+	AnimationType animationToRunAtTarget;
+	ActionType actionType;
+	UObject* actionTarget;
+
 	FVector timelineStartPos;
 	FVector timeLineEndPos;
 
-	bool targetLocationIsAvailable;
+	// Counters for actions
+	float EatingCounter;
+	float RestCounter;
+	float HungerCounter;
 
-	float movementSpeed;
+	bool targetLocationIsAvailable;
 
 	void AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime);
 
@@ -127,13 +142,25 @@ private:
 	const float jumpSpeed = 2.0f;
 	AnimationType currentAnimPlaying;
 
+	bool isWalking;
+	float walkProgress;
+	FVector walkStart;
+	FVector walkEnd;
+
+	void RemoveFoodTargetFromMapAndDestroy();
+	
+	// Methods to update the NPC attributes
+	void UpdateFoodAttributes(const uint8& hungerRecovered, bool ateBasicFood);
+	bool ForceRestWhenStaminaIsZero(const float& DeltaSeconds);
+	void UpdateHunger(const float& DeltaSeconds);
+	bool UpdateStamina(const float& DeltaSeconds, const uint8_t& Threshold);
+
 	bool waitForNextPositionCheck;
 	float OccupiedDelayTimer = 0.0f; // Accumulates time when target location is occupied by another NPC
 	const float OccupiedDelayThreshold = 0.5f; // Delay in seconds before trying again to move to the next location
 
 	// TESTING TICK CALLS
 	float DelayBeforeFirstPathRequest;
-	float TimeSinceLastCall;
 
 	// Collision sphere settings for updating objects "visible" to the NPC
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
@@ -157,7 +184,7 @@ private:
 
 	// Helper functions to get the closest item in the vision lists
 	ABasicNPC* GetClosestInList(const TArray<ABasicNPC*>& list);
-	UPrimitiveComponent* GetClosestInList(const TArray<UPrimitiveComponent*>& list);
+	UCustomProceduralMeshComponent* GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list);
 
 	// Avoid repeating the same compare the closest object logic
 	template<typename T>
@@ -185,7 +212,7 @@ private:
 	TArray<ABasicNPC*> ThreatsInRange;
 	TArray<ABasicNPC*> AlliesInRange;
 	TArray<ABasicNPC*> FoodNpcInRange;
-	TArray<UPrimitiveComponent*> FoodSourceInRange;
+	TArray<UCustomProceduralMeshComponent*> FoodSourceInRange;
 
 protected:
 	// Called when the game starts or when spawned

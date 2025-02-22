@@ -8,10 +8,12 @@ struct BasicNpcAttributes {
 
 	uint8_t movementSpeed;			// How fast the animal can move in the world.
 
-	uint8_t totalStamina;
+	uint8_t currentStamina;
+	uint8_t maxStamina;
 	uint8_t staminaDepletionRate;
 	uint8_t staminaRecoveryRate;	
-	uint8_t totalHunger;			// Certain NPCs can have a larger hunger bar, storing more food			
+	uint8_t currentHunger;			// The current hunger value
+	uint8_t maxHunger;				// The total hunger bar
 	uint8_t hungerDepletionRate;
 	uint8_t hungerRecoveryBasic;	// How much hunger is restored. Used for basic food sources, like grass or flowers. 
 	uint8_t hungerRecoveryImproved;	// How much hunger is restored. Used for improved food sources, like other animals.
@@ -20,6 +22,7 @@ struct BasicNpcAttributes {
 
 	uint8_t restAfterFoodBasic;		// How long should the NPC rest after eating a basic food source.
 	uint8_t restAfterFoodImproved;	// How long should the NPC rest after eating an improved food source.
+	uint8_t restAfterStaminaIsZero;	// How long should the NPC rest after the stamina reaches zero.
 
 	uint8_t mealsUntilRestIsNeeded; // After how many meals the NPC should rest.
 
@@ -68,18 +71,21 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	100,	// totalHp
 	30,		// hitDamage
 	5,		// attackSpeed
-	8,		// movementSpeed
-	80,		// totalStamina
+	230,	// movementSpeed
+	100,	// currentStamina
+	100, 	// maxStamina
 	5,		// staminaDepletionRate
 	10,		// staminaRecoveryRate
-	100,	// totalHunger
-	2,		// hungerDepletionRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
 	30,		// hungerRecoveryImproved
-	1,		// eatingSpeedRateBasic
+	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
-	3,		// restAfterFoodBasic
-	5,		// restAfterFoodImproved
+	4,		// restAfterFoodBasic
+	6,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
 	4,		// mealsUntilRestIsNeeded
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
@@ -109,17 +115,20 @@ const BasicNpcAttributes TapirBasicAttributes = {
 	10,		// hitDamage
 	3,		// attackSpeed
 	5,		// movementSpeed
-	60,		// totalStamina
+	60,		// currentStamina
+	60, 	// maxStamina
 	5,		// staminaDepletionRate
 	10,		// staminaRecoveryRate
-	100,	// totalHunger
-	2,		// hungerDepletionRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
 	30,		// hungerRecoveryImproved
-	1,		// eatingSpeedRateBasic
+	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
 	3,		// restAfterFoodBasic
 	5,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
 	4,		// mealsUntilRestIsNeeded
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter

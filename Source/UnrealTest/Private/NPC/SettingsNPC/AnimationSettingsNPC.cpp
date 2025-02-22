@@ -18,6 +18,20 @@ UAnimationSettingsNPC::~UAnimationSettingsNPC() {
 
 UAnimSequence* UAnimationSettingsNPC::GetAnimation(const AnimalType& animal, const AnimationType& animationType) {
     TMap<AnimationType, UAnimSequence*>* animalList = GetAnimalAnimationList(animal);
+
+    // Check if animalList is valid
+    if (!animalList) {
+        UE_LOG(LogTemp, Warning, TEXT("GetAnimation: Animal list is null for animal type %d"), static_cast<int32>(animal));
+        return nullptr;
+    }
+
+    // Check if animationType exists in the map
+    if (!animalList->Contains(animationType)) {
+        UE_LOG(LogTemp, Warning, TEXT("GetAnimation: Animation type %d not found for animal type %d"),
+            static_cast<int32>(animationType), static_cast<int32>(animal));
+        return nullptr;
+    }
+
     return (*animalList)[animationType];
 }
 
@@ -34,6 +48,8 @@ void UAnimationSettingsNPC::LoadAnimationsForAllAnimals() {
             if (animSequence) {
                 TMap<AnimationType, UAnimSequence*>* animalList = GetAnimalAnimationList(animal);
                 animalList->Add(AnimationKeys[i], animSequence);
+            } else {
+                UE_LOG(LogTemp, Error, TEXT("Animation sequence not found: %s"), *animationPath);
             }
         }
     }

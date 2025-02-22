@@ -12,6 +12,7 @@
 #include "..\DataStructures\VoxelObjectMeshData.h"
 #include "CoreMinimal.h"
 #include <Chunks/SingleChunk/BinaryChunk.h>
+#include "..\..\Utils\CustomMesh\CustomProceduralMeshComponent.h"
 #include <Chunks/Vegetation/Trees/Tree.h>
 #include "..\..\NPC\BasicNPC\BasicNPC.h"
 #include "WorldTerrainSettings.generated.h"
@@ -134,6 +135,7 @@ public:
 	int FlowerCount{ 0 };
 	const uint8_t FlowerVariations{ 40 };
 	const uint8_t FlowerScale{ 7 };
+	const float HalfFlowerScale{ static_cast<float>(FlowerScale) / 2.0f }; // Used for aligning in the middle of a voxel
 	const uint8_t FlowerSizePadding{ 16 };
 	const uint8_t FlowerSize{ 14 };
 	const int MaxFlowerSphere{ 2 };
@@ -158,6 +160,7 @@ public:
 	int GrassCount{ 0 };
 	const uint8_t GrassVariations{ 40 };
 	const uint8_t GrassScale{ 7 };
+	const float HalfGrassScale{ static_cast<float>(GrassScale) / 2.0f }; // Used for aligning in the middle of a voxel
 	const uint8_t GrassSizePadding{ 16 };
 	const uint8_t GrassSize{ 14 };
 	const uint16_t GrassHeight{ 14 }; // 2 bits
@@ -178,15 +181,20 @@ public:
 	FVoxelObjectMeshData* GetRandomFlowerMeshData();
 
 	void AddSpawnedTrees(const FIntPoint& TreeWorldCoordinates, ATree* TreeActor);
-	void AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, UProceduralMeshComponent* GrassActor);
-	void AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, UProceduralMeshComponent* FlowerActor);
+	void AddSpawnedGrass(const FIntPoint& GrassWorldCoordinates, UCustomProceduralMeshComponent* GrassActor);
+	void AddSpawnedFlower(const FIntPoint& FlowerWorldCoordinates, UCustomProceduralMeshComponent* FlowerActor);
 	void AddSpawnedNpc(const FIntPoint& npcWorldCoordinates, ABasicNPC* npcActor);
 	const TMap<FIntPoint, TArray<ATree*>>& GetSpawnedTreesMap() const;
 	TArray<ATree*> GetAndRemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
-	TArray<UProceduralMeshComponent*> GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates);
-	TArray<UProceduralMeshComponent*> GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates);
+	TArray<UCustomProceduralMeshComponent*> GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates);
+	TArray<UCustomProceduralMeshComponent*> GetAndRemoveFlowerFromMap(const FIntPoint& FlowerWorldCoordinates);
 	TArray<ABasicNPC*> GetAndRemoveNpcFromMap(const FIntPoint& npcWorldCoordinates);
 	void RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
+
+	// Remove single objects, usually used by NPCs when eating/killing them
+	void RemoveSingleGrassFromMap(UCustomProceduralMeshComponent* grass);
+	void RemoveSingleFlowerFromMap(UCustomProceduralMeshComponent* flower);
+	void RemoveSingleNpcFromMap(ABasicNPC* npc);
 
 	void AddChunkToRemoveCollision(ABinaryChunk* actor);
 	void AddTreeToRemoveCollision(ATree* actor);
@@ -233,8 +241,8 @@ private:
 
 	// Array to store spawned trees, grass, and flowers
 	TMap<FIntPoint, TArray<ATree*>> SpawnedTreesMap;
-	TMap<FIntPoint, TArray<UProceduralMeshComponent*>> SpawnedGrassMap;
-	TMap<FIntPoint, TArray<UProceduralMeshComponent*>> SpawnedFlowerMap;
+	TMap<FIntPoint, TArray<UCustomProceduralMeshComponent*>> SpawnedGrassMap;
+	TMap<FIntPoint, TArray<UCustomProceduralMeshComponent*>> SpawnedFlowerMap;
 	TMap<FIntPoint, TArray<ABasicNPC*>> SpawnedNpcMap;
 
 	// Arrays to update collision for actors (chunks and trees)
