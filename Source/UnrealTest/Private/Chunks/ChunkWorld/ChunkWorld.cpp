@@ -52,6 +52,10 @@ void AChunkWorld::SetAnimationSettingsNpc(UAnimationSettingsNPC* InAnimationSett
 	AnimationSettingsRef = InAnimationSettingsRef;
 }
 
+void AChunkWorld::SetStatsVoxelsMeshNPC(UStatsVoxelsMeshNPC* InStatsVoxelsMeshNPC) {
+	StatsVoxelsMeshNPCRef = InStatsVoxelsMeshNPC;
+}
+
 void AChunkWorld::InitializePathfindingManager() {
 	// Initialize thread pool for the NPC pathfinding
 	const int PathfindingThreads = 3;
@@ -288,6 +292,7 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 		SpawnedNPCActor->SetPathfindingManager(PathfindingManager);
 		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
 		SpawnedNPCActor->InitializeBrain(AnimalType::Tiger);
+		SpawnedNPCActor->SetStatsVoxelsMeshNPC(SVMNpc);
 
 		//SpawnedNPCActor->tag
 		// Define the boundaries for the collision check

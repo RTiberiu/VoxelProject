@@ -7,6 +7,8 @@
 #include "Chunks\ChunkData\ChunkLocationData.h"
 #include "Chunks\ChunkWorld\ChunkWorld.h"
 #include "NPC/SettingsNPC/AnimationSettingsNPC.h"
+#include "NPC/StatsNPC/StatsMeshGenerator.h"
+#include "NPC/StatsNPC/StatsVoxelsMeshNPC.h"
 
 #include "CoreMinimal.h"
 //#include "Engine/GameInstance.h"
@@ -27,6 +29,7 @@ private:
 	APerlinNoiseSettings* perlinNoiseSettings;
 	UAnimationSettingsNPC* animationSettingsNpcRef;
 
+	UStatsVoxelsMeshNPC* GenerateStatsVoxelMeshes();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -10,6 +10,8 @@
 #include "..\SettingsNPC\ActionStructures.h"
 //#include "DecisionSystemNPC.h"
 
+#include "..\StatsNPC\StatsVoxelsMeshNPC.h"
+
 #include "..\..\Utils\CustomMesh\CustomProceduralMeshComponent.h"
 #include <variant>
 #include "..\..\Pathfinding\SearchLibrary\Path.h"
@@ -41,6 +43,7 @@ public:
 	void SetPathfindingManager(PathfindingThreadManager* InPathfindingManager);
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 	void SetAnimationSettingsNPC(UAnimationSettingsNPC* InAnimationSettingsNPCRef); 
+	void SetStatsVoxelsMeshNPC(UStatsVoxelsMeshNPC* InStatsVoxelsMeshNPC);
 
 	void InitializeBrain(const AnimalType& animalType);
 
@@ -60,7 +63,7 @@ public:
 
 	std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> GetClosestInVisionList(VisionList list);
 
-	FVector& GetCurrentLocation();
+	FVector& GetCurrentLocation()
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
@@ -71,6 +74,9 @@ private:
 
 	UAnimationSettingsNPC* AnimationSettingsNPCRef;
 	UAnimationSettingsNPC*& AnimS = AnimationSettingsNPCRef;
+
+	UStatsVoxelsMeshNPC* StatsVoxelsMeshNPCRef;
+	UStatsVoxelsMeshNPC*& SVMNpc = StatsVoxelsMeshNPCRef;
 
 	PathfindingThreadManager* PathfindingManager;
 

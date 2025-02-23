@@ -55,6 +55,10 @@ void ABasicNPC::SetAnimationSettingsNPC(UAnimationSettingsNPC* InAnimationSettin
     AnimationSettingsNPCRef = InAnimationSettingsNPCRef;
 }
 
+void ABasicNPC::SetStatsVoxelsMeshNPC(UStatsVoxelsMeshNPC* InStatsVoxelsMeshNPC) {
+	StatsVoxelsMeshNPCRef = InStatsVoxelsMeshNPC;
+}
+
 void ABasicNPC::InitializeBrain(const AnimalType& animalType) {
     NpcType = animalType;
     Relationships = AnimalsRelationships[NpcType];

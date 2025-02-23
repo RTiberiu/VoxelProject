@@ -32,7 +32,11 @@ void AVoxelGameInstance::BeginPlay() {
             FVector::ZeroVector,                  
             FRotator::ZeroRotator               
     );
-    
+
+    // Generate the stats voxel meshes used for NPCs to show their attributes
+	UStatsVoxelsMeshNPC* statsVoxelsMeshNPC = GenerateStatsVoxelMeshes();
+	statsVoxelsMeshNPC->AddToRoot();
+
     // Spawn chunkWorld as an actor in the world
     FActorSpawnParameters SpawnParams;
 
@@ -53,6 +57,7 @@ void AVoxelGameInstance::BeginPlay() {
         chunkWorld->SetPerlinNoiseSettings(perlinNoiseSettings);
         chunkWorld->SetAnimationSettingsNpc(animationSettingsNpcRef);
         chunkWorld->InitializePathfindingManager();
+		chunkWorld->SetStatsVoxelsMeshNPC(statsVoxelsMeshNPC);
 
         // Finish spawning the chunk world
         UGameplayStatics::FinishSpawningActor(chunkWorld, FTransform(FRotator::ZeroRotator, FVector::ZeroVector));
@@ -90,6 +95,24 @@ void AVoxelGameInstance::EndPlay(const EEndPlayReason::Type EndPlayReason) {
         perlinNoiseSettings->Destroy();
         perlinNoiseSettings = nullptr;
     }
+}
+
+UStatsVoxelsMeshNPC* AVoxelGameInstance::GenerateStatsVoxelMeshes() {
+    UStatsMeshGenerator* statsMeshGenerator = NewObject<UStatsMeshGenerator>();
+    UStatsVoxelsMeshNPC* statsVoxelsMeshNPC = NewObject<UStatsVoxelsMeshNPC>();
+
+    const StatsType StatsArray[] = { Stamina, Hunger, HealthPoints, FoodPouch, Allies };
+	const FColor StatsColors[] = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue, FColor::Purple };
+    constexpr int StatsCount = sizeof(StatsArray) / sizeof(StatsArray[0]);
+
+    for (int i = 1; i < 10; i++) {
+		for (int j = 0; j < StatsCount; j++) {
+			FVoxelObjectMeshData meshData = statsMeshGenerator->GetStatsMeshData(StatsColors[j], i);
+			statsVoxelsMeshNPC->AddStatsMeshData(StatsArray[j], i, &meshData);
+		}
+    }
+
+    return statsVoxelsMeshNPC;
 }
 
 

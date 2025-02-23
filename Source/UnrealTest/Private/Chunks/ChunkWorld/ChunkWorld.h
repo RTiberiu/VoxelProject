@@ -10,6 +10,7 @@
 #include "..\ChunkMeshThreads\ChunksLocationRunnable.h"
 #include "..\ChunkMeshThreads\ChunkMeshDataRunnable.h"
 #include "..\ChunkData\ChunkLocationData.h"
+#include "..\..\NPC\StatsNPC\StatsVoxelsMeshNPC.h"
 
 #include "..\..\NPC\SettingsNPC\AnimationSettingsNPC.h"
 
@@ -41,6 +42,7 @@ public:
 	void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
 	void SetAnimationSettingsNpc(UAnimationSettingsNPC* InAnimationSettingsRef);
+	void SetStatsVoxelsMeshNPC(UStatsVoxelsMeshNPC* InStatsVoxelsMeshNPC);
 
 	void InitializePathfindingManager();
 
@@ -57,6 +59,9 @@ private:
 
 	UAnimationSettingsNPC* AnimationSettingsRef;
 	UAnimationSettingsNPC*& AnimS = AnimationSettingsRef; // creating an alias for the animation settings ref
+
+	UStatsVoxelsMeshNPC* StatsVoxelsMeshNPCRef;
+	UStatsVoxelsMeshNPC*& SVMNpc = StatsVoxelsMeshNPCRef; // creating an alias for the stats voxels mesh npc ref
 
 	TSubclassOf<AActor> Chunk;
 
