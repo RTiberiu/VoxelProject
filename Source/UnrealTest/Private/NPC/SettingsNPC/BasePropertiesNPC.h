@@ -71,7 +71,7 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	100,	// totalHp
 	30,		// hitDamage
 	5,		// attackSpeed
-	230,	// movementSpeed
+	200,	// movementSpeed
 	100,	// currentStamina
 	100, 	// maxStamina
 	5,		// staminaDepletionRate
@@ -99,7 +99,7 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	0.1f,	// desireToRecruitAllies
 	1.0f,	// survivalInstinct
 	30,		// foodOfferAmount
-	1500,	// roamRadius
+	600,	// roamRadius
 };
 
 const MemoryNpcAttributes TigerMemoryAttributes = {

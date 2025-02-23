@@ -18,9 +18,4 @@ private:
     //VoxelSearchState voxelSearchGoalState;
     VoxelSearchState* voxelSearchGoalState;
     VoxelSearchState* voxelSearchInitialState;
-    double walkerWalkTime;
-    int walkerAttentionCapacity;
-
-public:
-
 };

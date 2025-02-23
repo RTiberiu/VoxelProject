@@ -133,16 +133,14 @@ void ABasicNPC::RequestPathToPlayer() {
     PathfindingManager->AddPathfindingTask(this, npcLocation, playerLocation);
 }
 
-void ABasicNPC::ConsumePathAndMoveToLocation() {
-    float deltaTime = GetWorld()->GetDeltaSeconds();
-
+void ABasicNPC::ConsumePathAndMoveToLocation(const float& DeltaSeconds) {
     // Interpolating smoothly from the current location to the target
     FVector actorLocation = GetActorLocation();
 
-    AdjustRotationTowardsNextLocation(actorLocation, targetLocation, deltaTime);
+    AdjustRotationTowardsNextLocation(actorLocation, targetLocation, DeltaSeconds);
 
     // Only jump if there is a difference between the actor and the target
-    bool isJumpNeeded = FMath::Abs(actorLocation.Z - targetLocation.Z) > 5.0f;
+    bool isJumpNeeded = FMath::Abs(actorLocation.Z - targetLocation.Z) > 0.1f;
     if (isJumpNeeded) {
         // Start jump if moving in X/Y direction and not already jumping
         bool isMovingOnXY = FVector::Dist2D(actorLocation, targetLocation) > 10.0f;
@@ -159,6 +157,14 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
 
     if (isJumping) {
         PlayAnimation(AnimationType::Jump);
+
+        // Delay the jump to allow the animation to start first.
+        delayJumpCounter += DeltaSeconds;
+
+        if (delayJumpCounter < delayJump) {
+            return;
+        }
+
         // Linear interpolation for X and Y movement
         newPosition = FMath::Lerp(jumpStart, jumpEnd, jumpProgress);
 
@@ -168,18 +174,20 @@ void ABasicNPC::ConsumePathAndMoveToLocation() {
             FMath::Lerp(midPointZ, jumpEnd.Z, jumpProgress),
             jumpProgress);
 
-        jumpProgress += deltaTime * jumpSpeed;
+        jumpProgress += DeltaSeconds * jumpSpeed;
 
         // End jump when progress reaches 1
         if (jumpProgress >= 1.0f) {
+            delayJumpCounter = 0.0f;
             isJumping = false;
+
             // Ensuring the NPC lands exactly at target
             newPosition = jumpEnd; 
         }
     } else {
         PlayAnimation(AnimationType::Walk);
         // Move normally when not jumping
-        newPosition = FMath::VInterpConstantTo(actorLocation, targetLocation, deltaTime, DecisionSys->AnimalAttributes.movementSpeed);
+        newPosition = FMath::VInterpConstantTo(actorLocation, targetLocation, DeltaSeconds, DecisionSys->AnimalAttributes.movementSpeed);
     }
 
     SetActorLocation(newPosition);
@@ -389,11 +397,11 @@ void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, 
     float deltaYaw = FMath::Fmod(targetYaw - currentRotation.Yaw + 180.0f, 360.0f) - 180.0f;
 
     // If the rotation is already close to the target, skip interpolation
-    if (FMath::Abs(deltaYaw) > 1.0f) {
+    if (FMath::Abs(deltaYaw) > 0.1f) {
         FRotator targetRotation(0.0f, targetYaw, 0.0f);
 
         // Smoothly interpolating the yaw rotation and apply rotation
-        FRotator newRotation = FMath::RInterpTo(currentRotation, targetRotation, deltaTime, DecisionSys->AnimalAttributes.movementSpeed);
+        FRotator newRotation = FMath::RInterpTo(currentRotation, targetRotation, deltaTime, rotatingSpeed);
         SetActorRotation(newRotation);
     }
 }
@@ -642,7 +650,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
         // Smoothly move to the next location (happens over multiple frames)
         if (targetLocationIsAvailable) {
-            ConsumePathAndMoveToLocation();
+            ConsumePathAndMoveToLocation(DeltaSeconds);
         }
     }
 

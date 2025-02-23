@@ -91,7 +91,7 @@ private:
 	Path* pathToTarget;
 	bool pathIsReady;
 
-	void ConsumePathAndMoveToLocation();
+	void ConsumePathAndMoveToLocation(const float& DeltaSeconds);
 
 	void SetTargetLocation();
 	bool IsTargetLocationAvailable();
@@ -138,8 +138,11 @@ private:
 	float jumpProgress;
 	FVector jumpStart;
 	FVector jumpEnd;
-	const float jumpHeight = 60.0f;
-	const float jumpSpeed = 2.0f;
+	const float jumpHeight = 120.0f;
+	const float jumpSpeed = 1.5f;
+	const float delayJump = 0.12f;
+	float delayJumpCounter = 0.0f;
+	const float rotatingSpeed = 10.0f;
 	AnimationType currentAnimPlaying;
 
 	bool isWalking;

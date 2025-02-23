@@ -9,6 +9,7 @@
 #include "..\SearchProblem\VoxelSearchProblem.h"
 
 class ABasicNPC;
+class VoxelSearchProblem;
 class UWorldTerrainSettings;
 class UChunkLocationData;
 
