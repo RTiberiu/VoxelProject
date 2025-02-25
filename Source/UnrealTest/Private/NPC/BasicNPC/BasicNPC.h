@@ -127,6 +127,7 @@ private:
 	FVector currentLocation;
 
 	void RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds);
+	void SignalEndOfAction();
 
 	bool runTargetAnimation;
 	bool isTargetSet;

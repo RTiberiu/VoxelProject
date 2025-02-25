@@ -323,9 +323,6 @@ void ABasicNPC::ConsumePathAndMoveToLocation(const float& DeltaSeconds) {
 
 void ABasicNPC::SetTargetLocation() {
     if (pathToTarget->path.empty()) {
-        pathIsReady = false;
-        pathToTarget = nullptr;
-        isTargetSet = false;
         runTargetAnimation = true; // Trigger the final animation
         return;
     }
@@ -445,6 +442,7 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 
     switch (actionType) {
     case ActionType::AttackNpc:
+        SignalEndOfAction();
         break;
     case ActionType::AttackFoodSource:
         EatingCounter += DeltaSeconds;
@@ -457,43 +455,48 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
             UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryBasic, true);
 
             // Trigger end of action and reset counter
-            runTargetAnimation = false;
+            SignalEndOfAction();
             EatingCounter = 0.0f;
         }
         break;
     case ActionType::RestAfterBasicFood:
         if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodBasic)) {
             // Trigger end of action and reset counter
-            runTargetAnimation = false;
-            pathIsReady = false;
-            pathToTarget = nullptr;
-            isTargetSet = false;
+            SignalEndOfAction();
             RestCounter = 0.0f;
         }
-        
+
         break;
 
     case ActionType::RestAfterImprovedFood:
         if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodImproved)) {
             // Trigger end of action and reset counter
-            runTargetAnimation = false;
-            pathIsReady = false;
-            pathToTarget = nullptr;
-            isTargetSet = false;
+            SignalEndOfAction();
             RestCounter = 0.0f;
         }
         break;
     case ActionType::TradeFood:
+        SignalEndOfAction();
         break;
     case ActionType::Roam:
+        SignalEndOfAction();
         break;
     case ActionType::Flee:
+        SignalEndOfAction();
         break;
     }
 
     // TODO Update attributes
 
     // TODO Set the runTargetAnimation to false when done
+}
+
+// When an action is completed, modify variables to trigger a new action request
+void ABasicNPC::SignalEndOfAction() {
+    pathIsReady = false;
+    pathToTarget = nullptr;
+    isTargetSet = false;
+    runTargetAnimation = false;
 }
 
 void ABasicNPC::AdjustRotationTowardsNextLocation(const FVector& actorLocation, const FVector& targetPosition, const float& deltaTime) {
@@ -808,6 +811,4 @@ void ABasicNPC::Tick(float DeltaSeconds) {
     if (runTargetAnimation) {
         RunTargetAnimationAndUpdateAttributes(DeltaSeconds);
     }
-
-    // TODO Update attributes that happens regardless of action (like hunger)
 }
