@@ -92,6 +92,7 @@ private:
 
 	// NPC Stats related methods
 	void UpdateStatsVoxelsMesh(StatsType statType);
+	int GetStatsVoxelNumber(const float& CurrentValue, const float& MaxValue);
 	void InitializeStatsVoxelMeshes();
 	TMap<StatsType, UCustomProceduralMeshComponent*> StatsMeshes;
 

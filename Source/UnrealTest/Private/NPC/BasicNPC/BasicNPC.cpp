@@ -83,18 +83,47 @@ void ABasicNPC::InitializeBrain(const AnimalType& animalType) {
     InitializeVisionCollisionSphere(DecisionSys->AnimalAttributes.awarenessRadius);
 }
 
-// Based on parameters, set the stats voxels mesh data
 void ABasicNPC::UpdateStatsVoxelsMesh(StatsType statType) {
+    // Get the current and max value for the stat
+    float CurrentValue{ 0 };
+    float MaxValue{ 0 };
+
+    switch (statType) {
+    case StatsType::Stamina:
+        CurrentValue = static_cast<float>(DecisionSys->AnimalAttributes.currentStamina);
+        MaxValue = static_cast<float>(DecisionSys->AnimalAttributes.maxStamina);
+        break;
+    case StatsType::Hunger:
+        CurrentValue = static_cast<float>(DecisionSys->AnimalAttributes.currentHunger);
+        MaxValue = static_cast<float>(DecisionSys->AnimalAttributes.maxHunger);
+        break;
+    case StatsType::HealthPoints:
+        CurrentValue = static_cast<float>(DecisionSys->AnimalAttributes.currentHp);
+        MaxValue = static_cast<float>(DecisionSys->AnimalAttributes.maxHp);
+        break;
+    case StatsType::FoodPouch:
+        CurrentValue = static_cast<float>(DecisionSys->AnimalAttributes.foodPouch);
+        MaxValue = static_cast<float>(DecisionSys->AnimalAttributes.maxHunger);
+        break;
+    case StatsType::AlliesInPack:
+        break;
+    };
 
     // TODO Calculate the actual fillness value
-    const int FillnessValue = FMath::RandRange(1, 26);
+    const int FillnessValue = GetStatsVoxelNumber(CurrentValue, MaxValue);
 
     // Get the correct stat mesh and update it 
     UCustomProceduralMeshComponent* Mesh = StatsMeshes[statType];
     Mesh->ClearAllMeshSections();
+
+    // Return early if filnnes is zero, since it should select any mesh
+    if (FillnessValue == 0) {
+        return;
+    }
+
     FVoxelObjectMeshData* NewStatVoxelMeshData = SVMNpc->GetStatsMeshData(statType, FillnessValue);
 
-    // This ensure the normals remain correct when the root (npc) rotates
+    // This ensure the normals remain correct when the root (npc) rotates // TODO Potentially do this only once
     TArray<FVector> RecalculatedNormals;
     TArray<FProcMeshTangent> RecalculatedTangents;
     UKismetProceduralMeshLibrary::CalculateTangentsForMesh(
@@ -116,6 +145,17 @@ void ABasicNPC::UpdateStatsVoxelsMesh(StatsType statType) {
         RecalculatedTangents,
         false
     );
+}
+
+// Calculate the fillness value for the stats voxel
+int ABasicNPC::GetStatsVoxelNumber(const float& CurrentValue, const float& MaxValue) {
+    if (CurrentValue <= 0) {
+        return 0;
+    }
+
+    float Ratio = CurrentValue / MaxValue;
+    int VoxelCount = FMath::RoundToInt(Ratio * 27.0f);
+    return FMath::Clamp(VoxelCount, 0, 27);
 }
 
 void ABasicNPC::InitializeStatsVoxelMeshes() {
@@ -277,6 +317,7 @@ void ABasicNPC::ConsumePathAndMoveToLocation(const float& DeltaSeconds) {
         DecisionSys->AnimalAttributes.currentStamina = FMath::Max(
             DecisionSys->AnimalAttributes.currentStamina - DecisionSys->AnimalAttributes.staminaDepletionRate,
             0);
+        UpdateStatsVoxelsMesh(StatsType::Stamina);
     }
 }
 
@@ -415,8 +456,6 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
             // Update the food attributes
             UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryBasic, true);
 
-            UpdateStatsVoxelsMesh(StatsType::Hunger);
-
             // Trigger end of action and reset counter
             runTargetAnimation = false;
             EatingCounter = 0.0f;
@@ -424,9 +463,6 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
         break;
     case ActionType::RestAfterBasicFood:
         if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodBasic)) {
-
-            UpdateStatsVoxelsMesh(StatsType::Stamina);
-
             // Trigger end of action and reset counter
             runTargetAnimation = false;
             pathIsReady = false;
@@ -439,9 +475,6 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 
     case ActionType::RestAfterImprovedFood:
         if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodImproved)) {
-            
-            UpdateStatsVoxelsMesh(StatsType::Stamina);
-
             // Trigger end of action and reset counter
             runTargetAnimation = false;
             pathIsReady = false;
@@ -513,13 +546,19 @@ void ABasicNPC::UpdateFoodAttributes(const uint8& hungerRecovered, bool ateBasic
             uint8_t remainder = updatedHunger - DecisionSys->AnimalAttributes.maxHunger;
             DecisionSys->AnimalAttributes.currentHunger = DecisionSys->AnimalAttributes.maxHunger;
             DecisionSys->AnimalAttributes.foodPouch += remainder;
+
+            UpdateStatsVoxelsMesh(StatsType::Hunger);
+            UpdateStatsVoxelsMesh(StatsType::FoodPouch);
         } else {
             // Update the current hunger
             DecisionSys->AnimalAttributes.currentHunger = updatedHunger;
+
+            UpdateStatsVoxelsMesh(StatsType::Hunger);
         }
     } else {
         // Add directly to the food pouch 
         DecisionSys->AnimalAttributes.foodPouch += hungerRecovered;
+        UpdateStatsVoxelsMesh(StatsType::FoodPouch);
     }
     
     // Update meals counter
@@ -560,6 +599,9 @@ void ABasicNPC::UpdateHunger(const float& DeltaSeconds) {
             newHunger,
             0
         );
+
+        UpdateStatsVoxelsMesh(StatsType::Hunger);
+
         HungerCounter = 0.0f;
     }
 }
@@ -576,6 +618,8 @@ bool ABasicNPC::UpdateStamina(const float& DeltaSeconds, const uint8_t& Threshol
             newStamina,
             DecisionSys->AnimalAttributes.maxStamina
         );
+
+        UpdateStatsVoxelsMesh(StatsType::Stamina);
 
         return true;
     }

@@ -2,7 +2,8 @@
 #include <cstdint>
 
 struct BasicNpcAttributes {
-	uint8_t totalHp;
+	uint8_t currentHp;
+	uint8_t maxHp;
 	uint8_t hitDamage;				// Damage point when attacking another NPC
 	uint8_t attackSpeed;			// How long the animal has to wait before dealing another attack
 
@@ -68,7 +69,8 @@ struct MemoryNpcAttributes {
 };
 
 const BasicNpcAttributes TigerBasicAttributes = {
-	100,	// totalHp
+	100,	// currentHp
+	100,	// maxHp
 	30,		// hitDamage
 	5,		// attackSpeed
 	200,	// movementSpeed
@@ -111,7 +113,8 @@ const MemoryNpcAttributes TigerMemoryAttributes = {
 };
 
 const BasicNpcAttributes TapirBasicAttributes = {
-	100,	// totalHp
+	100,	// currentHp
+	100,	// maxHp
 	10,		// hitDamage
 	3,		// attackSpeed
 	5,		// movementSpeed

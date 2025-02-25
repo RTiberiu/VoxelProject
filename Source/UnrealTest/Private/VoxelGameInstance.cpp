@@ -105,7 +105,7 @@ void AVoxelGameInstance::GenerateStatsVoxelMeshes() {
 	const TArray<StatsType> StatTypes = statsVoxelsMeshNPC->GetStatsTypes();
 	const FColor StatsColors[] = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue, FColor::Purple };
 
-    for (int i = 1; i < VoxelFillAmount; i++) {
+    for (int i = 1; i <= VoxelFillAmount; i++) {
 		for (int j = 0; j < StatTypes.Num(); j++) {
 			FVoxelObjectMeshData meshData = statsMeshGenerator->GetStatsMeshData(StatsColors[j], i);
 			statsVoxelsMeshNPC->AddStatsMeshData(StatTypes[j], i, meshData);

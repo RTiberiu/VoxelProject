@@ -38,11 +38,11 @@ private:
 	};
 
 	const TMap<StatsType, FVector> StatsVoxelOffsets = {
-		{StatsType::Stamina, FVector(0.0f, -75.0f, 150.0f)},
-		{StatsType::Hunger, FVector(0.0f, -25.0f, 150.0f)},
-		{StatsType::HealthPoints, FVector(0.0f, 25.0f, 150.0f)},
-		{StatsType::FoodPouch, FVector(0.0f, -50.0f, 200.0f)},
-		{StatsType::AlliesInPack, FVector(0.0f, 0.0f, 200.0f)}
+		{StatsType::Stamina, FVector(50.0f, -100.0f, 150.0f)},
+		{StatsType::Hunger, FVector(50.0f, -50.0f, 150.0f)},
+		{StatsType::HealthPoints, FVector(50.0f, 0.0f, 150.0f)},
+		{StatsType::FoodPouch, FVector(50.0f, -75.0f, 200.0f)},
+		{StatsType::AlliesInPack, FVector(50.0f, -25.0f, 200.0f)}
 	};
 
 	
