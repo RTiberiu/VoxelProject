@@ -18,12 +18,11 @@ UStatsMeshGenerator::~UStatsMeshGenerator() {
 }
 
 FVoxelObjectMeshData UStatsMeshGenerator::GetStatsMeshData(const FColor& InStatsColor, const int& InFilledVoxels) {
-    
 	StatsColor = InStatsColor;
 	FilledVoxels = InFilledVoxels;
 
 	createStatsBinarySolidColumnsYXZ();
-	createTerrainMeshesData();
+	createStatsMeshesData();
 
 	FVoxelObjectMeshData TemporaryMeshData = MeshData;
 
@@ -54,8 +53,6 @@ void UStatsMeshGenerator::createStatsBinarySolidColumnsYXZ() {
 	binaryStats.xBinaryColumn = std::vector<uint16_t>(StatsDimensions, 0);
 	binaryStats.yBinaryColumn = std::vector<uint16_t>(StatsDimensions, 0);
 	binaryStats.zBinaryColumn = std::vector<uint16_t>(StatsDimensions, 0);
-
-	const int halfStatsChunk = StatsSize / 2;
 
 	// Get the points based on the FillVoxels amount
 	TArray<FVector> uniqueStatsPoints = getUniqueStatsPoints();
@@ -109,9 +106,11 @@ TArray<FVector> UStatsMeshGenerator::getUniqueStatsPoints() {
 			}
 		}
 	}
+
+	return uniqueStatsPoints;
 }
 
-void UStatsMeshGenerator::createTerrainMeshesData() {
+void UStatsMeshGenerator::createStatsMeshesData() {
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint16_t>> columnFaceMasks{

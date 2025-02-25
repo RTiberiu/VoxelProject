@@ -27,8 +27,6 @@ void UGrassMeshGenerator::createBladeBinarySolidColumnsYXZ() {
 	binaryGrass.xBinaryColumn = std::vector<uint16_t>(GrassDimensions, 0);
 	binaryGrass.zBinaryColumn = std::vector<uint16_t>(GrassDimensions, 0);
 
-	const int halfGrassChunk = WTSR->GrassSize / 2;
-
 	// TODO Move this random generator to a different class, as this should be initialized only once
 	// Create a random number generator
 	std::random_device rd;

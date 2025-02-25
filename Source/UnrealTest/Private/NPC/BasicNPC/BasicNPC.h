@@ -63,7 +63,7 @@ public:
 
 	std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> GetClosestInVisionList(VisionList list);
 
-	FVector& GetCurrentLocation()
+	FVector& GetCurrentLocation();
 
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
@@ -82,12 +82,18 @@ private:
 
 	AAIController* AIController;
 
+	UPROPERTY()
 	UDecisionSystemNPC* DecisionSys;
 
 	AnimalType NpcType;
 	AnimalRelationships Relationships;
 
 	void spawnNPC();
+
+	// NPC Stats related methods
+	void UpdateStatsVoxelsMesh(StatsType statType);
+	void InitializeStatsVoxelMeshes();
+	TMap<StatsType, UCustomProceduralMeshComponent*> StatsMeshes;
 
 	void PlayAnimation(const AnimationType& animationtype);
 

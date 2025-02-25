@@ -20,11 +20,13 @@ void AVoxelGameInstance::BeginPlay() {
     chunkLocationData = NewObject<UChunkLocationData>();
     worldTerrainSettings = NewObject<UWorldTerrainSettings>();
     animationSettingsNpcRef = NewObject<UAnimationSettingsNPC>();
-         
+    statsVoxelsMeshNPC = NewObject<UStatsVoxelsMeshNPC>();
+
     // Ensuring there is not premature garbage collection on the object
     worldTerrainSettings->AddToRoot();
     chunkLocationData->AddToRoot();
     animationSettingsNpcRef->AddToRoot();
+    statsVoxelsMeshNPC->AddToRoot();
 
     // Spawn PerlinNoiseSettings for allowing value changes in the editor
     perlinNoiseSettings = GetWorld()->SpawnActor<APerlinNoiseSettings>(
@@ -34,8 +36,7 @@ void AVoxelGameInstance::BeginPlay() {
     );
 
     // Generate the stats voxel meshes used for NPCs to show their attributes
-	UStatsVoxelsMeshNPC* statsVoxelsMeshNPC = GenerateStatsVoxelMeshes();
-	statsVoxelsMeshNPC->AddToRoot();
+    GenerateStatsVoxelMeshes();
 
     // Spawn chunkWorld as an actor in the world
     FActorSpawnParameters SpawnParams;
@@ -97,22 +98,19 @@ void AVoxelGameInstance::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     }
 }
 
-UStatsVoxelsMeshNPC* AVoxelGameInstance::GenerateStatsVoxelMeshes() {
+void AVoxelGameInstance::GenerateStatsVoxelMeshes() {
     UStatsMeshGenerator* statsMeshGenerator = NewObject<UStatsMeshGenerator>();
-    UStatsVoxelsMeshNPC* statsVoxelsMeshNPC = NewObject<UStatsVoxelsMeshNPC>();
 
-    const StatsType StatsArray[] = { Stamina, Hunger, HealthPoints, FoodPouch, Allies };
+    const int VoxelFillAmount = 27;
+	const TArray<StatsType> StatTypes = statsVoxelsMeshNPC->GetStatsTypes();
 	const FColor StatsColors[] = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue, FColor::Purple };
-    constexpr int StatsCount = sizeof(StatsArray) / sizeof(StatsArray[0]);
 
-    for (int i = 1; i < 10; i++) {
-		for (int j = 0; j < StatsCount; j++) {
+    for (int i = 1; i < VoxelFillAmount; i++) {
+		for (int j = 0; j < StatTypes.Num(); j++) {
 			FVoxelObjectMeshData meshData = statsMeshGenerator->GetStatsMeshData(StatsColors[j], i);
-			statsVoxelsMeshNPC->AddStatsMeshData(StatsArray[j], i, &meshData);
+			statsVoxelsMeshNPC->AddStatsMeshData(StatTypes[j], i, meshData);
 		}
     }
-
-    return statsVoxelsMeshNPC;
 }
 
 

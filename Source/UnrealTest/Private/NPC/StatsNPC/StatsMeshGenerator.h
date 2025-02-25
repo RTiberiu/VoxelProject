@@ -4,6 +4,7 @@
 #include "..\..\Chunks\DataStructures\VoxelObjectLocationData.h"
 #include <vector>
 #include "CoreMinimal.h"
+#include "StatsMeshGenerator.generated.h"
 
 UCLASS()
 class UStatsMeshGenerator : public UObject {
@@ -34,7 +35,7 @@ private:
 	int FilledVoxels { 0 };
 
 	// Stats voxel settings
-	const uint8_t StatsScale{ 7 };
+	const uint8_t StatsScale{ 10 };
 	const float HalfStatsScale{ static_cast<float>(StatsScale) / 2.0f };
 	const uint8_t StatsSizePadding{ 16 };
 	const uint8_t StatsSize{ 14 };
@@ -49,7 +50,7 @@ private:
 
 	TArray<FVector> getUniqueStatsPoints();
 
-	void createTerrainMeshesData();
+	void createStatsMeshesData();
 
 	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint16_t>>& columnFaceMasks);
 
@@ -73,6 +74,4 @@ private:
 		FVector& voxelPosition4,
 		const int& height, const int& width,
 		const int& axis);
-
-
 };

@@ -2,6 +2,7 @@
 
 #include "..\..\Chunks\TerrainSettings\WorldTerrainSettings.h"
 #include "DecisionSystemNPC.h"
+#include "KismetProceduralMeshLibrary.h"
 
 #include "GameFramework/PawnMovementComponent.h"
 
@@ -55,8 +56,13 @@ void ABasicNPC::SetAnimationSettingsNPC(UAnimationSettingsNPC* InAnimationSettin
     AnimationSettingsNPCRef = InAnimationSettingsNPCRef;
 }
 
+// Should be called after InitializeBrain() and it sets the voxels above the NPC
+// showing various attributes. 
 void ABasicNPC::SetStatsVoxelsMeshNPC(UStatsVoxelsMeshNPC* InStatsVoxelsMeshNPC) {
 	StatsVoxelsMeshNPCRef = InStatsVoxelsMeshNPC;
+
+    // Creating all the meshes that will hold the stats mesh data based on parameters
+    InitializeStatsVoxelMeshes();
 }
 
 void ABasicNPC::InitializeBrain(const AnimalType& animalType) {
@@ -75,6 +81,68 @@ void ABasicNPC::InitializeBrain(const AnimalType& animalType) {
 
     // Assign the sphere radius from the 
     InitializeVisionCollisionSphere(DecisionSys->AnimalAttributes.awarenessRadius);
+}
+
+// Based on parameters, set the stats voxels mesh data
+void ABasicNPC::UpdateStatsVoxelsMesh(StatsType statType) {
+
+    // TODO Calculate the actual fillness value
+    const int FillnessValue = FMath::RandRange(1, 26);
+
+    // Get the correct stat mesh and update it 
+    UCustomProceduralMeshComponent* Mesh = StatsMeshes[statType];
+    Mesh->ClearAllMeshSections();
+    FVoxelObjectMeshData* NewStatVoxelMeshData = SVMNpc->GetStatsMeshData(statType, FillnessValue);
+
+    // This ensure the normals remain correct when the root (npc) rotates
+    TArray<FVector> RecalculatedNormals;
+    TArray<FProcMeshTangent> RecalculatedTangents;
+    UKismetProceduralMeshLibrary::CalculateTangentsForMesh(
+        NewStatVoxelMeshData->Vertices,
+        NewStatVoxelMeshData->Triangles,
+        NewStatVoxelMeshData->UV0,
+        RecalculatedNormals,
+        RecalculatedTangents
+    );
+
+    // Use the recalculated normals and tangents and create the mesh section
+    Mesh->CreateMeshSection(
+        0,
+        NewStatVoxelMeshData->Vertices,
+        NewStatVoxelMeshData->Triangles,
+        RecalculatedNormals,
+        NewStatVoxelMeshData->UV0,
+        NewStatVoxelMeshData->Colors,
+        RecalculatedTangents,
+        false
+    );
+}
+
+void ABasicNPC::InitializeStatsVoxelMeshes() {
+    FRotator VoxelRotation(-180.0f, 0.0f, 45.0f);
+
+	TArray<StatsType> StatsTypes = SVMNpc->GetStatsTypes();
+    for (StatsType statsType : StatsTypes) {
+        UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
+        Mesh->RegisterComponent();
+        Mesh->SetCastShadow(false);
+       
+        UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
+        if (Material) {
+            Mesh->SetMaterial(0, Material);
+        }
+
+        // Set the offset location and rotation
+        Mesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+
+        FVector NewLocation = currentLocation + SVMNpc->GetStatsVoxelOffset(statsType);
+        Mesh->SetRelativeRotation(VoxelRotation);
+        Mesh->SetRelativeLocation(NewLocation);
+		StatsMeshes.Add(statsType, Mesh);
+
+        // Add initial values for the stats voxels
+        UpdateStatsVoxelsMesh(statsType);
+    }
 }
 
 void ABasicNPC::spawnNPC() {
@@ -347,6 +415,8 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
             // Update the food attributes
             UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryBasic, true);
 
+            UpdateStatsVoxelsMesh(StatsType::Hunger);
+
             // Trigger end of action and reset counter
             runTargetAnimation = false;
             EatingCounter = 0.0f;
@@ -354,6 +424,9 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
         break;
     case ActionType::RestAfterBasicFood:
         if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodBasic)) {
+
+            UpdateStatsVoxelsMesh(StatsType::Stamina);
+
             // Trigger end of action and reset counter
             runTargetAnimation = false;
             pathIsReady = false;
@@ -366,6 +439,9 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 
     case ActionType::RestAfterImprovedFood:
         if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodImproved)) {
+            
+            UpdateStatsVoxelsMesh(StatsType::Stamina);
+
             // Trigger end of action and reset counter
             runTargetAnimation = false;
             pathIsReady = false;
@@ -461,6 +537,8 @@ bool ABasicNPC::ForceRestWhenStaminaIsZero(const float& DeltaSeconds) {
         bool staminaUpdated = UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterStaminaIsZero);
 
         if (staminaUpdated) {
+            UpdateStatsVoxelsMesh(StatsType::Stamina);
+
             // Reset counter and stop resting
             RestCounter = 0.0f;
             return false;
