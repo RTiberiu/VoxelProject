@@ -96,7 +96,7 @@ private:
 	void InitializeStatsVoxelMeshes();
 	TMap<StatsType, UCustomProceduralMeshComponent*> StatsMeshes;
 
-	void PlayAnimation(const AnimationType& animationtype);
+	void PlayAnimation(const AnimationType& animationtype, bool loopAnim = true);
 
 	void InitializeVisionCollisionSphere(const float& radius);
 
@@ -171,6 +171,13 @@ private:
 	bool ForceRestWhenStaminaIsZero(const float& DeltaSeconds);
 	void UpdateHunger(const float& DeltaSeconds);
 	bool UpdateStamina(const float& DeltaSeconds, const uint8_t& Threshold);
+
+	// Trigger a death animation and destroy the NPC
+	void TriggerNpcDeath();
+	void WaitForDespawnThresholdAndDestroy(const float& DeltaSeconds);
+	bool isDeathTriggered;
+	float DespawningCounter = 0.0f;
+	const float DespawnTime = 5.0f;
 
 	bool waitForNextPositionCheck;
 	float OccupiedDelayTimer = 0.0f; // Accumulates time when target location is occupied by another NPC

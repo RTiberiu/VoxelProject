@@ -20,6 +20,7 @@ ABasicNPC::ABasicNPC() {
     targetLocationIsAvailable = false;
     runTargetAnimation = false;
     isTargetSet = false;
+    isDeathTriggered = false;
 
     ThreatsInRange = TArray<ABasicNPC*>();
     AlliesInRange = TArray<ABasicNPC*>();
@@ -206,7 +207,7 @@ void ABasicNPC::spawnNPC() {
     currentLocation = GetActorLocation();
 }
 
-void ABasicNPC::PlayAnimation(const AnimationType& animationtype) {
+void ABasicNPC::PlayAnimation(const AnimationType& animationtype, bool loopAnim) {
     if (currentAnimPlaying == animationtype) {
         return;
     }
@@ -215,7 +216,7 @@ void ABasicNPC::PlayAnimation(const AnimationType& animationtype) {
     
     UAnimSequence* AnimationPtr = AnimS->GetAnimation(NpcType, animationtype);
     if (AnimationPtr) {
-        SkeletalMesh->PlayAnimation(AnimationPtr, true);
+        SkeletalMesh->PlayAnimation(AnimationPtr, loopAnim);
     }
 }
 
@@ -605,6 +606,11 @@ void ABasicNPC::UpdateHunger(const float& DeltaSeconds) {
 
         UpdateStatsVoxelsMesh(StatsType::Hunger);
 
+        // Check if NPC should die of starvation
+		if (DecisionSys->AnimalAttributes.currentHunger == 0) {
+            TriggerNpcDeath();
+		}
+
         HungerCounter = 0.0f;
     }
 }
@@ -627,6 +633,23 @@ bool ABasicNPC::UpdateStamina(const float& DeltaSeconds, const uint8_t& Threshol
         return true;
     }
     return false;
+}
+
+
+// Destroy NPC and clear it from the spawned map
+void ABasicNPC::TriggerNpcDeath() {
+    PlayAnimation(AnimationType::Death, false);
+    isDeathTriggered = true;
+}
+
+void ABasicNPC::WaitForDespawnThresholdAndDestroy(const float& DeltaSeconds) {
+    DespawningCounter += DeltaSeconds;
+
+    if (DespawningCounter >= DespawnTime) {
+        WTSR->RemoveSingleNpcFromMap(this);
+        this->RemoveFromRoot();
+        this->Destroy();
+    }
 }
 
 void ABasicNPC::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
@@ -766,6 +789,11 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
     // Decrease the hunger every unit of time (1s)
     UpdateHunger(DeltaSeconds);
+
+    if (isDeathTriggered) {
+        WaitForDespawnThresholdAndDestroy(DeltaSeconds);
+        return;
+    }
     
     if (pathIsReady) {
         // Making sure the next position is not occupied by another NPC
