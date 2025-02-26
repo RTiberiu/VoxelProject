@@ -77,6 +77,11 @@ constexpr AnimalType PandaFoodType = None;
 constexpr AnimalType PandaAllies = Tiger | Tapir | RedPanda | Sloth | Cobra | Bat | Peacock | Gorilla;
 constexpr AnimalType PandaEnemies = None;
 
+// RedPanda settings
+constexpr AnimalType RedPandaFoodType = Bat | Peacock;
+constexpr AnimalType RedPandaAllies = Tapir | RedPanda | Sloth | Gorilla;
+constexpr AnimalType RedPandaEnemies = Tiger | Cobra;
+
 extern TMap<AnimalType, FString> TypeToName;
 extern TMap<AnimalType, AnimalRelationships> AnimalsRelationships;
 

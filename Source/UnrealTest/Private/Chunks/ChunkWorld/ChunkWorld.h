@@ -102,12 +102,12 @@ private:
 	void destroyCurrentWorldChunks();
 
 	// Tree implementation
-	void SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
+	void SpawnTrees(FVoxelObjectLocationData LocationData, FVector PlayerPosition);
 	TSubclassOf<AActor> Tree;
 
-	void SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
-	void SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
-	void SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition);
+	void SpawnGrass(FVoxelObjectLocationData LocationData, FVector PlayerPosition);
+	void SpawnFlower(FVoxelObjectLocationData LocationData, FVector PlayerPosition);
+	void SpawnNPC(TPair<FVoxelObjectLocationData, AnimalType> LocationAndType, FVector PlayerPosition);
 
 	// NPC Settings
 	TSubclassOf<AActor> NPC;
@@ -141,7 +141,7 @@ private:
 	const int flowerToSpawnPerFrame = 3;
 
 	// NPC actors to be destroyed and settings
-	TArray<FVoxelObjectLocationData> NPCPositionsToSpawn;
+	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCPositionsToSpawn;
 	const int npcToSpawnPerFrame = 2;
 
 	TArray<ABasicNPC*> NpcActorsToRemove;

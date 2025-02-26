@@ -8,6 +8,7 @@
 
 #include "..\DataStructures\VoxelObjectMeshData.h"
 #include "..\DataStructures\VoxelObjectLocationData.h"
+#include "..\..\NPC\SettingsNPC\RelationshipSettingsNPC.h" // For the AnimalType enum
 #include "CoreMinimal.h"
 
 class FastNoiseLite;
@@ -98,7 +99,35 @@ private:
 
 	int getColorIndexFromVoxelHeight(const int& height);
 
-	void attemptToSpawnVegetationAtLocation(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation);
+	void AddSpawnLocationForVegetationOrNpc(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation);
 
+	float GetMiddleOfVoxelObjectPosition(
+		const int& location,
+		const double& worldLocation,
+		const uint8_t& objectSize,
+		const uint8_t& objectScale,
+		const uint8_t& objectHalfScale
+	);
+
+	// Add spawn points for vegetation and NPCs
+	void AddGrassSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation, const int& colorIndex);
+	void AddFlowerSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation, const int& colorIndex);
+	void AddTreeSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation);
+	void AddNpcSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation, const float& spawnObjectChance);
+
+
+	// NPC Spawn chances
+	AnimalType GetAnimalTypeFromSpawnChance();
+
+	TArray<TPair<AnimalType, float>> AnimalSpawnChances = {
+		{ AnimalType::RedPanda, 0.05f },
+		{ AnimalType::Tapir,    0.15f },
+		{ AnimalType::Sloth,    0.3f },
+		{ AnimalType::Cobra,    0.4f },
+		{ AnimalType::Bat,      0.5f },
+		{ AnimalType::Peacock,  0.6f },
+		{ AnimalType::Gorilla,  0.9f },
+		{ AnimalType::Panda,    1.0f }
+	};
 
 };

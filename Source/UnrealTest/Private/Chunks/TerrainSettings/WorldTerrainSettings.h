@@ -123,6 +123,7 @@ public:
 	const int TreeChunkRadius{ UnrealScale * TreeSpawnRadius * chunkSizePadding };
 	int TreeCount{ 0 };
 	const uint8_t TreeScale{ 15 };
+	const float HalfTreeScale{ static_cast<float>(TreeScale) / 2.0f }; // Used for aligning in the middle of a voxel
 	const uint8_t TreeCountMax{ 40 };
 	const uint16_t TreeHeight{ 60 }; // 5 bits
 	const uint8_t TreeSize{ 30 }; 

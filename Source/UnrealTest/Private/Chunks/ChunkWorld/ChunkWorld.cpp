@@ -179,16 +179,16 @@ void AChunkWorld::destroyCurrentWorldChunks() {
 	}
 }
 
-void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
+void AChunkWorld::SpawnTrees(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
 	// Spawn the chunk actor deferred
-	ATree* SpawnedTreeActor = GetWorld()->SpawnActorDeferred<ATree>(Tree, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+	ATree* SpawnedTreeActor = GetWorld()->SpawnActorDeferred<ATree>(Tree, FTransform(FRotator::ZeroRotator, LocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 	if (SpawnedTreeActor) {
 		// Add references to BinaryChunk and pass the computed mesh data
 		SpawnedTreeActor->SetWorldTerrainSettings(WTSR);
 		SpawnedTreeActor->SetTreeMeshData(WTSR->GetRandomTreeMeshData());
-		SpawnedTreeActor->SetTreeWorldLocation(ChunkLocationData.ObjectWorldCoords);
-		SpawnedTreeActor->SetTreeChunkRelativeLocation(ChunkLocationData.ObjectPosition);
+		SpawnedTreeActor->SetTreeWorldLocation(LocationData.ObjectWorldCoords);
+		SpawnedTreeActor->SetTreeChunkRelativeLocation(LocationData.ObjectPosition);
 
 		// Define the boundaries for the collision check
 		float minX = PlayerPosition.X - WTSR->VegetationCollisionDistance;
@@ -197,24 +197,24 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData ChunkLocationData, FVector
 		float maxY = PlayerPosition.Y + WTSR->VegetationCollisionDistance;
 
 		// Check if the player is within the collision boundaries
-		bool withinCollisionDistance = (ChunkLocationData.ObjectPosition.X >= minX && ChunkLocationData.ObjectPosition.X <= maxX) &&
-			(ChunkLocationData.ObjectPosition.Y >= minY && ChunkLocationData.ObjectPosition.Y <= maxY);
+		bool withinCollisionDistance = (LocationData.ObjectPosition.X >= minX && LocationData.ObjectPosition.X <= maxX) &&
+			(LocationData.ObjectPosition.Y >= minY && LocationData.ObjectPosition.Y <= maxY);
 
 		if (withinCollisionDistance) {
 			SpawnedTreeActor->SetTreeCollision(true);
 		}
 
 		// Finish spawning the chunk actor
-		UGameplayStatics::FinishSpawningActor(SpawnedTreeActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
+		UGameplayStatics::FinishSpawningActor(SpawnedTreeActor, FTransform(FRotator::ZeroRotator, LocationData.ObjectPosition));
 
 		// TODO Add the tree actor to a map so I can update the collision and remove it later on
-		WTSR->AddSpawnedTrees(ChunkLocationData.ObjectWorldCoords, SpawnedTreeActor);
+		WTSR->AddSpawnedTrees(LocationData.ObjectWorldCoords, SpawnedTreeActor);
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn Tree Actor!"));
 	}
 }
 
-void AChunkWorld::SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
+void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
 	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
 	Mesh->SetCastShadow(false);
@@ -230,7 +230,7 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector
 
 	// Setting custom data 
 	Mesh->MeshType = MeshType::Grass;
-	Mesh->ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+	Mesh->ObjectWorldCoords = LocationData.ObjectWorldCoords;
 	
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
@@ -239,15 +239,15 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData ChunkLocationData, FVector
 		Mesh->SetMaterial(0, Material);
 	}
 
-	Mesh->SetWorldLocation(ChunkLocationData.ObjectPosition);
+	Mesh->SetWorldLocation(LocationData.ObjectPosition);
 	Mesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 
 	// Adding the tree object to a map so I can remove it later on
-	WTSR->AddSpawnedGrass(ChunkLocationData.ObjectWorldCoords, Mesh);
+	WTSR->AddSpawnedGrass(LocationData.ObjectWorldCoords, Mesh);
 }
 
 // TODO Combine spawngrass and spawnflower into one method
-void AChunkWorld::SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
+void AChunkWorld::SpawnFlower(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
 	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
 	Mesh->SetCastShadow(false);
@@ -264,7 +264,7 @@ void AChunkWorld::SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVecto
 
 	// Setting custom data 
 	Mesh->MeshType = MeshType::Flower;
-	Mesh->ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+	Mesh->ObjectWorldCoords = LocationData.ObjectWorldCoords;
 
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
@@ -273,16 +273,16 @@ void AChunkWorld::SpawnFlower(FVoxelObjectLocationData ChunkLocationData, FVecto
 		Mesh->SetMaterial(0, Material);
 	}
 
-	Mesh->SetWorldLocation(ChunkLocationData.ObjectPosition);
+	Mesh->SetWorldLocation(LocationData.ObjectPosition);
 	Mesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 
 	// Adding the tree object to a map so I can remove it later on
-	WTSR->AddSpawnedFlower(ChunkLocationData.ObjectWorldCoords, Mesh);
+	WTSR->AddSpawnedFlower(LocationData.ObjectWorldCoords, Mesh);
 }
 
-void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector PlayerPosition) {
+void AChunkWorld::SpawnNPC(TPair<FVoxelObjectLocationData, AnimalType> LocationAndType, FVector PlayerPosition) {
 	// Spawn the NPC actor deferred
-	ABasicNPC* SpawnedNPCActor = GetWorld()->SpawnActorDeferred<ABasicNPC>(NPC, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+	ABasicNPC* SpawnedNPCActor = GetWorld()->SpawnActorDeferred<ABasicNPC>(NPC, FTransform(FRotator::ZeroRotator, LocationAndType.Key.ObjectPosition), this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
 	if (SpawnedNPCActor) {
 		// Add references to the NPC and pass the pathfinding manager for making requests
@@ -290,8 +290,8 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 		SpawnedNPCActor->SetChunkLocationData(CLDR);
 		SpawnedNPCActor->SetAnimationSettingsNPC(AnimS);
 		SpawnedNPCActor->SetPathfindingManager(PathfindingManager);
-		SpawnedNPCActor->SetNPCWorldLocation(ChunkLocationData.ObjectWorldCoords);
-		SpawnedNPCActor->InitializeBrain(AnimalType::Tiger);
+		SpawnedNPCActor->SetNPCWorldLocation(LocationAndType.Key.ObjectWorldCoords);
+		SpawnedNPCActor->InitializeBrain(LocationAndType.Value);
 		SpawnedNPCActor->SetStatsVoxelsMeshNPC(SVMNpc);
 
 		//SpawnedNPCActor->tag
@@ -310,13 +310,13 @@ void AChunkWorld::SpawnNPC(FVoxelObjectLocationData ChunkLocationData, FVector P
 		//}
 
 		// Finish spawning the chunk actor
-		UGameplayStatics::FinishSpawningActor(SpawnedNPCActor, FTransform(FRotator::ZeroRotator, ChunkLocationData.ObjectPosition));
+		UGameplayStatics::FinishSpawningActor(SpawnedNPCActor, FTransform(FRotator::ZeroRotator, LocationAndType.Key.ObjectPosition));
 
 		// This occupies the current voxel where the NPC is spawned (used for collision avoidance during pathfinding)
-		CLDR->AddOccupiedVoxelPosition(ChunkLocationData.ObjectPosition, SpawnedNPCActor);
+		CLDR->AddOccupiedVoxelPosition(LocationAndType.Key.ObjectPosition, SpawnedNPCActor);
 
 		// Add the NPC actor to a map so I can update the collision and remove it later on
-		WTSR->AddSpawnedNpc(ChunkLocationData.ObjectWorldCoords, SpawnedNPCActor);
+		WTSR->AddSpawnedNpc(LocationAndType.Key.ObjectWorldCoords, SpawnedNPCActor);
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn NPC Actor!"));
 	}
@@ -366,8 +366,8 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 	CLDR->RemoveNPCSpawnPosition(destroyPosition);
 
 	// Remove NPCs to spawn in the ChunkWorld cache
-	NPCPositionsToSpawn.RemoveAll([&](const FVoxelObjectLocationData& Item) {
-		return Item.ObjectWorldCoords == destroyPosition;
+	NPCPositionsToSpawn.RemoveAll([&](const TPair<FVoxelObjectLocationData, AnimalType>& Item) {
+		return Item.Key.ObjectWorldCoords == destroyPosition;
 		});
 
 	// Add spawned NPCs to a remove list to remove over multiple frames
@@ -843,7 +843,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	}
 
 	// Append NPC positions waiting to be spawned
-	TArray<FVoxelObjectLocationData> NPCSpawnPositions = CLDR->getNPCSpawnPosition();
+	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPosition();
 	NPCPositionsToSpawn.Append(NPCSpawnPositions);
 
 	// Spawn a few flowers in the current frame
@@ -853,7 +853,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 30) { // TODO TESTING Spawning just one NPC to test path adjustment
+		if (WTSR->NPCCount < 50) { // TODO TESTING Spawning just one NPC to test path adjustment
 			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 
@@ -861,7 +861,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 		// Print the NPC count every 50
 		/*if (WTSR->NPCCount % 200 == 0) {
-			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount);
+			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount); 
 		}*/
 
 		NPCPositionsToSpawn.RemoveAt(positionIndex);

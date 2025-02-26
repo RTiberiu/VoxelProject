@@ -117,7 +117,7 @@ const BasicNpcAttributes TapirBasicAttributes = {
 	100,	// maxHp
 	10,		// hitDamage
 	3,		// attackSpeed
-	5,		// movementSpeed
+	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
 	5,		// staminaDepletionRate
@@ -149,6 +149,320 @@ const BasicNpcAttributes TapirBasicAttributes = {
 };
 
 const MemoryNpcAttributes TapirMemoryAttributes = {
+	3,  // negativeChaseDesireBonus
+	6,  // positiveChaseDesireBonus
+	5,  // positiveDesireToRecruitAlliesBonus
+	2,  // negativeDesireToRecruitAlliesBonus
+	4   // positiveDesireToHoardFoodBonus
+};
+
+const BasicNpcAttributes SlothBasicAttributes = {
+	100,	// currentHp
+	100,	// maxHp
+	10,		// hitDamage
+	3,		// attackSpeed
+	200,	// movementSpeed
+	60,		// currentStamina
+	60, 	// maxStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	2,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.5f,   // desireToHoardFood
+	0.1f,	// chaseDesire
+	900.0f, // awarenessRadius
+	3000,	// fleeingRadius
+	1.0f,   // reactionSpeed
+	60,		// willingnessToBecomeAlly
+	0.5,	// desireToRecruitAllies
+	0.7f,	// survivalInstinct
+	20,		// foodOfferAmount
+	1500,	// roamRadius
+};
+
+const MemoryNpcAttributes SlothMemoryAttributes = {
+	3,  // negativeChaseDesireBonus
+	6,  // positiveChaseDesireBonus
+	5,  // positiveDesireToRecruitAlliesBonus
+	2,  // negativeDesireToRecruitAlliesBonus
+	4   // positiveDesireToHoardFoodBonus
+};
+
+
+const BasicNpcAttributes CobraBasicAttributes = {
+	100,	// currentHp
+	100,	// maxHp
+	10,		// hitDamage
+	3,		// attackSpeed
+	200,	// movementSpeed
+	60,		// currentStamina
+	60, 	// maxStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	2,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.5f,   // desireToHoardFood
+	0.1f,	// chaseDesire
+	900.0f, // awarenessRadius
+	3000,	// fleeingRadius
+	1.0f,   // reactionSpeed
+	60,		// willingnessToBecomeAlly
+	0.5,	// desireToRecruitAllies
+	0.7f,	// survivalInstinct
+	20,		// foodOfferAmount
+	1500,	// roamRadius
+};
+
+const MemoryNpcAttributes CobraMemoryAttributes = {
+	3,  // negativeChaseDesireBonus
+	6,  // positiveChaseDesireBonus
+	5,  // positiveDesireToRecruitAlliesBonus
+	2,  // negativeDesireToRecruitAlliesBonus
+	4   // positiveDesireToHoardFoodBonus
+};
+
+
+const BasicNpcAttributes BatBasicAttributes = {
+	100,	// currentHp
+	100,	// maxHp
+	10,		// hitDamage
+	3,		// attackSpeed
+	200,	// movementSpeed
+	60,		// currentStamina
+	60, 	// maxStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	2,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.5f,   // desireToHoardFood
+	0.1f,	// chaseDesire
+	900.0f, // awarenessRadius
+	3000,	// fleeingRadius
+	1.0f,   // reactionSpeed
+	60,		// willingnessToBecomeAlly
+	0.5,	// desireToRecruitAllies
+	0.7f,	// survivalInstinct
+	20,		// foodOfferAmount
+	1500,	// roamRadius
+};
+
+const MemoryNpcAttributes BatMemoryAttributes = {
+	3,  // negativeChaseDesireBonus
+	6,  // positiveChaseDesireBonus
+	5,  // positiveDesireToRecruitAlliesBonus
+	2,  // negativeDesireToRecruitAlliesBonus
+	4   // positiveDesireToHoardFoodBonus
+};
+
+
+const BasicNpcAttributes PeacockBasicAttributes = {
+	100,	// currentHp
+	100,	// maxHp
+	10,		// hitDamage
+	3,		// attackSpeed
+	200,	// movementSpeed
+	60,		// currentStamina
+	60, 	// maxStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	2,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.5f,   // desireToHoardFood
+	0.1f,	// chaseDesire
+	900.0f, // awarenessRadius
+	3000,	// fleeingRadius
+	1.0f,   // reactionSpeed
+	60,		// willingnessToBecomeAlly
+	0.5,	// desireToRecruitAllies
+	0.7f,	// survivalInstinct
+	20,		// foodOfferAmount
+	1500,	// roamRadius
+};
+
+const MemoryNpcAttributes PeacockMemoryAttributes = {
+	3,  // negativeChaseDesireBonus
+	6,  // positiveChaseDesireBonus
+	5,  // positiveDesireToRecruitAlliesBonus
+	2,  // negativeDesireToRecruitAlliesBonus
+	4   // positiveDesireToHoardFoodBonus
+};
+
+
+const BasicNpcAttributes GorillaBasicAttributes = {
+	100,	// currentHp
+	100,	// maxHp
+	10,		// hitDamage
+	3,		// attackSpeed
+	200,	// movementSpeed
+	60,		// currentStamina
+	60, 	// maxStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	2,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.5f,   // desireToHoardFood
+	0.1f,	// chaseDesire
+	900.0f, // awarenessRadius
+	3000,	// fleeingRadius
+	1.0f,   // reactionSpeed
+	60,		// willingnessToBecomeAlly
+	0.5,	// desireToRecruitAllies
+	0.7f,	// survivalInstinct
+	20,		// foodOfferAmount
+	1500,	// roamRadius
+};
+
+const MemoryNpcAttributes GorillaMemoryAttributes = {
+	3,  // negativeChaseDesireBonus
+	6,  // positiveChaseDesireBonus
+	5,  // positiveDesireToRecruitAlliesBonus
+	2,  // negativeDesireToRecruitAlliesBonus
+	4   // positiveDesireToHoardFoodBonus
+};
+
+
+const BasicNpcAttributes PandaBasicAttributes = {
+	100,	// currentHp
+	100,	// maxHp
+	10,		// hitDamage
+	3,		// attackSpeed
+	200,	// movementSpeed
+	60,		// currentStamina
+	60, 	// maxStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	2,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.5f,   // desireToHoardFood
+	0.1f,	// chaseDesire
+	900.0f, // awarenessRadius
+	3000,	// fleeingRadius
+	1.0f,   // reactionSpeed
+	60,		// willingnessToBecomeAlly
+	0.5,	// desireToRecruitAllies
+	0.7f,	// survivalInstinct
+	20,		// foodOfferAmount
+	1500,	// roamRadius
+};
+
+const MemoryNpcAttributes PandaMemoryAttributes = {
+	3,  // negativeChaseDesireBonus
+	6,  // positiveChaseDesireBonus
+	5,  // positiveDesireToRecruitAlliesBonus
+	2,  // negativeDesireToRecruitAlliesBonus
+	4   // positiveDesireToHoardFoodBonus
+};
+
+
+const BasicNpcAttributes RedPandaBasicAttributes = {
+	100,	// currentHp
+	100,	// maxHp
+	10,		// hitDamage
+	3,		// attackSpeed
+	200,	// movementSpeed
+	60,		// currentStamina
+	60, 	// maxStamina
+	5,		// staminaDepletionRate
+	10,		// staminaRecoveryRate
+	100,	// currentHunger
+	100,	// maxHunger
+	5,		// hungerDepletionRate
+	20,		// hungerRecoveryBasic
+	30,		// hungerRecoveryImproved
+	2,		// eatingSpeedRateBasic
+	3,		// eatingSpeedRateImproved
+	3,		// restAfterFoodBasic
+	5,		// restAfterFoodImproved
+	5, 		// restAfterStaminaIsZero
+	4,		// mealsUntilRestIsNeeded
+	0,		// basicMealsCounter
+	0,		// improvedMealsCounter
+	0,		// foodPouch
+	0.5f,   // desireToHoardFood
+	0.1f,	// chaseDesire
+	900.0f, // awarenessRadius
+	3000,	// fleeingRadius
+	1.0f,   // reactionSpeed
+	60,		// willingnessToBecomeAlly
+	0.5,	// desireToRecruitAllies
+	0.7f,	// survivalInstinct
+	20,		// foodOfferAmount
+	1500,	// roamRadius
+};
+
+const MemoryNpcAttributes RedPandaMemoryAttributes = {
 	3,  // negativeChaseDesireBonus
 	6,  // positiveChaseDesireBonus
 	5,  // positiveDesireToRecruitAlliesBonus

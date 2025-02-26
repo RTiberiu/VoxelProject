@@ -177,7 +177,7 @@ private:
 	void WaitForDespawnThresholdAndDestroy(const float& DeltaSeconds);
 	bool isDeathTriggered;
 	float DespawningCounter = 0.0f;
-	const float DespawnTime = 5.0f;
+	const float DespawnTime = 10.0f;
 
 	bool waitForNextPositionCheck;
 	float OccupiedDelayTimer = 0.0f; // Accumulates time when target location is occupied by another NPC

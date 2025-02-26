@@ -47,7 +47,8 @@ private:
 			AnimalType::Sloth,
 			AnimalType::Cobra,
 			AnimalType::Peacock,
-			AnimalType::Panda
+			AnimalType::Panda,
+			AnimalType::RedPanda
 	};
 
 	const FString BaseSkeletalMeshPath = "SkeletalMesh'/Game/Characters/Animals/";
@@ -60,9 +61,10 @@ private:
 		{AnimalType::Sloth,   "Sloth/Sloth_Animations.Sloth_Animations'"},
 		{AnimalType::Cobra,   "Cobra/Cobra_Animations.Cobra_Animations'"},
 		{AnimalType::Peacock, "Peacock/Peacock_Animations.Peacock_Animations'"},
-		{AnimalType::Panda,   "Panda/Panda_Animations.Panda_Animations'"}
+		{AnimalType::Panda,   "Panda/Panda_Animations.Panda_Animations'"},
+		{AnimalType::RedPanda,   "RedPanda/RedPanda_Animations.RedPanda_Animations'"}
     };
-
+	
 	// Every other animation path for an NPC should follow this structure 
 	const TArray<AnimationType> AnimationKeys = {
 		AnimationType::IdleA,
@@ -106,6 +108,7 @@ private:
 	TMap<AnimationType, UAnimSequence*> CobraLoadedAnimations;
 	TMap<AnimationType, UAnimSequence*> PeacockLoadedAnimations;
 	TMap<AnimationType, UAnimSequence*> PandaLoadedAnimations;
+	TMap<AnimationType, UAnimSequence*> RedPandaLoadedAnimations;
 
 	TMap<AnimalType, TMap<AnimationType, UAnimSequence*>*> AnimalAnimationMap = {
 		{AnimalType::Tiger,   &TigerLoadedAnimations},
@@ -115,7 +118,8 @@ private:
 		{AnimalType::Sloth,   &SlothLoadedAnimations},
 		{AnimalType::Cobra,   &CobraLoadedAnimations},
 		{AnimalType::Peacock, &PeacockLoadedAnimations},
-		{AnimalType::Panda,   &PandaLoadedAnimations}
+		{AnimalType::Panda,   &PandaLoadedAnimations},
+		{AnimalType::RedPanda,   &RedPandaLoadedAnimations},
 	};
 };
 

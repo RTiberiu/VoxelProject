@@ -9,7 +9,8 @@ TMap<AnimalType, AnimalRelationships> AnimalsRelationships{
 	{ Bat,     { BatFoodType,     BatAllies,     BatEnemies     } },
 	{ Peacock, { PeacockFoodType, PeacockAllies, PeacockEnemies } },
 	{ Gorilla, { GorillaFoodType, GorillaAllies, GorillaEnemies } },
-	{ Panda,   { PandaFoodType,   PandaAllies,   PandaEnemies   } }
+	{ Panda,   { PandaFoodType,   PandaAllies,   PandaEnemies   } },
+	{ RedPanda, {RedPandaFoodType, RedPandaAllies, RedPandaEnemies}}
 };
 
 TMap<AnimalType, FString> TypeToName = {
@@ -20,5 +21,6 @@ TMap<AnimalType, FString> TypeToName = {
 	{ Bat,     "Bat"     },
 	{ Peacock, "Peacock" },
 	{ Gorilla, "Gorilla" },
-	{ Panda,   "Panda"   }
+	{ Panda,   "Panda"   },
+	{ RedPanda, "RedPanda"}
 };

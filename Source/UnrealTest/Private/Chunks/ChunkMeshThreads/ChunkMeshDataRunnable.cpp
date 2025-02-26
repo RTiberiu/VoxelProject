@@ -171,8 +171,8 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 				// Add the voxel point to the surface voxel points array
 				surfaceVoxelPoints.Add(height);
 
-				// Spawn some vegetation at current voxel point
-				attemptToSpawnVegetationAtLocation(x, z, height, chunkWorldLocation);
+				// Spawn vegetation or NPC at current voxel point
+				AddSpawnLocationForVegetationOrNpc(x, z, height, chunkWorldLocation);
 			}
 
 			// Add enough bits to y to cover the entire height (4 64bit integers when the max height is 256)
@@ -640,7 +640,7 @@ int ChunkMeshDataRunnable::getColorIndexFromVoxelHeight(const int& height) {
 	return colorIndex;
 }
 
-void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation) {
+void ChunkMeshDataRunnable::AddSpawnLocationForVegetationOrNpc(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation) {
 	// Return early if the point is not on grass
 	const int colorIndex = getColorIndexFromVoxelHeight(height);
 	bool pointNotOnGrass = colorIndex < WTSR->GrassColorStartIndex || colorIndex > WTSR->GrassColorEndIndex;
@@ -648,53 +648,98 @@ void ChunkMeshDataRunnable::attemptToSpawnVegetationAtLocation(const int& x, con
 		return;
 	}
 
-	float spawnObjectChance = FMath::RandRange(0.0f, 1.0f);
-	FVoxelObjectLocationData objectSpawnPosition;
+	const float spawnObjectChance = FMath::FRand();
 
-	// TODO Extract the X and Z calculations into a different functions or simplify the code
 	if (spawnObjectChance < WTSR->TreeSpawnChance) {
-		float treeX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
-		float treeZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->TreeSize * WTSR->TreeScale) / 2) + WTSR->UnrealScale / 2) - WTSR->TreeScale / 2;
-		objectSpawnPosition.ObjectPosition = FVector(treeX, treeZ, height * WTSR->UnrealScale);
-		objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
-
-		CLDR->addTreeSpawnPosition(objectSpawnPosition);
-
-		// Add position to be avoided in the pathfinding
-		const int adjustedX = x - 1;
-		const int adjustedZ = z - 1;
-		surfaceAvoidPositions.Add(FVector2D(adjustedX, adjustedZ));
-
+		AddTreeSpawnPoint(x, z, height, chunkWorldLocation);
 	} else if (spawnObjectChance < WTSR->FlowerSpawnChance) {
-		// Reduce the flower spawn levels by 2 
-		bool isOnReducedGrassLevel = colorIndex > WTSR->GrassColorEndIndex - 2;
-		if (isOnReducedGrassLevel) return;
-
-		float flowerX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->FlowerSize * WTSR->FlowerScale) / 2) + WTSR->HalfUnrealScale) - WTSR->HalfFlowerScale;
-		float flowerZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->FlowerSize * WTSR->FlowerScale) / 2) + WTSR->HalfUnrealScale) - WTSR->HalfFlowerScale;
-		objectSpawnPosition.ObjectPosition = FVector(flowerX, flowerZ, height * WTSR->UnrealScale);
-		objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
-
-		CLDR->addFlowerSpawnPosition(objectSpawnPosition);
+		AddFlowerSpawnPoint(x, z, height, chunkWorldLocation, colorIndex);
 	} else if (spawnObjectChance < WTSR->GrassSpawnChance) {
-		// Reduce the grass spawn levels by 2 
-		bool isOnReducedGrassLevel = colorIndex > WTSR->GrassColorEndIndex - 2;
-		if (isOnReducedGrassLevel) return;
-
-		float grassX = (x * WTSR->UnrealScale + chunkWorldLocation.X - ((WTSR->GrassSize * WTSR->GrassScale) / 2) + WTSR->HalfUnrealScale) - WTSR->HalfGrassScale;
-		float grassZ = (z * WTSR->UnrealScale + chunkWorldLocation.Y - ((WTSR->GrassSize * WTSR->GrassScale) / 2) + WTSR->HalfUnrealScale) - WTSR->HalfGrassScale;
-		objectSpawnPosition.ObjectPosition = FVector(grassX, grassZ, height * WTSR->UnrealScale);
-		objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
-
-		CLDR->addGrassSpawnPosition(objectSpawnPosition);
+		AddGrassSpawnPoint(x, z, height, chunkWorldLocation, colorIndex);
 	} else if (spawnObjectChance < WTSR->NPCSpawnChance) {
-		float npcX = x * WTSR->UnrealScale + chunkWorldLocation.X + WTSR->HalfUnrealScale;
-		float npcZ = z * WTSR->UnrealScale + chunkWorldLocation.Y + WTSR->HalfUnrealScale;
-
-		objectSpawnPosition.ObjectPosition = FVector(npcX, npcZ, height * WTSR->UnrealScale);
-		objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
-
-		CLDR->addNPCSpawnPosition(objectSpawnPosition);
+		AddNpcSpawnPoint(x, z, height, chunkWorldLocation, spawnObjectChance);
 	}
+}
+
+// Calculates the middle of the voxel based on the local location coordinate, world location, and the object size and scale
+float ChunkMeshDataRunnable::GetMiddleOfVoxelObjectPosition(const int& location, const double& worldLocation, const uint8_t& objectSize, const uint8_t& objectScale, const uint8_t& objectHalfScale) {
+	return (location * WTSR->UnrealScale + worldLocation - ((objectSize * objectScale) / 2) + WTSR->HalfUnrealScale) - objectHalfScale;
+}
+
+void ChunkMeshDataRunnable::AddGrassSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation, const int& colorIndex) {
+	// Reduce the grass spawn levels by 2 
+	const int levelOffset = 2;
+	bool isOnReducedGrassLevel = colorIndex > WTSR->GrassColorEndIndex - levelOffset;
+	if (isOnReducedGrassLevel) return;
+
+	float grassX = GetMiddleOfVoxelObjectPosition(x, chunkWorldLocation.X, WTSR->GrassSize, WTSR->GrassScale, WTSR->HalfGrassScale);
+	float grassZ = GetMiddleOfVoxelObjectPosition(z, chunkWorldLocation.Y, WTSR->GrassSize, WTSR->GrassScale, WTSR->HalfGrassScale);
+
+	FVoxelObjectLocationData objectSpawnPosition;
+	objectSpawnPosition.ObjectPosition = FVector(grassX, grassZ, height * WTSR->UnrealScale);
+	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
+	CLDR->addGrassSpawnPosition(objectSpawnPosition);
+}
+
+void ChunkMeshDataRunnable::AddFlowerSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation, const int& colorIndex) {
+	// Reduce the flower spawn levels by 2 
+	const int levelOffset = 2;
+	bool isOnReducedGrassLevel = colorIndex > WTSR->GrassColorEndIndex - levelOffset;
+	if (isOnReducedGrassLevel) return;
+
+	float flowerX = GetMiddleOfVoxelObjectPosition(x, chunkWorldLocation.X, WTSR->FlowerSize, WTSR->FlowerScale, WTSR->HalfFlowerScale);
+	float flowerZ = GetMiddleOfVoxelObjectPosition(z, chunkWorldLocation.Y, WTSR->FlowerSize, WTSR->FlowerScale, WTSR->HalfFlowerScale);
+
+	FVoxelObjectLocationData objectSpawnPosition;
+	objectSpawnPosition.ObjectPosition = FVector(flowerX, flowerZ, height * WTSR->UnrealScale);
+	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
+	CLDR->addFlowerSpawnPosition(objectSpawnPosition);
+}
+
+void ChunkMeshDataRunnable::AddTreeSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation) {
+	float treeX = GetMiddleOfVoxelObjectPosition(x, chunkWorldLocation.X, WTSR->TreeSize, WTSR->TreeScale, WTSR->HalfTreeScale);
+	float treeZ = GetMiddleOfVoxelObjectPosition(z, chunkWorldLocation.Y, WTSR->TreeSize, WTSR->TreeScale, WTSR->HalfTreeScale);
+
+	FVoxelObjectLocationData objectSpawnPosition;
+	objectSpawnPosition.ObjectPosition = FVector(treeX, treeZ, height * WTSR->UnrealScale);
+	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
+	CLDR->addTreeSpawnPosition(objectSpawnPosition);
+
+	// Add position to be avoided in the pathfinding
+	const int adjustedX = x - 1;
+	const int adjustedZ = z - 1;
+	surfaceAvoidPositions.Add(FVector2D(adjustedX, adjustedZ));
+}
+
+void ChunkMeshDataRunnable::AddNpcSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation, const float& spawnObjectChance) {
+	float npcX = x * WTSR->UnrealScale + chunkWorldLocation.X + WTSR->HalfUnrealScale;
+	float npcZ = z * WTSR->UnrealScale + chunkWorldLocation.Y + WTSR->HalfUnrealScale;
+
+	FVoxelObjectLocationData objectSpawnPosition;
+	objectSpawnPosition.ObjectPosition = FVector(npcX, npcZ, height * WTSR->UnrealScale);
+	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
+
+	// TODO Adjust spawn type based on noise not random
+	AnimalType animalType = GetAnimalTypeFromSpawnChance();
+	const TPair<FVoxelObjectLocationData, AnimalType> PositionAndType = { objectSpawnPosition, animalType };
+	CLDR->addNPCSpawnPosition(PositionAndType);
+}
+
+AnimalType ChunkMeshDataRunnable::GetAnimalTypeFromSpawnChance() {
+	const float randomValue = FMath::FRand();
+	float AccumulatedChance = 0.0f;
+
+	for (const TPair<AnimalType, float>& Pair : AnimalSpawnChances) {
+		AccumulatedChance += Pair.Value;
+		if (randomValue <= AccumulatedChance) {
+			return Pair.Key;
+		}
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("Returned default animal spawn chance."));
+	return AnimalSpawnChances.Last().Key;
 }
 

@@ -187,7 +187,7 @@ void ABasicNPC::InitializeStatsVoxelMeshes() {
 }
 
 void ABasicNPC::spawnNPC() {
-    FString MeshPath = AnimS->GetSkeletalMeshPath(NpcType);;
+    FString MeshPath = AnimS->GetSkeletalMeshPath(NpcType);
     
     // Load the skeletal mesh
     USkeletalMesh* LoadedMesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath);
@@ -199,6 +199,8 @@ void ABasicNPC::spawnNPC() {
         /*SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         SkeletalMesh->SetCollisionResponseToAllChannels(ECR_Block);
         SkeletalMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);*/
+    } else {
+        UE_LOG(LogTemp, Error, TEXT("Couldn't find sekeletal mesh."));
     }
 
     // Load the animation asset
@@ -441,6 +443,7 @@ FVector& ABasicNPC::GetCurrentLocation() {
 void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
     PlayAnimation(animationToRunAtTarget);
 
+    
     switch (actionType) {
     case ActionType::AttackNpc:
         SignalEndOfAction();
@@ -608,7 +611,7 @@ void ABasicNPC::UpdateHunger(const float& DeltaSeconds) {
 
         // Check if NPC should die of starvation
 		if (DecisionSys->AnimalAttributes.currentHunger == 0) {
-            TriggerNpcDeath();
+            // TriggerNpcDeath(); // TODO Uncomment this after done testing, to allow NPCs to die
 		}
 
         HungerCounter = 0.0f;
@@ -636,12 +639,13 @@ bool ABasicNPC::UpdateStamina(const float& DeltaSeconds, const uint8_t& Threshol
 }
 
 
-// Destroy NPC and clear it from the spawned map
+// Run the death animation and set that the NPC should be destroyed
 void ABasicNPC::TriggerNpcDeath() {
     PlayAnimation(AnimationType::Death, false);
     isDeathTriggered = true;
 }
 
+// Wait for the despawn threshold and destroy the NPC
 void ABasicNPC::WaitForDespawnThresholdAndDestroy(const float& DeltaSeconds) {
     DespawningCounter += DeltaSeconds;
 
@@ -690,21 +694,21 @@ void ABasicNPC::AddOverlappingNpcToVisionList(ABasicNPC* OverlappingNpc) {
 
     // Check if it's food 
     if ((Relationships.FoodType & OverlappingNpcType) == OverlappingNpcType) {
-        UE_LOG(LogTemp, Warning, TEXT("Added %s to the FOOD NPC vision list."), *OverlappingNpc->GetName())
+        //UE_LOG(LogTemp, Warning, TEXT("Added %s to the FOOD NPC vision list."), *OverlappingNpc->GetName());
         FoodNpcInRange.Add(OverlappingNpc);
         return;
     }
 
     // Check if it's ally
     if ((Relationships.Allies & OverlappingNpcType) == OverlappingNpcType) {
-        UE_LOG(LogTemp, Warning, TEXT("Added %s to the ALLIES vision list."), *OverlappingNpc->GetName())
+        //UE_LOG(LogTemp, Warning, TEXT("Added %s to the ALLIES vision list."), *OverlappingNpc->GetName());
         AlliesInRange.Add(OverlappingNpc);
         return;
     }
 
     // Check if it's threat
     if ((Relationships.Enemies & OverlappingNpcType) == OverlappingNpcType) {
-        UE_LOG(LogTemp, Warning, TEXT("Added %s to the THREATS vision list."), *OverlappingNpc->GetName())
+        //UE_LOG(LogTemp, Warning, TEXT("Added %s to the THREATS vision list."), *OverlappingNpc->GetName());
         ThreatsInRange.Add(OverlappingNpc);
         return;
     }
@@ -715,21 +719,21 @@ void ABasicNPC::RemoveOverlappingNpcFromVisionList(ABasicNPC* OverlappingNpc) {
 
     // Check if it's food 
     if ((Relationships.FoodType & OverlappingNpcType) == OverlappingNpcType) {
-        UE_LOG(LogTemp, Warning, TEXT("Removed %s from the FOOD NPC vision list."), *OverlappingNpc->GetName())
+        //UE_LOG(LogTemp, Warning, TEXT("Removed %s from the FOOD NPC vision list."), *OverlappingNpc->GetName());
         FoodNpcInRange.Remove(OverlappingNpc);
         return;
     }
 
     // Check if it's ally
     if ((Relationships.Allies & OverlappingNpcType) == OverlappingNpcType) {
-        UE_LOG(LogTemp, Warning, TEXT("Removed %s from the ALLIES vision list."), *OverlappingNpc->GetName())
+        //UE_LOG(LogTemp, Warning, TEXT("Removed %s from the ALLIES vision list."), *OverlappingNpc->GetName());
         AlliesInRange.Remove(OverlappingNpc);
         return;
     }
 
     // Check if it's threat
     if ((Relationships.Enemies & OverlappingNpcType) == OverlappingNpcType) {
-        UE_LOG(LogTemp, Warning, TEXT("Removed %s from the THREATS vision list."), *OverlappingNpc->GetName())
+        //UE_LOG(LogTemp, Warning, TEXT("Removed %s from the THREATS vision list."), *OverlappingNpc->GetName());
         ThreatsInRange.Remove(OverlappingNpc);
         return;
     }
@@ -782,7 +786,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
 
     // TESTING ONLY -- PREVENTING THE NPC TO MAKE ANY MOVES FOR THE FIRST N SECONDS
-    if (DelayBeforeFirstPathRequest < 5.0f) {
+    if (DelayBeforeFirstPathRequest < 2.0f) {
         DelayBeforeFirstPathRequest += DeltaSeconds;
         return;
     }
@@ -810,6 +814,8 @@ void ABasicNPC::Tick(float DeltaSeconds) {
             ConsumePathAndMoveToLocation(DeltaSeconds);
         }
     }
+
+    // TODO IF THE FOOD SOURCE IS GONE, STOP ACTION AND REQUEST NEW ACTION
 
     if (!isTargetSet) {
         isTargetSet = true;

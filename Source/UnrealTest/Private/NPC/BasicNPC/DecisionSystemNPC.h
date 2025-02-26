@@ -35,13 +35,27 @@ private:
 
 	// Base and memory attributes for all the animal types
 	const TMap<AnimalType, const BasicNpcAttributes*> AnimalsBaseAttributes = {
+		{AnimalType::RedPanda, &RedPandaBasicAttributes},
 		{AnimalType::Tiger, &TigerBasicAttributes},
-		{AnimalType::Tapir, &TapirBasicAttributes}
+		{AnimalType::Tapir, &TapirBasicAttributes},
+		{AnimalType::Sloth, &SlothBasicAttributes},
+		{AnimalType::Cobra, &CobraBasicAttributes},
+		{AnimalType::Bat, &BatBasicAttributes},
+		{AnimalType::Peacock, &PeacockBasicAttributes},
+		{AnimalType::Gorilla, &GorillaBasicAttributes},
+		{AnimalType::Panda, &PandaBasicAttributes}
 	};
 
 	const TMap<AnimalType, const MemoryNpcAttributes*> AnimalsMemoryAttributes = {
+		{AnimalType::RedPanda, &RedPandaMemoryAttributes},
 		{AnimalType::Tiger, &TigerMemoryAttributes},
-		{AnimalType::Tapir, &TapirMemoryAttributes}
+		{AnimalType::Tapir, &TapirMemoryAttributes},
+		{ AnimalType::Sloth,&SlothMemoryAttributes },
+		{AnimalType::Cobra, &CobraMemoryAttributes},
+		{AnimalType::Bat, &BatMemoryAttributes},
+		{AnimalType::Peacock, &PeacockMemoryAttributes},
+		{AnimalType::Gorilla, &GorillaMemoryAttributes},
+		{AnimalType::Panda, &PandaMemoryAttributes}
 	};
 
 	const TMap<FString, const AnimalType*> AnimalsRelationShips = {
@@ -51,6 +65,10 @@ private:
 		{"TapirFood", &TapirFoodType},
 		{"TapirAllies", &TapirAllies},
 		{"TapirEnemies", &TapirEnemies}
+
+		// TODO Add the rest of the relationships
+		// TODO Improve this Map, instead of using FString,
+		// use AnimalType and RelationshipType
 	};
 
 	// Used for roam random directions

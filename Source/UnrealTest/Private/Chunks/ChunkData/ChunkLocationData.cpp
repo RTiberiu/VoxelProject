@@ -126,14 +126,14 @@ TArray<FVoxelObjectLocationData> UChunkLocationData::getFlowerSpawnPosition() {
 	return output;
 }
 
-TArray<FVoxelObjectLocationData> UChunkLocationData::getNPCSpawnPosition() {
-	TArray<FVoxelObjectLocationData> output;
+TArray<TPair<FVoxelObjectLocationData, AnimalType>> UChunkLocationData::getNPCSpawnPosition() {
+	TArray<TPair<FVoxelObjectLocationData, AnimalType>> output;
 
 	NPCToSpawnSemaphore->Acquire();
 	
 	// Get the first item from the map // TODO Maybe extractt this into a function, as all getSpawnPosition use the same logic
 	if (!NPCSpawnPositions.IsEmpty()) {
-		for (const TPair<FIntPoint, TArray<FVoxelObjectLocationData>>& pair : NPCSpawnPositions) {
+		for (const TPair<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>>& pair : NPCSpawnPositions) {
 			output = pair.Value;
 			NPCSpawnPositions.Remove(pair.Key);
 			break;
@@ -186,15 +186,15 @@ void UChunkLocationData::addFlowerSpawnPosition(const FVoxelObjectLocationData p
 	FlowersToSpawnSemaphore->Release();
 }
 
-void UChunkLocationData::addNPCSpawnPosition(const FVoxelObjectLocationData position) {
+void UChunkLocationData::addNPCSpawnPosition(const TPair<FVoxelObjectLocationData, AnimalType> positionAndType) {
 	NPCToSpawnSemaphore->Acquire();
-
+	
 	// If it exists, add the new NPC position to the existing array
-	if (NPCSpawnPositions.Contains(position.ObjectWorldCoords)) {
-		NPCSpawnPositions[position.ObjectWorldCoords].Add(position);
+	if (NPCSpawnPositions.Contains(positionAndType.Key.ObjectWorldCoords)) {
+		NPCSpawnPositions[positionAndType.Key.ObjectWorldCoords].Add(positionAndType);
 	} else {
 		// If not, create a new array with the new NPC position
-		NPCSpawnPositions.Add(position.ObjectWorldCoords, TArray<FVoxelObjectLocationData>({ position }));
+		NPCSpawnPositions.Add(positionAndType.Key.ObjectWorldCoords, TArray<TPair<FVoxelObjectLocationData, AnimalType>>({ positionAndType }));
 	}
 
 	NPCToSpawnSemaphore->Release();
@@ -246,7 +246,7 @@ void UChunkLocationData::RemoveNPCSpawnPosition(const FIntPoint& point) {
 	NPCToSpawnSemaphore->Acquire();
 
 	// Iterating over the map and removing the key and value
-	for (TMap<FIntPoint, TArray<FVoxelObjectLocationData>>::TIterator SpawnPosition(NPCSpawnPositions); SpawnPosition; ++SpawnPosition) {
+	for (TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>>::TIterator SpawnPosition(NPCSpawnPositions); SpawnPosition; ++SpawnPosition) {
 		if (SpawnPosition.Key() == point) {
 			SpawnPosition.RemoveCurrent();
 			break;
