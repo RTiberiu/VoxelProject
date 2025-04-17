@@ -17,7 +17,7 @@ ATree::ATree() {
 
 	Mesh = CreateDefaultSubobject<UProceduralMeshComponent>("Mesh");
 
-	Mesh->SetCastShadow(false);
+	Mesh->SetCastShadow(true);
 
 	// By default the tree shouldn't have collision
 	hasCollision = false;

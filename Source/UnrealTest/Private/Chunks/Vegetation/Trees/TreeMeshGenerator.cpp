@@ -623,13 +623,16 @@ void UTreeMeshGenerator::createAllVoxelPositionsFromOriginal(FVector& voxelPosit
 
 void UTreeMeshGenerator::createQuadAndAddToMeshData(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& height, const int& width, const int& axis, bool forTreeTrunk) {
 	FVector Normal;
-	if (axis == 0 || axis == 3 || axis == 5) {
-		// Calculate the normals for counter clockwise vectors arrangement
-		Normal = FVector::CrossProduct(voxelPosition4 - voxelPosition1, voxelPosition2 - voxelPosition1).GetSafeNormal();
+	const FVector Edge1 = voxelPosition2 - voxelPosition1;
+	const FVector Edge2 = voxelPosition4 - voxelPosition1;
+
+	if (axis == 0 || axis == 2 || axis == 5 || axis == 4 || axis == 3) {
+		Normal = FVector::CrossProduct(Edge2, Edge1);
 	} else {
-		// Calculate the normals for clockwise vectors arrangement
-		Normal = FVector::CrossProduct(voxelPosition2 - voxelPosition1, voxelPosition4 - voxelPosition1).GetSafeNormal();
+		Normal = FVector::CrossProduct(Edge1, Edge2);
 	}
+
+	Normal = Normal.GetSafeNormal();
 
 	FColor layerColor;
 	if (forTreeTrunk) {

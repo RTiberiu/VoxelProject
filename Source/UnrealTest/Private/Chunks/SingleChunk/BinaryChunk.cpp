@@ -17,7 +17,7 @@ ABinaryChunk::ABinaryChunk() {
 
 	Mesh = CreateDefaultSubobject<UProceduralMeshComponent>("Mesh");
 
-	Mesh->SetCastShadow(false);
+	Mesh->SetCastShadow(true);
 
 	// By default the chunk shouldn't have collision
 	hasCollision = false;

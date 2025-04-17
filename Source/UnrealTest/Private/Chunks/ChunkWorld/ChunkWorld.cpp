@@ -217,7 +217,7 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData LocationData, FVector Play
 void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
 	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
-	Mesh->SetCastShadow(false);
+	Mesh->SetCastShadow(true);
 
 	FVoxelObjectMeshData* MeshData = WTSR->GetRandomGrassMeshData();
 	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), true);
@@ -250,7 +250,7 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector Play
 void AChunkWorld::SpawnFlower(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
 	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
-	Mesh->SetCastShadow(false);
+	Mesh->SetCastShadow(true);
 
 	FVoxelObjectMeshData* MeshData = WTSR->GetRandomFlowerMeshData();
 	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), true);
@@ -854,7 +854,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		}
 
 		if (WTSR->NPCCount < 50) { // TODO TESTING Spawning just one NPC to test path adjustment
-			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+			// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 
 		WTSR->NPCCount++;
