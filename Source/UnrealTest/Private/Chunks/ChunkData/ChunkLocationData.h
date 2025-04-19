@@ -39,12 +39,17 @@ public:
 
     void AddVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
     void RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
-    void CheckForGrassSpawnPointsInRange();
+    void CheckForSpawnPointsInRange();
 
     TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
     TArray<FVoxelObjectLocationData> getGrassSpawnPosition();
     TArray<FVoxelObjectLocationData> getFlowerSpawnPosition();
     TArray<TPair<FVoxelObjectLocationData, AnimalType>> getNPCSpawnPosition();
+
+    TArray<FVoxelObjectLocationData> getTreeSpawnPositionsInRange();
+    TArray<FVoxelObjectLocationData> getGrassSpawnPositionInRange();
+    TArray<FVoxelObjectLocationData> getFlowerSpawnPositionInRange();
+    TArray<TPair<FVoxelObjectLocationData, AnimalType>> getNPCSpawnPositionInRange();
 
     // Methods to add single spawn points for vegetation and NPCs
     void addTreeSpawnPosition(const FVoxelObjectLocationData position);
@@ -128,6 +133,11 @@ private:
     // and when clearing those maps, the references should also be cleared from this one.
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> VegetationChunkSpawnPoints;
     FairSemaphore* VegetationChunkSemaphore;
+
+    //TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> treesInRangeSpawnPositions;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> grassInRangeSpawnPositions;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> flowersInRangeSpawnPositions;
+
 
 
     FairSemaphore* MeshDataSemaphore;

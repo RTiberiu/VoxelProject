@@ -29,6 +29,9 @@ uint32 ChunksLocationRunnable::Run() {
 
 		UpdateSpawnPoints(VEGETATION);
 
+		// Update the initial position for the next frame
+		WTSR->updateInitialPlayerPosition(PlayerPosition);
+
 		// Update Chunks and Trees collision
 		WTSR->UpdateChunksCollision(PlayerPosition);
 		WTSR->UpdateTreeCollisions(PlayerPosition);
@@ -139,9 +142,6 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 			}
 		}
 	}
-
-	// Update the initial position for the next frame
-	WTSR->updateInitialPlayerPosition(PlayerPosition);
 }
 
 FIntPoint ChunksLocationRunnable::GetChunkCoordinates(FVector Position) const {

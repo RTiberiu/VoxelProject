@@ -77,15 +77,16 @@ void AChunkWorld::spawnInitialWorld() {
 	FVector ChunkPosition = FVector(0, 0, 0);
 	FIntPoint ChunkWorldCoords = FIntPoint(0, 0);
 	CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
+	CLDR->AddVegetationChunkSpawnPosition(ChunkWorldCoords);
 
 	// Add chunk positions to spawn by going in a spiral from origin position
 	std::set<std::pair<int, int>> avoidPosition = { {0,0} };
 	int currentSpiralRing = 1;
 	int maxSpiralRings = WTSR->DrawDistance;
+	int vegetationMax = WTSR->VegetationDrawDistance;
 
 	while (currentSpiralRing <= maxSpiralRings) {
 		for (int x = -currentSpiralRing; x < currentSpiralRing; x++) {
-			FString rowString; // TESTING
 			for (int z = -currentSpiralRing; z < currentSpiralRing; z++) {
 				std::pair<int, int> currentPair = { x, z };
 
@@ -97,6 +98,12 @@ void AChunkWorld::spawnInitialWorld() {
 				ChunkWorldCoords = FIntPoint(x, z);
 
 				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
+
+				// If withing the vegetation distance
+				int ringDistance = FMath::Max(FMath::Abs(x), FMath::Abs(z));
+				if (ringDistance <= vegetationMax) {
+					CLDR->AddVegetationChunkSpawnPosition(ChunkWorldCoords);
+				}
 
 				avoidPosition.insert(currentPair);
 			}
@@ -796,8 +803,11 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		return;
 	}
 
+	// TODO Reduce the check for every couple of frames. 
+	CLDR->CheckForSpawnPointsInRange();
+
 	// Append grass positions waiting to be spawned
-	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPosition();
+	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPositionInRange();
 	GrassPositionsToSpawn.Append(grassSpawnPositions);
 
 	// Spawn a few trees in the current frame
@@ -820,7 +830,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	}
 
 	// Append flower positions waiting to be spawned
-	TArray<FVoxelObjectLocationData> flowerSpawnPositions = CLDR->getFlowerSpawnPosition();
+	TArray<FVoxelObjectLocationData> flowerSpawnPositions = CLDR->getFlowerSpawnPositionInRange();
 	FlowerPositionsToSpawn.Append(flowerSpawnPositions);
 
 	// Spawn a few flowers in the current frame
