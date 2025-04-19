@@ -101,6 +101,12 @@ private:
 
 	void AddSpawnLocationForVegetationOrNpc(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation);
 
+	// Batching the spawn points to send them once to CLDR
+	TArray<FVoxelObjectLocationData> PendingTreeSpawns;
+	TArray<FVoxelObjectLocationData> PendingFlowerSpawns;
+	TArray<FVoxelObjectLocationData> PendingGrassSpawns;
+	TArray<TPair<FVoxelObjectLocationData, AnimalType>> PendingNpcSpawns;
+
 	float GetMiddleOfVoxelObjectPosition(
 		const int& location,
 		const double& worldLocation,

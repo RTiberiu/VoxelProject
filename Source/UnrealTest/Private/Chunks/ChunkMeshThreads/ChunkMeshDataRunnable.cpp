@@ -30,6 +30,12 @@ bool ChunkMeshDataRunnable::Init() {
 uint32 ChunkMeshDataRunnable::Run() {
 	while (isRunning) {
 
+		PendingTreeSpawns.Empty();
+		PendingFlowerSpawns.Empty();
+		PendingGrassSpawns.Empty();
+		PendingNpcSpawns.Empty();
+		surfaceAvoidPositions.Empty();
+
 		Time start = std::chrono::high_resolution_clock::now();
 
 		createBinarySolidColumnsYXZ();
@@ -92,6 +98,11 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	const FNoiseMapSettings& continentalnessSettings = PNSR->noiseMapSettings[0];
 	const FNoiseMapSettings& erosionSettings = PNSR->noiseMapSettings[1];
 	const FNoiseMapSettings& peaksAndValleysSettings = PNSR->noiseMapSettings[2];
+
+	// Holding spawn points for vegetation or NPC
+	struct FSpawnPoint { int X, Z, Y; };
+	TArray<FSpawnPoint> spawnPoints;
+
 
 	// Loop over the chunk dimensions (X, Y, Z)
 	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
@@ -171,8 +182,8 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 				// Add the voxel point to the surface voxel points array
 				surfaceVoxelPoints.Add(height);
 
-				// Spawn vegetation or NPC at current voxel point
-				AddSpawnLocationForVegetationOrNpc(x, z, height, chunkWorldLocation);
+				// Storing vegetation or NPC spawn points for the current voxel point
+				spawnPoints.Add({ x, z, height });
 			}
 
 			// Add enough bits to y to cover the entire height (4 64bit integers when the max height is 256)
@@ -236,9 +247,19 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 		}
 	}
 
+	// Get a list of all the spawn points for vegetation and NPCs
+	for (const FSpawnPoint& spawnPoint : spawnPoints) {
+		AddSpawnLocationForVegetationOrNpc(spawnPoint.X, spawnPoint.Z, spawnPoint.Y, chunkWorldLocation);
+	}
+
+	// Send all the spawn points to CLDR
+	CLDR->addNPCSpawnPositions(PendingNpcSpawns);
+	CLDR->addTreeSpawnPositions(PendingTreeSpawns);
+	CLDR->addGrassSpawnPositions(PendingGrassSpawns);
+	CLDR->addFlowerSpawnPositions(PendingFlowerSpawns);
+
 	// Add the surface voxel points to the chunk location data
 	CLDR->AddSurfaceVoxelPointsForChunk(ChunkLocationData.ObjectWorldCoords, surfaceVoxelPoints, surfaceAvoidPositions);
-
 }
 
 void ChunkMeshDataRunnable::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
@@ -681,7 +702,7 @@ void ChunkMeshDataRunnable::AddGrassSpawnPoint(const int& x, const int& z, const
 	objectSpawnPosition.ObjectPosition = FVector(grassX, grassZ, height * WTSR->UnrealScale);
 	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
-	CLDR->addGrassSpawnPosition(objectSpawnPosition);
+	PendingGrassSpawns.Add(objectSpawnPosition);
 }
 
 void ChunkMeshDataRunnable::AddFlowerSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation, const int& colorIndex) {
@@ -697,7 +718,7 @@ void ChunkMeshDataRunnable::AddFlowerSpawnPoint(const int& x, const int& z, cons
 	objectSpawnPosition.ObjectPosition = FVector(flowerX, flowerZ, height * WTSR->UnrealScale);
 	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
-	CLDR->addFlowerSpawnPosition(objectSpawnPosition);
+	PendingFlowerSpawns.Add(objectSpawnPosition);
 }
 
 void ChunkMeshDataRunnable::AddTreeSpawnPoint(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation) {
@@ -708,7 +729,7 @@ void ChunkMeshDataRunnable::AddTreeSpawnPoint(const int& x, const int& z, const 
 	objectSpawnPosition.ObjectPosition = FVector(treeX, treeZ, height * WTSR->UnrealScale);
 	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
-	CLDR->addTreeSpawnPosition(objectSpawnPosition);
+	PendingTreeSpawns.Add(objectSpawnPosition);
 
 	// Add position to be avoided in the pathfinding
 	const int adjustedX = x - 1;
@@ -727,7 +748,7 @@ void ChunkMeshDataRunnable::AddNpcSpawnPoint(const int& x, const int& z, const i
 	// TODO Adjust spawn type based on noise not random
 	AnimalType animalType = GetAnimalTypeFromSpawnChance();
 	const TPair<FVoxelObjectLocationData, AnimalType> PositionAndType = { objectSpawnPosition, animalType };
-	CLDR->addNPCSpawnPosition(PositionAndType);
+	PendingNpcSpawns.Add(PositionAndType);
 }
 
 AnimalType ChunkMeshDataRunnable::GetAnimalTypeFromSpawnChance() {

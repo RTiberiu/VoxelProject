@@ -232,6 +232,55 @@ void UChunkLocationData::addNPCSpawnPosition(const TPair<FVoxelObjectLocationDat
 	NPCToSpawnSemaphore->Release();
 }
 
+void UChunkLocationData::addTreeSpawnPositions(const TArray<FVoxelObjectLocationData>& positions) {
+    TreesToSpawnSemaphore->Acquire();
+    for (const FVoxelObjectLocationData& pos : positions) {
+        if (treesSpawnPositions.Contains(pos.ObjectWorldCoords)) {
+            treesSpawnPositions[pos.ObjectWorldCoords].Add(pos);
+        } else {
+            treesSpawnPositions.Add(pos.ObjectWorldCoords, TArray<FVoxelObjectLocationData>({ pos }));
+        }
+    }
+    TreesToSpawnSemaphore->Release();
+}
+
+void UChunkLocationData::addGrassSpawnPositions(const TArray<FVoxelObjectLocationData>& positions) {
+    GrassToSpawnSemaphore->Acquire();
+    for (const FVoxelObjectLocationData& pos : positions) {
+        if (grassSpawnPositions.Contains(pos.ObjectWorldCoords)) {
+            grassSpawnPositions[pos.ObjectWorldCoords].Add(pos);
+        } else {
+            grassSpawnPositions.Add(pos.ObjectWorldCoords, TArray<FVoxelObjectLocationData>({ pos }));
+        }
+    }
+    GrassToSpawnSemaphore->Release();
+}
+
+void UChunkLocationData::addFlowerSpawnPositions(const TArray<FVoxelObjectLocationData>& positions) {
+    FlowersToSpawnSemaphore->Acquire();
+    for (const FVoxelObjectLocationData& pos : positions) {
+        if (flowersSpawnPositions.Contains(pos.ObjectWorldCoords)) {
+            flowersSpawnPositions[pos.ObjectWorldCoords].Add(pos);
+        } else {
+            flowersSpawnPositions.Add(pos.ObjectWorldCoords, TArray<FVoxelObjectLocationData>({ pos }));
+        }
+    }
+    FlowersToSpawnSemaphore->Release();
+}
+
+void UChunkLocationData::addNPCSpawnPositions(const TArray<TPair<FVoxelObjectLocationData, AnimalType>>& positionsAndTypes) {
+    NPCToSpawnSemaphore->Acquire();
+    for (const TPair<FVoxelObjectLocationData, AnimalType>& entry : positionsAndTypes) {
+        const FIntPoint& key = entry.Key.ObjectWorldCoords;
+        if (NPCSpawnPositions.Contains(key)) {
+            NPCSpawnPositions[key].Add(entry);
+        } else {
+            NPCSpawnPositions.Add(key, TArray<TPair<FVoxelObjectLocationData, AnimalType>>({ entry }));
+        }
+    }
+    NPCToSpawnSemaphore->Release();
+}
+
 void UChunkLocationData::RemoveTreeSpawnPosition(const FIntPoint& point) {
 	TreesToSpawnSemaphore->Acquire();
 

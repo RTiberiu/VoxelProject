@@ -40,7 +40,7 @@ private:
 
 	FVector PlayerPosition;
 
-	void UpdateSpawnPoints(SpawnPointType SpawnType)
+	void UpdateSpawnPoints(SpawnPointType SpawnType);
 
 	void UpdateChunkCollisions();
 	void UpdateTreeCollisions();

@@ -46,10 +46,17 @@ public:
     TArray<FVoxelObjectLocationData> getFlowerSpawnPosition();
     TArray<TPair<FVoxelObjectLocationData, AnimalType>> getNPCSpawnPosition();
 
+    // Methods to add single spawn points for vegetation and NPCs
     void addTreeSpawnPosition(const FVoxelObjectLocationData position);
     void addGrassSpawnPosition(const FVoxelObjectLocationData position);
     void addFlowerSpawnPosition(const FVoxelObjectLocationData position);
     void addNPCSpawnPosition(const TPair<FVoxelObjectLocationData, AnimalType> positionAndType);
+
+    // Methods to add batch spawn points for vegetation and NPCs
+    void addTreeSpawnPositions(const TArray<FVoxelObjectLocationData>& positions);
+    void addGrassSpawnPositions(const TArray<FVoxelObjectLocationData>& positions);
+    void addFlowerSpawnPositions(const TArray<FVoxelObjectLocationData>& positions);
+    void addNPCSpawnPositions(const TArray<TPair<FVoxelObjectLocationData, AnimalType>>& positionsAndTypes);
 
     void RemoveTreeSpawnPosition(const FIntPoint& point);
     void RemoveGrassSpawnPosition(const FIntPoint& point);
