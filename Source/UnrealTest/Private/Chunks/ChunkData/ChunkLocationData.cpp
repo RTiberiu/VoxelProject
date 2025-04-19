@@ -75,6 +75,38 @@ void UChunkLocationData::emptyPositionQueues() {
 	chunksToDestroyPositions.Empty();
 }
 
+void UChunkLocationData::AddVegetationChunkSpawnPosition(FIntPoint& chunkPosition) {  
+	VegetationChunkSemaphore->Acquire();
+	if (!VegetationChunkSpawnPoints.Contains(chunkPosition)) {  
+		VegetationChunkSpawnPoints.Add(chunkPosition, nullptr);  
+	}  
+	VegetationChunkSemaphore->Release();
+}
+
+void UChunkLocationData::RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosition) {
+	VegetationChunkSemaphore->Acquire();
+	if (VegetationChunkSpawnPoints.Contains(chunkPosition)) {
+		VegetationChunkSpawnPoints.Remove(chunkPosition);
+	}
+	VegetationChunkSemaphore->Release();
+}
+
+void UChunkLocationData::CheckForGrassSpawnPointsInRange() {  
+	VegetationChunkSemaphore->Acquire();  
+	
+	// Check if Vegetation spawn points are in Grass spawn points, and add a reference
+	// to that list of Grass points if it exists.
+	for (const TPair<FIntPoint, TArray<FVoxelObjectLocationData>*>& VegetationPair : VegetationChunkSpawnPoints) {  
+		GrassToSpawnSemaphore->Acquire();
+		if (grassSpawnPositions.Contains(VegetationPair.Key)) {  
+			VegetationChunkSpawnPoints[VegetationPair.Key] = &grassSpawnPositions[VegetationPair.Key]; 
+		}  
+		GrassToSpawnSemaphore->Release();
+	}
+
+	VegetationChunkSemaphore->Release();  
+}
+
 TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions() {
 	TArray<FVoxelObjectLocationData> output;
 	TreesToSpawnSemaphore->Acquire();

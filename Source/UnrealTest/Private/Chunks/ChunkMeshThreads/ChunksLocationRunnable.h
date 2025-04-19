@@ -11,6 +11,11 @@ class ABinaryChunk;
 class UWorldTerrainSettings; // forward declaration to the world settings
 class UChunkLocationData;
 
+enum SpawnPointType {
+	VEGETATION,
+	CHUNKS
+};
+
 class ChunksLocationRunnable : public FRunnable {
 public:
 	ChunksLocationRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
@@ -35,7 +40,8 @@ private:
 
 	FVector PlayerPosition;
 
-	void UpdateChunks();
+	void UpdateSpawnPoints(SpawnPointType SpawnType)
+
 	void UpdateChunkCollisions();
 	void UpdateTreeCollisions();
 

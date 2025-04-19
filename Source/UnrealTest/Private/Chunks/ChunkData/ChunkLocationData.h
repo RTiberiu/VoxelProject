@@ -37,6 +37,10 @@ public:
     
     void emptyPositionQueues();
 
+    void AddVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
+    void RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
+    void CheckForGrassSpawnPointsInRange();
+
     TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
     TArray<FVoxelObjectLocationData> getGrassSpawnPosition();
     TArray<FVoxelObjectLocationData> getFlowerSpawnPosition();
@@ -111,6 +115,13 @@ private:
 
     FairSemaphore* NPCToSpawnSemaphore;
     TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>> NPCSpawnPositions;
+
+    // Map to store the current Chunk Points where Vegetation should spawn
+    // Note: This holds a reference to the grassSpawnPositions/flowersSpawnPositions
+    // and when clearing those maps, the references should also be cleared from this one.
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> VegetationChunkSpawnPoints;
+    FairSemaphore* VegetationChunkSemaphore;
+
 
     FairSemaphore* MeshDataSemaphore;
 

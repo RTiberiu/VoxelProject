@@ -30,7 +30,7 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 60 }; // this changes the voxel size (100 is 1m) // 50 
-	const uint8_t DrawDistance{ 6 }; // 5 
+	const uint8_t DrawDistance{ 10 }; // 5 
     const uint8_t HalfUnrealScale{ static_cast<uint8_t>(UnrealScale / 2) }; // Used for aligning in the middle of a voxel
 
 	// Single chunk settings
@@ -70,7 +70,6 @@ public:
 
 	void updateCurrentPlayerPosition(FVector& newPosition);
 	FVector& getCurrentPlayerPosition();
-
 
 	// Chunk noises
 	// Noise objects used to generate the world
@@ -116,6 +115,8 @@ public:
 	const float FlowerSpawnChance{ 0.03f };	// Showcase settings: 0.03f		// Testing settings: 0.03f
 	const float GrassSpawnChance{ 0.05f };	// Showcase settings: 0.08f		// Testing settings: 0.05f
 	const float NPCSpawnChance{ 0.052f };	// Showcase settings: 0.082f	// Testing settings: 0.052f
+	const uint8_t VegetationDrawDistance{ 3 }; 
+
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };

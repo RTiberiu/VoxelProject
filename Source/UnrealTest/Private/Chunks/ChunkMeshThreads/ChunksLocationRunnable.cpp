@@ -22,12 +22,16 @@ bool ChunksLocationRunnable::Init() {
 
 uint32 ChunksLocationRunnable::Run() {
 	while (isRunning) {
-		// Spawn new chunks
+		// Add spawn points for Chunks
 		WTSR->UpdateChunkSemaphore->Acquire();
-		UpdateChunks();
+		UpdateSpawnPoints(CHUNKS);
+		WTSR->UpdateChunkSemaphore->Release();
+
+		UpdateSpawnPoints(VEGETATION);
+
+		// Update Chunks and Trees collision
 		WTSR->UpdateChunksCollision(PlayerPosition);
 		WTSR->UpdateTreeCollisions(PlayerPosition);
-		WTSR->UpdateChunkSemaphore->Release();
 
 		isTaskComplete = true;
 		isRunning = false;
@@ -46,42 +50,52 @@ FThreadSafeBool ChunksLocationRunnable::IsTaskComplete() const {
 	return isTaskComplete;
 }
 
-void ChunksLocationRunnable::UpdateChunks() {
+void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 	FIntPoint PlayerChunkCoords = GetChunkCoordinates(PlayerPosition);
 	FIntPoint InitialChunkCoords = GetChunkCoordinates(WTSR->getInitialPlayerPosition());
 
+	uint8_t DrawDistance;
+	if (SpawnType == CHUNKS) {
+		DrawDistance = WTSR->DrawDistance;
+	} else if (SpawnType == VEGETATION) {
+		DrawDistance = WTSR->VegetationDrawDistance;
+	}
+
 	// Add and remove chunks on the X axis 
 	if (PlayerChunkCoords.X != InitialChunkCoords.X) {
-
 		int lastRowX{ 0 };
 		int newRowX{ 0 };
 		if (PlayerChunkCoords.X > InitialChunkCoords.X) {
 			// Get the first row by adding the draw distance to the player's X
 			//UE_LOG(LogTemp, Warning, TEXT("Moved right")); // TESTING 
-			lastRowX = PlayerChunkCoords.X - WTSR->DrawDistance - 1;
-			newRowX = PlayerChunkCoords.X + WTSR->DrawDistance - 1;
+			lastRowX = PlayerChunkCoords.X - DrawDistance - 1;
+			newRowX = PlayerChunkCoords.X + DrawDistance - 1;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial X
 			//UE_LOG(LogTemp, Warning, TEXT("Moved left")); // TESTING 
-			lastRowX = InitialChunkCoords.X + WTSR->DrawDistance - 1;
-			newRowX = InitialChunkCoords.X - WTSR->DrawDistance - 1;
+			lastRowX = InitialChunkCoords.X + DrawDistance - 1;
+			newRowX = InitialChunkCoords.X - DrawDistance - 1;
 		}
 
 		// Add new chunks and remove old chunks based on the player's new X position
-		const int firstIndexChunkZ = InitialChunkCoords.Y - WTSR->DrawDistance;
-		const int lastIndexChunkZ = InitialChunkCoords.Y + WTSR->DrawDistance;
+		const int firstIndexChunkZ = InitialChunkCoords.Y - DrawDistance;
+		const int lastIndexChunkZ = InitialChunkCoords.Y + DrawDistance;
 
 		// Loop and remove the entire row of chunks 
 		for (int z = firstIndexChunkZ; z < lastIndexChunkZ; z++) {
 			FIntPoint oldChunkCoords = FIntPoint(lastRowX, z);
 
-			CLDR->addChunksToDestroyPosition(oldChunkCoords);
-			
 			// Adding new row 
 			FIntPoint newChunkCoords = FIntPoint(newRowX, z);
-			FVector ChunkPosition = FVector(newRowX * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
-			CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
+			if (SpawnType == CHUNKS) {
+				FVector ChunkPosition = FVector(newRowX * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
+				CLDR->addChunksToDestroyPosition(oldChunkCoords);
+				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
+			} else if (SpawnType == VEGETATION) {
+				CLDR->AddVegetationChunkSpawnPosition(newChunkCoords);
+				CLDR->RemoveVegetationChunkSpawnPosition(oldChunkCoords);
+			}
 		}
 	}
 	
@@ -99,29 +113,30 @@ void ChunksLocationRunnable::UpdateChunks() {
 		int newTreeRowZ{ 0 };
 		if (PlayerChunkCoords.Y > InitialChunkCoords.Y) {
 			// Get the first row by adding the draw distance to the player's Z
-			//UE_LOG(LogTemp, Warning, TEXT("Moved up")); // TESTING 
-			lastRowZ = InitialChunkCoords.Y - WTSR->DrawDistance;
-			newRowZ = InitialChunkCoords.Y + WTSR->DrawDistance;
+			lastRowZ = InitialChunkCoords.Y - DrawDistance;
+			newRowZ = InitialChunkCoords.Y + DrawDistance;
 		} else {
 			// Get the last row by substracting the draw distance from the the initial Z
-			//UE_LOG(LogTemp, Warning, TEXT("Moved down")); // TESTING 
-			lastRowZ = PlayerChunkCoords.Y + WTSR->DrawDistance;
-			newRowZ = PlayerChunkCoords.Y - WTSR->DrawDistance;
+			lastRowZ = PlayerChunkCoords.Y + DrawDistance;
+			newRowZ = PlayerChunkCoords.Y - DrawDistance;
 		}
 
-		const int firstIndexChunkX = PlayerChunkCoords.X - WTSR->DrawDistance;
-		const int lastIndexChunkX = PlayerChunkCoords.X + WTSR->DrawDistance;
+		const int firstIndexChunkX = PlayerChunkCoords.X - DrawDistance;
+		const int lastIndexChunkX = PlayerChunkCoords.X + DrawDistance;
 
 		// Loop and remove the entire row of chunks 
 		for (int x = firstIndexChunkX; x < lastIndexChunkX; x++) {
 			FIntPoint oldChunkCoords = FIntPoint(x, lastRowZ);
-
-			CLDR->addChunksToDestroyPosition(oldChunkCoords);
-
 			FIntPoint newChunkCoords = FIntPoint(x, newRowZ);
-			FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, newRowZ * WTSR->chunkSize * WTSR->UnrealScale, 0);
 
-			CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
+			if (SpawnType == CHUNKS) {
+				FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, newRowZ * WTSR->chunkSize * WTSR->UnrealScale, 0);
+				CLDR->addChunksToDestroyPosition(oldChunkCoords);
+				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
+			} else if (SpawnType == VEGETATION) {
+				CLDR->AddVegetationChunkSpawnPosition(newChunkCoords);
+				CLDR->RemoveVegetationChunkSpawnPosition(oldChunkCoords);
+			}
 		}
 	}
 
