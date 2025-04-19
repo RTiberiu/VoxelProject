@@ -12,6 +12,7 @@
 #include "ChunkLocationData.generated.h"
 
 class ABasicNPC;
+class WorldTerrainSettings;
 
 UCLASS()
 class  UChunkLocationData : public UObject {
@@ -21,6 +22,8 @@ public:
     UChunkLocationData();
 
     ~UChunkLocationData();
+
+    void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
 
     bool getChunkToSpawnPosition(FVoxelObjectLocationData& OutLocation);
     bool getChunkToDestroyPosition(FIntPoint& OutPosition);
@@ -40,6 +43,10 @@ public:
     void AddVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
     void RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
     void CheckForSpawnPointsInRange();
+    void CheckAndAddVegetationNotInRange(
+        TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove,
+        TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove
+    );
 
     TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
     TArray<FVoxelObjectLocationData> getGrassSpawnPosition();
@@ -90,6 +97,8 @@ public:
     void AddOccupiedVoxelPosition(const FVector& position, ABasicNPC* npcAtLocation);
 
 private:
+    UWorldTerrainSettings* WorldTerrainSettingsRef;
+    UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
 
     const int chunkSize{ 62 }; 
 

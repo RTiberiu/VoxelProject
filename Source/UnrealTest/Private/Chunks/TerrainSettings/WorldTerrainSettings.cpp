@@ -355,21 +355,21 @@ TArray<ATree*> UWorldTerrainSettings::GetAndRemoveTreeFromMap(const FIntPoint& T
 	TreeMapSemaphore->Release();
 	return RemovedTrees;
 }
+TArray<UCustomProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates) {  
+	TArray<UCustomProceduralMeshComponent*> RemovedGrass;  // Array to hold the remaining grass at the location  
 
-TArray<UCustomProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveGrassFromMap(const FIntPoint& GrassWorldCoordinates) {
-	TArray<UCustomProceduralMeshComponent*> RemovedGrass;  // Array to hold the remaining grass at the location
+	GrassMapSemaphore->Acquire();  
 
-	GrassMapSemaphore->Acquire();
+	// Check if the map contains the coordinates  
+	if (SpawnedGrassMap.Contains(GrassWorldCoordinates)) {  
+		// Get and remove the array of grass at this location if it's not empty  
+		if (!SpawnedGrassMap[GrassWorldCoordinates].IsEmpty()) {  
+			RemovedGrass = SpawnedGrassMap.FindAndRemoveChecked(GrassWorldCoordinates);  
+			SpawnedGrassMap.Remove(GrassWorldCoordinates);  
+		} 
+	}  
 
-	// Check if the map contains the coordinates
-	if (SpawnedGrassMap.Contains(GrassWorldCoordinates)) {
-		// Get and remove the array of grass at this location if it's not empty
-		if (!SpawnedGrassMap[GrassWorldCoordinates].IsEmpty()) {
-			RemovedGrass = SpawnedGrassMap.FindAndRemoveChecked(GrassWorldCoordinates);
-		}
-	}
-
-	GrassMapSemaphore->Release();
+	GrassMapSemaphore->Release();  
 	return RemovedGrass;
 }
 
@@ -383,6 +383,7 @@ TArray<UCustomProceduralMeshComponent*> UWorldTerrainSettings::GetAndRemoveFlowe
 		// Get and remove the array of flower at this location if it's not empty
 		if (!SpawnedFlowerMap[FlowerWorldCoordinates].IsEmpty()) {
 			RemovedFlower = SpawnedFlowerMap.FindAndRemoveChecked(FlowerWorldCoordinates);
+			SpawnedFlowerMap.Remove(FlowerWorldCoordinates);
 		}
 	}
 
@@ -400,6 +401,7 @@ TArray<ABasicNPC*> UWorldTerrainSettings::GetAndRemoveNpcFromMap(const FIntPoint
 		// Get and remove the array of NPCs at this location if it's not empty
 		if (!SpawnedNpcMap[npcWorldCoordinates].IsEmpty()) {
 			RemovedNpcs = SpawnedNpcMap.FindAndRemoveChecked(npcWorldCoordinates);
+			// TODO If using LOD system, remove the key as well (like for the Flower/Grass
 		}
 	}
 
@@ -415,6 +417,50 @@ void UWorldTerrainSettings::RemoveTreeFromMap(const FIntPoint& TreeWorldCoordina
 	}
 
 	TreeMapSemaphore->Release();
+}
+
+void UWorldTerrainSettings::CheckAndReturnGrassNotInRange(TArray<FIntPoint>& coordinates, TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove) {
+   GrassMapSemaphore->Acquire();  
+
+   // Iterate over the keys of SpawnedGrassMap  
+   for (TMap<FIntPoint, TArray<UCustomProceduralMeshComponent*>>::TIterator GrassMapIterator = SpawnedGrassMap.CreateIterator(); GrassMapIterator; ++GrassMapIterator) {  
+      const FIntPoint& Key = GrassMapIterator.Key();  
+
+      // Check if the key is not in the provided coordinates  
+      if (!coordinates.Contains(Key)) {  
+		  // Add each grass component to the queue  
+		  for (UCustomProceduralMeshComponent* GrassActor : GrassMapIterator.Value()) {
+			  GrassActorsToRemove->Enqueue(GrassActor);
+		  }
+
+          // Remove the key from the map  
+          GrassMapIterator.RemoveCurrent();  
+      }  
+   }
+
+   GrassMapSemaphore->Release();  
+}
+
+void UWorldTerrainSettings::CheckAndReturnFlowersNotInRange(TArray<FIntPoint>& coordinates, TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove) {
+	FlowerMapSemaphore->Acquire();
+
+	// Iterate over the keys of SpawnedFlowerMap  
+	for (TMap<FIntPoint, TArray<UCustomProceduralMeshComponent*>>::TIterator FlowerMapIterator = SpawnedFlowerMap.CreateIterator(); FlowerMapIterator; ++FlowerMapIterator) {
+		const FIntPoint& Key = FlowerMapIterator.Key();
+
+		// Check if the key is not in the provided coordinates  
+		if (!coordinates.Contains(Key)) {
+			// Add each flower component to the queue  
+			for (UCustomProceduralMeshComponent* FlowerActor : FlowerMapIterator.Value()) {
+				FlowerActorsToRemove->Enqueue(FlowerActor);
+			}
+
+			// Remove the key from the map  
+			FlowerMapIterator.RemoveCurrent();
+		}
+	}
+
+	FlowerMapSemaphore->Release();
 }
 
 void UWorldTerrainSettings::RemoveSingleGrassFromMap(UCustomProceduralMeshComponent* grass) {

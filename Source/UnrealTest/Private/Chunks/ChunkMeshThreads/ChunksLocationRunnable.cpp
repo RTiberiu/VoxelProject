@@ -6,7 +6,19 @@
 #include "..\TerrainSettings\WorldTerrainSettings.h"
 #include "..\ChunkData\ChunkLocationData.h"
 
-ChunksLocationRunnable::ChunksLocationRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef) : PlayerPosition(PlayerPosition), isRunning(false), isTaskComplete(false) {
+ChunksLocationRunnable::ChunksLocationRunnable(
+	FVector PlayerPosition,
+	UWorldTerrainSettings* InWorldTerrainSettingsRef,
+	UChunkLocationData* InChunkLocationDataRef,
+	TQueue<UCustomProceduralMeshComponent*>* InGrassActorsToRemove,
+	TQueue<UCustomProceduralMeshComponent*>* InFlowerActorsToRemove
+) : 
+	PlayerPosition(PlayerPosition), 
+	isRunning(false), 
+	isTaskComplete(false),
+	GrassActorsToRemove(InGrassActorsToRemove),
+	FlowerActorsToRemove(InFlowerActorsToRemove)
+{
 	WorldTerrainSettingsRef = InWorldTerrainSettingsRef;
 	ChunkLocationDataRef = InChunkLocationDataRef;
 }
@@ -98,6 +110,18 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 			} else if (SpawnType == VEGETATION) {
 				CLDR->AddVegetationChunkSpawnPosition(newChunkCoords);
 				CLDR->RemoveVegetationChunkSpawnPosition(oldChunkCoords);
+
+				// Add the spawned vegetation mesh component to the lists, 
+				// so they can be removed over multiple frames
+                TArray<UCustomProceduralMeshComponent*> grassToRemove = WTSR->GetAndRemoveGrassFromMap(oldChunkCoords);  
+                for (UCustomProceduralMeshComponent* GrassActor : grassToRemove) {  
+                   GrassActorsToRemove->Enqueue(GrassActor);
+                }
+
+                TArray<UCustomProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(oldChunkCoords);  
+                for (UCustomProceduralMeshComponent* FlowerActor : flowerToRemove) {  
+                   FlowerActorsToRemove->Enqueue(FlowerActor);  
+                }
 			}
 		}
 	}
@@ -139,6 +163,18 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 			} else if (SpawnType == VEGETATION) {
 				CLDR->AddVegetationChunkSpawnPosition(newChunkCoords);
 				CLDR->RemoveVegetationChunkSpawnPosition(oldChunkCoords);
+
+				// Add the spawned vegetation mesh component to the lists, 
+				// so they can be removed over multiple frames
+				TArray<UCustomProceduralMeshComponent*> grassToRemove = WTSR->GetAndRemoveGrassFromMap(oldChunkCoords);
+				for (UCustomProceduralMeshComponent* GrassActor : grassToRemove) {
+					GrassActorsToRemove->Enqueue(GrassActor);
+				}
+
+				TArray<UCustomProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(oldChunkCoords);
+				for (UCustomProceduralMeshComponent* FlowerActor : flowerToRemove) {
+					FlowerActorsToRemove->Enqueue(FlowerActor);
+				}
 			}
 		}
 	}

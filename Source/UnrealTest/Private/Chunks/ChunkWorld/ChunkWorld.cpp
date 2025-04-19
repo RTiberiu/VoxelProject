@@ -99,7 +99,7 @@ void AChunkWorld::spawnInitialWorld() {
 
 				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
-				// If withing the vegetation distance
+
 				int ringDistance = FMath::Max(FMath::Abs(x), FMath::Abs(z));
 				if (ringDistance <= vegetationMax) {
 					CLDR->AddVegetationChunkSpawnPosition(ChunkWorldCoords);
@@ -249,7 +249,7 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector Play
 	Mesh->SetWorldLocation(LocationData.ObjectPosition);
 	Mesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 
-	// Adding the tree object to a map so I can remove it later on
+	// Adding the grass object to a map so I can remove it later on
 	WTSR->AddSpawnedGrass(LocationData.ObjectWorldCoords, Mesh);
 }
 
@@ -353,10 +353,6 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 		return Item.ObjectWorldCoords == destroyPosition;
 		});
 
-	// Add spawned grass to a remove list to remove over multiple frames
-	TArray<UCustomProceduralMeshComponent*> grassToRemove = WTSR->GetAndRemoveGrassFromMap(destroyPosition);
-	GrassActorsToRemove.Append(grassToRemove);
-
 	// Remove remaining flower to spawn position at current chunk destroyed
 	CLDR->RemoveFlowerSpawnPosition(destroyPosition);
 
@@ -364,10 +360,6 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 	FlowerPositionsToSpawn.RemoveAll([&](const FVoxelObjectLocationData& Item) {
 		return Item.ObjectWorldCoords == destroyPosition;
 		});
-
-	// Add spawned flowers to a remove list to remove over multiple frames
-	TArray<UCustomProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(destroyPosition);
-	FlowerActorsToRemove.Append(flowerToRemove);
 
 	// Remove remaining NPC to spawn position at current chunk destroyed
 	CLDR->RemoveNPCSpawnPosition(destroyPosition);
@@ -418,74 +410,40 @@ void AChunkWorld::DestroyTreeActors() {
 
 void AChunkWorld::DestroyGrassActors() {
 	// Remove grass actors
-	int removedGrassCounter = 0;
-	for (int32 grassIndex = 0; grassIndex < GrassActorsToRemove.Num();) {
-		if (removedGrassCounter >= grassToRemovePerFrame) {
-			break;
-		}
+    int removedGrassCounter = 0;  
+    while (!GrassActorsToRemove.IsEmpty() && removedGrassCounter < grassToRemovePerFrame) {  
 
-		UCustomProceduralMeshComponent* grassToRemove = GrassActorsToRemove[grassIndex];
-		if (grassToRemove) {
-			grassToRemove->UnregisterComponent();
-			grassToRemove->DestroyComponent();
-			WTSR->GrassCount--;
-		} else {
-			CLDR->AddUnspawnedGrassToDestroy(grassToRemove);
+		UCustomProceduralMeshComponent* grassToRemove = nullptr;  
+		if (GrassActorsToRemove.Dequeue(grassToRemove) && grassToRemove) {  
+			if (IsValid(grassToRemove)) {
+				grassToRemove->UnregisterComponent();
+				grassToRemove->DestroyComponent();
+				WTSR->GrassCount--;
+				removedGrassCounter++;
+			} else {
+				GrassActorsToRemove.Enqueue(grassToRemove);
+			}
 		}
-
-		GrassActorsToRemove.RemoveAt(grassIndex);
-		removedGrassCounter++;
-	}
-
-	// Check for any previously unspawned grass that could be now destroyed 
-	UCustomProceduralMeshComponent* unspawnedGrass = nullptr;
-	CLDR->AddUnspawnedGrassToDestroy(unspawnedGrass);
-	if (unspawnedGrass) {
-		// Destroy if it's valid and part of the world
-		if (IsValid(unspawnedGrass)) {
-			unspawnedGrass->UnregisterComponent();
-			unspawnedGrass->DestroyComponent();
-		} else {
-			// Add back to the list and wait for the grass to be spawned.
-			CLDR->AddUnspawnedGrassToDestroy(unspawnedGrass);
-		}
-	}
+    }
 }
 
 void AChunkWorld::DestroyFlowerActors() {
 	// Remove flower actors
-	int removedFlowerCounter = 0;
-	for (int32 flowerIndex = 0; flowerIndex < FlowerActorsToRemove.Num();) {
-		if (removedFlowerCounter >= flowerToRemovePerFrame) {
-			break;
-		}
+    int removedFlowerCounter = 0;  
+    while (!FlowerActorsToRemove.IsEmpty() && removedFlowerCounter < flowerToRemovePerFrame) {  
+       UCustomProceduralMeshComponent* flowerToRemove = nullptr;  
+       if (FlowerActorsToRemove.Dequeue(flowerToRemove) && flowerToRemove) { 
+		   if (IsValid(flowerToRemove)) {
+				flowerToRemove->UnregisterComponent();  
+				flowerToRemove->DestroyComponent();  
+				WTSR->FlowerCount--;  
+				removedFlowerCounter++;  
+		   } else {
+			   FlowerActorsToRemove.Enqueue(flowerToRemove);
+		   }
+       }  
 
-		UCustomProceduralMeshComponent* flowerToRemove = FlowerActorsToRemove[flowerIndex];
-		if (flowerToRemove) {
-			flowerToRemove->UnregisterComponent();
-			flowerToRemove->DestroyComponent();
-			WTSR->FlowerCount--;
-		} else {
-			CLDR->AddUnspawnedFlowerToDestroy(flowerToRemove);
-		}
-
-		FlowerActorsToRemove.RemoveAt(flowerIndex);
-		removedFlowerCounter++;
-	}
-
-	// Check for any previously unspawned flower that could be now destroyed 
-	UCustomProceduralMeshComponent* unspawnedFlower = nullptr;
-	CLDR->AddUnspawnedFlowerToDestroy(unspawnedFlower);
-	if (unspawnedFlower) {
-		// Destroy if it's valid and part of the world
-		if (IsValid(unspawnedFlower)) {
-			unspawnedFlower->UnregisterComponent();
-			unspawnedFlower->DestroyComponent();
-		} else {
-			// Add back to the list and wait for the flower to be spawned.
-			CLDR->AddUnspawnedFlowerToDestroy(unspawnedFlower);
-		}
-	}
+    }
 }
 
 void AChunkWorld::DestroyNpcActors() {
@@ -643,7 +601,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	if (!isLocationTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
 		isLocationTaskRunning.AtomicSet(true);
-		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR);
+		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR, &GrassActorsToRemove, &FlowerActorsToRemove);
 		chunksLocationThread = FRunnableThread::Create(chunksLocationRunnable, TEXT("chunksLocationThread"), 0, TPri_Normal);
 	}
 
@@ -803,16 +761,28 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		return;
 	}
 
-	// TODO Reduce the check for every couple of frames. 
-	CLDR->CheckForSpawnPointsInRange();
+	// Check every few frames for spawned points in range and for vegetation not in range
+	if (FramesCounterCheckSpawnedPointsInRange > FramesToCheckForSpawnPointsInRange) {
+		CLDR->CheckForSpawnPointsInRange();
+		CLDR->CheckAndAddVegetationNotInRange(&GrassActorsToRemove, &FlowerActorsToRemove);
+		FramesCounterCheckSpawnedPointsInRange = 0;
+	}
+	FramesCounterCheckSpawnedPointsInRange++; 
 
 	// Append grass positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPositionInRange();
 	GrassPositionsToSpawn.Append(grassSpawnPositions);
 
+	// TODO There is an issue, where if the Chunk FIntPoint for vegetation is removed 
+	// and the Grass positions for that Chunk are still in GrassPositionsToSpawn,
+	// the Grass will be spawned and then never removed.
+	// 
+	// I think RemoveVegetationChunkSpawnPosition() should also clear up GrassPositionToSpawn
+	//
+
 	// Spawn a few trees in the current frame
 	int spawnedGrassCounter = 0;
-	for (int32 positionIndex = 0; positionIndex < GrassPositionsToSpawn.Num();) {
+	for (int32 positionIndex = 0; positionIndex < GrassPositionsToSpawn.Num();) { // TODO I might have race conditions here
 		if (spawnedGrassCounter >= grassToSpawnPerFrame) {
 			break;
 		}

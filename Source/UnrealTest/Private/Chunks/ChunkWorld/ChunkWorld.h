@@ -127,14 +127,14 @@ private:
 	const int treesToSpawnPerFrame = 1;
 
 	// Grass actors to be destroyed and settings
-	TArray<UCustomProceduralMeshComponent*> GrassActorsToRemove;
+	TQueue<UCustomProceduralMeshComponent*> GrassActorsToRemove;
 	const int grassToRemovePerFrame = 3;
 
 	TArray<FVoxelObjectLocationData> GrassPositionsToSpawn;
 	const int grassToSpawnPerFrame = 3;
 
 	// Flower actors to be destroyed and settings
-	TArray<UCustomProceduralMeshComponent*> FlowerActorsToRemove;
+	TQueue<UCustomProceduralMeshComponent*> FlowerActorsToRemove;
 	const int flowerToRemovePerFrame = 3;
 
 	TArray<FVoxelObjectLocationData> FlowerPositionsToSpawn;
@@ -146,6 +146,9 @@ private:
 
 	TArray<ABasicNPC*> NpcActorsToRemove;
 	const int npcToRemovePerFrame = 2;
+
+	const int FramesToCheckForSpawnPointsInRange = 10;
+	int FramesCounterCheckSpawnedPointsInRange = 0;
 
 	bool spawnedTreesThisFrame;
 	bool spawnedChunksThisFrame;

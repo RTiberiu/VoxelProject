@@ -5,6 +5,7 @@
 #include "Async/Async.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "..\..\Utils\CustomMesh\CustomProceduralMeshComponent.h"
 
 class ATree;
 class ABinaryChunk;
@@ -18,7 +19,13 @@ enum SpawnPointType {
 
 class ChunksLocationRunnable : public FRunnable {
 public:
-	ChunksLocationRunnable(FVector PlayerPosition, UWorldTerrainSettings* InWorldTerrainSettingsRef, UChunkLocationData* InChunkLocationDataRef);
+	ChunksLocationRunnable(
+		FVector PlayerPosition, 
+		UWorldTerrainSettings* InWorldTerrainSettingsRef, 
+		UChunkLocationData* InChunkLocationDataRef,
+		TQueue<UCustomProceduralMeshComponent*>* InGrassActorsToRemove,
+		TQueue<UCustomProceduralMeshComponent*>* InFlowerActorsToRemove
+		);
 	virtual ~ChunksLocationRunnable() override;
 
 	virtual bool Init() override;
@@ -37,6 +44,8 @@ private:
 	UChunkLocationData* ChunkLocationDataRef;
 	UChunkLocationData*& CLDR = ChunkLocationDataRef;
 
+	TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove;
+	TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove;
 
 	FVector PlayerPosition;
 

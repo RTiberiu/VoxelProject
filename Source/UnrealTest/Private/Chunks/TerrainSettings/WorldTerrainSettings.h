@@ -193,6 +193,9 @@ public:
 	TArray<ABasicNPC*> GetAndRemoveNpcFromMap(const FIntPoint& npcWorldCoordinates);
 	void RemoveTreeFromMap(const FIntPoint& TreeWorldCoordinates);
 
+	void CheckAndReturnGrassNotInRange(TArray<FIntPoint>& coordinates, TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove);
+	void CheckAndReturnFlowersNotInRange(TArray<FIntPoint>& coordinates, TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove);
+
 	// Remove single objects, usually used by NPCs when eating/killing them
 	void RemoveSingleGrassFromMap(UCustomProceduralMeshComponent* grass);
 	void RemoveSingleFlowerFromMap(UCustomProceduralMeshComponent* flower);

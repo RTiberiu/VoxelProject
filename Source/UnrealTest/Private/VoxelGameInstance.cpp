@@ -22,6 +22,9 @@ void AVoxelGameInstance::BeginPlay() {
     animationSettingsNpcRef = NewObject<UAnimationSettingsNPC>();
     statsVoxelsMeshNPC = NewObject<UStatsVoxelsMeshNPC>();
 
+    // Add a world terrain settings ref to chunk location data
+    chunkLocationData->SetWorldTerrainSettings(worldTerrainSettings);
+
     // Ensuring there is not premature garbage collection on the object
     worldTerrainSettings->AddToRoot();
     chunkLocationData->AddToRoot();
