@@ -120,7 +120,7 @@ private:
 	void DestroyNpcActors();
 
 	// Tree actors to be destroyed and settings
-	TArray<ATree*> TreeActorsToRemove;
+	TQueue<ATree*> TreeActorsToRemove;
 	const int treesToRemovePerFrame = 1;
 
 	TArray<FVoxelObjectLocationData> TreePositionsToSpawn;
@@ -147,7 +147,7 @@ private:
 	TArray<ABasicNPC*> NpcActorsToRemove;
 	const int npcToRemovePerFrame = 2;
 
-	const int FramesToCheckForSpawnPointsInRange = 10;
+	const int FramesToCheckForSpawnPointsInRange = 20;
 	int FramesCounterCheckSpawnedPointsInRange = 0;
 
 	bool spawnedTreesThisFrame;

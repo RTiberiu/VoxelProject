@@ -14,7 +14,8 @@ class UChunkLocationData;
 
 enum SpawnPointType {
 	VEGETATION,
-	CHUNKS
+	CHUNKS,
+	TREES
 };
 
 class ChunksLocationRunnable : public FRunnable {
@@ -24,7 +25,8 @@ public:
 		UWorldTerrainSettings* InWorldTerrainSettingsRef, 
 		UChunkLocationData* InChunkLocationDataRef,
 		TQueue<UCustomProceduralMeshComponent*>* InGrassActorsToRemove,
-		TQueue<UCustomProceduralMeshComponent*>* InFlowerActorsToRemove
+		TQueue<UCustomProceduralMeshComponent*>* InFlowerActorsToRemove,
+		TQueue<ATree*>* InTreeActorsToRemove
 		);
 	virtual ~ChunksLocationRunnable() override;
 
@@ -46,6 +48,7 @@ private:
 
 	TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove;
 	TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove;
+	TQueue<ATree*>* TreeActorsToRemove;
 
 	FVector PlayerPosition;
 

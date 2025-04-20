@@ -11,13 +11,15 @@ ChunksLocationRunnable::ChunksLocationRunnable(
 	UWorldTerrainSettings* InWorldTerrainSettingsRef,
 	UChunkLocationData* InChunkLocationDataRef,
 	TQueue<UCustomProceduralMeshComponent*>* InGrassActorsToRemove,
-	TQueue<UCustomProceduralMeshComponent*>* InFlowerActorsToRemove
+	TQueue<UCustomProceduralMeshComponent*>* InFlowerActorsToRemove,
+	TQueue<ATree*>* InTreeActorsToRemove
 ) : 
 	PlayerPosition(PlayerPosition), 
 	isRunning(false), 
 	isTaskComplete(false),
 	GrassActorsToRemove(InGrassActorsToRemove),
-	FlowerActorsToRemove(InFlowerActorsToRemove)
+	FlowerActorsToRemove(InFlowerActorsToRemove),
+	TreeActorsToRemove(InTreeActorsToRemove)
 {
 	WorldTerrainSettingsRef = InWorldTerrainSettingsRef;
 	ChunkLocationDataRef = InChunkLocationDataRef;
@@ -40,6 +42,7 @@ uint32 ChunksLocationRunnable::Run() {
 		WTSR->UpdateChunkSemaphore->Release();
 
 		UpdateSpawnPoints(VEGETATION);
+		UpdateSpawnPoints(TREES);
 
 		// Update the initial position for the next frame
 		WTSR->updateInitialPlayerPosition(PlayerPosition);
@@ -74,6 +77,8 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 		DrawDistance = WTSR->DrawDistance;
 	} else if (SpawnType == VEGETATION) {
 		DrawDistance = WTSR->VegetationDrawDistance;
+	} else if (SpawnType == TREES) {
+		DrawDistance = WTSR->TreeDrawDistance;
 	}
 
 	// Add and remove chunks on the X axis 
@@ -122,6 +127,14 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
                 for (UCustomProceduralMeshComponent* FlowerActor : flowerToRemove) {  
                    FlowerActorsToRemove->Enqueue(FlowerActor);  
                 }
+			} else if (SpawnType == TREES) {
+				CLDR->AddTreeChunkSpawnPosition(newChunkCoords);
+				CLDR->RemoveTreeChunkSpawnPosition(oldChunkCoords);
+
+				TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(oldChunkCoords);
+				for (ATree* TreeActor : treesToRemove) {
+					TreeActorsToRemove->Enqueue(TreeActor);
+				}
 			}
 		}
 	}
@@ -174,6 +187,14 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 				TArray<UCustomProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(oldChunkCoords);
 				for (UCustomProceduralMeshComponent* FlowerActor : flowerToRemove) {
 					FlowerActorsToRemove->Enqueue(FlowerActor);
+				}
+			} else if (SpawnType == TREES) {
+				CLDR->AddTreeChunkSpawnPosition(newChunkCoords);
+				CLDR->RemoveTreeChunkSpawnPosition(oldChunkCoords);
+
+				TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(oldChunkCoords);
+				for (ATree* TreeActor : treesToRemove) {
+					TreeActorsToRemove->Enqueue(TreeActor);
 				}
 			}
 		}

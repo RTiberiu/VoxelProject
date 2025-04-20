@@ -84,6 +84,7 @@ void AChunkWorld::spawnInitialWorld() {
 	int currentSpiralRing = 1;
 	int maxSpiralRings = WTSR->DrawDistance;
 	int vegetationMax = WTSR->VegetationDrawDistance;
+	int treeMax = WTSR->TreeDrawDistance;
 
 	while (currentSpiralRing <= maxSpiralRings) {
 		for (int x = -currentSpiralRing; x < currentSpiralRing; x++) {
@@ -99,10 +100,13 @@ void AChunkWorld::spawnInitialWorld() {
 
 				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
-
 				int ringDistance = FMath::Max(FMath::Abs(x), FMath::Abs(z));
 				if (ringDistance <= vegetationMax) {
 					CLDR->AddVegetationChunkSpawnPosition(ChunkWorldCoords);
+				}
+
+				if (ringDistance <= treeMax) {
+					CLDR->AddTreeChunkSpawnPosition(ChunkWorldCoords);
 				}
 
 				avoidPosition.insert(currentPair);
@@ -341,10 +345,6 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 		return Item.ObjectWorldCoords == destroyPosition;
 		});
 
-	// Add spawned trees to a remove list to remove over multiple frames
-	TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(destroyPosition);
-	TreeActorsToRemove.Append(treesToRemove);
-
 	// Remove remaining grass to spawn position at current chunk destroyed
 	CLDR->RemoveGrassSpawnPosition(destroyPosition);
 
@@ -377,33 +377,17 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 void AChunkWorld::DestroyTreeActors() {
 	// Remove tree actors
 	int removedTreeCounter = 0;
-	for (int32 treeIndex = 0; treeIndex < TreeActorsToRemove.Num();) {
-		if (removedTreeCounter >= treesToRemovePerFrame) {
-			break;
-		}
+	while (!TreeActorsToRemove.IsEmpty() && removedTreeCounter < treesToRemovePerFrame) {
 
-		ATree* treeToRemove = TreeActorsToRemove[treeIndex];
-		if (treeToRemove) {
-			treeToRemove->Destroy();
-			WTSR->TreeCount--;
-		} else {
-			CLDR->AddUnspawnedTreeToDestroy(treeToRemove);
-		}
-
-		TreeActorsToRemove.RemoveAt(treeIndex);
-		removedTreeCounter++;
-	}
-
-	// Check for any previously unspawned trees that could be now destroyed 
-	ATree* unspawnedTree = nullptr;
-	CLDR->GetUnspawnedTreeToDestroy(unspawnedTree);
-	if (unspawnedTree) {
-		// Destroy if it's valid and part of the world
-		if (IsValid(unspawnedTree) && unspawnedTree->IsActorInitialized()) {
-			unspawnedTree->Destroy();
-		} else {
-			// Add back to the list and wait for the tree to be spawned.
-			CLDR->AddUnspawnedTreeToDestroy(unspawnedTree);
+		ATree* treeToRemove = nullptr;
+		if (TreeActorsToRemove.Dequeue(treeToRemove) && treeToRemove) {
+			if (IsValid(treeToRemove)) {
+				treeToRemove->Destroy();
+				WTSR->TreeCount--;
+				removedTreeCounter++;
+			} else {
+				TreeActorsToRemove.Enqueue(treeToRemove);
+			}
 		}
 	}
 }
@@ -601,7 +585,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	if (!isLocationTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
 		isLocationTaskRunning.AtomicSet(true);
-		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR, &GrassActorsToRemove, &FlowerActorsToRemove);
+		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR, &GrassActorsToRemove, &FlowerActorsToRemove, &TreeActorsToRemove);
 		chunksLocationThread = FRunnableThread::Create(chunksLocationRunnable, TEXT("chunksLocationThread"), 0, TPri_Normal);
 	}
 
@@ -730,7 +714,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	}
 
 	// Append tree positions waiting to be spawned
-	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositions();
+	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositionsInRange();
 	TreePositionsToSpawn.Append(treeSpawnPositions);
 
 	// Spawn a few trees in the current frame
@@ -743,7 +727,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 		SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->TreeCount++;
-
 
 		// Print the tree count every 50
 		if (WTSR->TreeCount % 1000 == 0) {
@@ -765,6 +748,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	if (FramesCounterCheckSpawnedPointsInRange > FramesToCheckForSpawnPointsInRange) {
 		CLDR->CheckForSpawnPointsInRange();
 		CLDR->CheckAndAddVegetationNotInRange(&GrassActorsToRemove, &FlowerActorsToRemove);
+		CLDR->CheckAndAddTreesNotInRange(&TreeActorsToRemove);
 		FramesCounterCheckSpawnedPointsInRange = 0;
 	}
 	FramesCounterCheckSpawnedPointsInRange++; 
@@ -773,16 +757,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPositionInRange();
 	GrassPositionsToSpawn.Append(grassSpawnPositions);
 
-	// TODO There is an issue, where if the Chunk FIntPoint for vegetation is removed 
-	// and the Grass positions for that Chunk are still in GrassPositionsToSpawn,
-	// the Grass will be spawned and then never removed.
-	// 
-	// I think RemoveVegetationChunkSpawnPosition() should also clear up GrassPositionToSpawn
-	//
-
 	// Spawn a few trees in the current frame
 	int spawnedGrassCounter = 0;
-	for (int32 positionIndex = 0; positionIndex < GrassPositionsToSpawn.Num();) { // TODO I might have race conditions here
+	for (int32 positionIndex = 0; positionIndex < GrassPositionsToSpawn.Num();) {
 		if (spawnedGrassCounter >= grassToSpawnPerFrame) {
 			break;
 		}
@@ -790,7 +767,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->GrassCount++;
 
-		// Print the tree count every 50
+		// Print the grass count every 50
 		/*if (WTSR->GrassCount % 1000 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("Grass count: %d"), WTSR->GrassCount);
 		}*/
@@ -813,7 +790,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->FlowerCount++;
 
-		// Print the tree count every 50
+		// Print the flower count every 50
 		/*if (WTSR->FlowerCount % 50 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("Flower count: %d"), WTSR->FlowerCount);
 		}*/

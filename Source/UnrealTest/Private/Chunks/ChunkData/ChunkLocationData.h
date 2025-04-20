@@ -41,12 +41,17 @@ public:
     void emptyPositionQueues();
 
     void AddVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
+    void AddTreeChunkSpawnPosition(FIntPoint& chunkPosition);
     void RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
+    void RemoveTreeChunkSpawnPosition(FIntPoint& chunkPosition);
     void CheckForSpawnPointsInRange();
     void CheckAndAddVegetationNotInRange(
         TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove,
         TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove
     );
+
+    void CheckAndAddTreesNotInRange(TQueue<ATree*>* TreeActorsToRemove);
+
 
     TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
     TArray<FVoxelObjectLocationData> getGrassSpawnPosition();
@@ -141,11 +146,13 @@ private:
     // Note: This holds a reference to the grassSpawnPositions/flowersSpawnPositions
     // and when clearing those maps, the references should also be cleared from this one.
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> VegetationChunkSpawnPoints;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> TreeChunkSpawnPoints;
     FairSemaphore* VegetationChunkSemaphore;
+    FairSemaphore* TreeChunkSemaphore;
 
-    //TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> treesInRangeSpawnPositions;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> grassInRangeSpawnPositions;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> flowersInRangeSpawnPositions;
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> treesInRangeSpawnPositions;
 
 
 

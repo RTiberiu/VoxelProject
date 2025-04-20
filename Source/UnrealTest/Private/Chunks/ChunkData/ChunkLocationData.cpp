@@ -11,6 +11,7 @@ UChunkLocationData::UChunkLocationData() :
 	NPCToSpawnSemaphore(new FairSemaphore(1)),
 	TreesToSpawnSemaphore(new FairSemaphore(1)),
 	VegetationChunkSemaphore(new FairSemaphore(1)),
+	TreeChunkSemaphore(new FairSemaphore(1)),
 	SurfaceVoxelPointsSemaphore(new FairSemaphore(1)) {
 }
 
@@ -25,6 +26,7 @@ UChunkLocationData::~UChunkLocationData() {
 	delete NPCToSpawnSemaphore;
 	delete SurfaceVoxelPointsSemaphore;
 	delete VegetationChunkSemaphore;
+	delete TreeChunkSemaphore;
 }
 
 void UChunkLocationData::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -83,12 +85,20 @@ void UChunkLocationData::emptyPositionQueues() {
 	chunksToDestroyPositions.Empty();
 }
 
-void UChunkLocationData::AddVegetationChunkSpawnPosition(FIntPoint& chunkPosition) {  
+void UChunkLocationData::AddVegetationChunkSpawnPosition(FIntPoint& chunkPosition) {
 	VegetationChunkSemaphore->Acquire();
 	if (!VegetationChunkSpawnPoints.Contains(chunkPosition)) {  
 		VegetationChunkSpawnPoints.Add(chunkPosition, nullptr);  
 	}  
 	VegetationChunkSemaphore->Release();
+}
+
+void UChunkLocationData::AddTreeChunkSpawnPosition(FIntPoint& chunkPosition) {
+	TreeChunkSemaphore->Acquire();
+	if (!TreeChunkSpawnPoints.Contains(chunkPosition)) {
+		TreeChunkSpawnPoints.Add(chunkPosition, nullptr);
+	}
+	TreeChunkSemaphore->Release();
 }
 
 void UChunkLocationData::RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosition) {
@@ -97,7 +107,7 @@ void UChunkLocationData::RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosi
 		VegetationChunkSpawnPoints.Remove(chunkPosition);
 	}
 
-	// Remove grass and flowers waiting to be spawned
+	// Remove grass, flowers, and trees waiting to be spawned
 	if (grassInRangeSpawnPositions.Contains(chunkPosition)) {
 		grassInRangeSpawnPositions.Remove(chunkPosition);
 	}
@@ -107,6 +117,19 @@ void UChunkLocationData::RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosi
 	}
 
 	VegetationChunkSemaphore->Release();
+}
+
+void UChunkLocationData::RemoveTreeChunkSpawnPosition(FIntPoint& chunkPosition) {
+	TreeChunkSemaphore->Acquire();
+	if (TreeChunkSpawnPoints.Contains(chunkPosition)) {
+		TreeChunkSpawnPoints.Remove(chunkPosition);
+	}
+
+	if (treesInRangeSpawnPositions.Contains(chunkPosition)) {
+		treesInRangeSpawnPositions.Remove(chunkPosition);
+	}
+
+	TreeChunkSemaphore->Release();
 }
 
 void UChunkLocationData::CheckForSpawnPointsInRange() {
@@ -140,21 +163,38 @@ void UChunkLocationData::CheckForSpawnPointsInRange() {
 		FlowersToSpawnSemaphore->Release();
 
 		// Adding trees spawn points // COMMENTED OUT TO KEEP THEM OUT OF THE LOD SYSTEM
-		/*TreesToSpawnSemaphore->Acquire();
-		if (treesSpawnPositions.Contains(VegetationPair.Key)) {
-			treesInRangeSpawnPositions[VegetationPair.Key] = &treesSpawnPositions[VegetationPair.Key];
+		if (flowersSpawnPositions.Contains(VegetationPair.Key)) {
+			if (flowersInRangeSpawnPositions.Find(VegetationPair.Key) == nullptr) {
+				flowersInRangeSpawnPositions.Add(
+					VegetationPair.Key,
+					&flowersSpawnPositions[VegetationPair.Key]
+				);
+			}
 		}
-		TreesToSpawnSemaphore->Release();*/
-
-		// Adding NPC spawn points
 	}
 
 	VegetationChunkSemaphore->Release();  
+
+	// Checking the tree spawn area
+	TreeChunkSemaphore->Acquire();
+	TreesToSpawnSemaphore->Acquire();
+	for (const TPair<FIntPoint, TArray<FVoxelObjectLocationData>*>& TreePair : TreeChunkSpawnPoints) {
+		if (treesSpawnPositions.Contains(TreePair.Key)) {
+			if (treesInRangeSpawnPositions.Find(TreePair.Key) == nullptr) {
+				treesInRangeSpawnPositions.Add(
+					TreePair.Key,
+					&treesSpawnPositions[TreePair.Key]
+				);
+			}
+		}
+	}
+	TreesToSpawnSemaphore->Release();
+	TreeChunkSemaphore->Release();
 }
 
 void UChunkLocationData::CheckAndAddVegetationNotInRange(  
-   TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove,  
-   TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove) {  
+	TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove,  
+	TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove) {
    VegetationChunkSemaphore->Acquire();  
 
    // Get the Chunk Coordinates from Vegetation Chunk Spawn Points
@@ -165,6 +205,18 @@ void UChunkLocationData::CheckAndAddVegetationNotInRange(
    WTSR->CheckAndReturnFlowersNotInRange(Keys, FlowerActorsToRemove);
 
    VegetationChunkSemaphore->Release();  
+}
+
+void UChunkLocationData::CheckAndAddTreesNotInRange(TQueue<ATree*>* TreeActorsToRemove) {
+	TreeChunkSemaphore->Acquire();
+
+	// Get the Chunk Coordinates from Tree Chunk Spawn Points
+	TArray<FIntPoint> Keys;
+	TreeChunkSpawnPoints.GetKeys(Keys);
+
+	WTSR->CheckAndReturnTreesNotInRange(Keys, TreeActorsToRemove);
+
+	TreeChunkSemaphore->Release();
 }
 
 TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions() {
@@ -236,7 +288,26 @@ TArray<TPair<FVoxelObjectLocationData, AnimalType>> UChunkLocationData::getNPCSp
 	return output;
 }
 
-TArray<FVoxelObjectLocationData> UChunkLocationData::getGrassSpawnPositionInRange() {  
+TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositionsInRange() {
+	TArray<FVoxelObjectLocationData> output;
+	VegetationChunkSemaphore->Acquire();
+
+	for (TPair<FIntPoint, TArray<FVoxelObjectLocationData>*>& pair : treesInRangeSpawnPositions) {
+		if (TArray<FVoxelObjectLocationData>* FoundPtr = treesSpawnPositions.Find(pair.Key)) {
+			TArray<FVoxelObjectLocationData>* OriginalPtr = FoundPtr;
+			if (pair.Value == OriginalPtr && pair.Value->Num() > 0) {
+				output = *pair.Value;
+				pair.Value->Empty();
+				break;
+			}
+		}
+	}
+
+	VegetationChunkSemaphore->Release();
+	return output;
+}
+
+TArray<FVoxelObjectLocationData> UChunkLocationData::getGrassSpawnPositionInRange() {
 	TArray<FVoxelObjectLocationData> output;  
 	VegetationChunkSemaphore->Acquire();
 

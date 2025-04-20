@@ -463,6 +463,27 @@ void UWorldTerrainSettings::CheckAndReturnFlowersNotInRange(TArray<FIntPoint>& c
 	FlowerMapSemaphore->Release();
 }
 
+void UWorldTerrainSettings::CheckAndReturnTreesNotInRange(TArray<FIntPoint>& coordinates, TQueue<ATree*>* TreeActorsToRemove) {
+	TreeMapSemaphore->Acquire();
+
+	// Iterate over the keys of SpawnedTreesMap  
+	for (TMap<FIntPoint, TArray<ATree*>>::TIterator TreeMapIterator = SpawnedTreesMap.CreateIterator(); TreeMapIterator; ++TreeMapIterator) {
+		const FIntPoint& Key = TreeMapIterator.Key();
+
+		// Check if the key is not in the provided coordinates  
+		if (!coordinates.Contains(Key)) {
+			// Add each tree actor to the queue  
+			for (ATree* TreeActor : TreeMapIterator.Value()) {
+				TreeActorsToRemove->Enqueue(TreeActor);
+			}
+
+			// Remove the key from the map  
+			TreeMapIterator.RemoveCurrent();
+		}
+	}
+	TreeMapSemaphore->Release();
+}
+
 void UWorldTerrainSettings::RemoveSingleGrassFromMap(UCustomProceduralMeshComponent* grass) {
     GrassMapSemaphore->Acquire();
 

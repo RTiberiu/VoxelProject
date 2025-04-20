@@ -30,8 +30,11 @@ public:
 	~UWorldTerrainSettings();
 
 	const uint8_t UnrealScale{ 60 }; // this changes the voxel size (100 is 1m) // 50 
-	const uint8_t DrawDistance{ 10 }; // 5 
+	const uint8_t DrawDistance{ 14 }; // 5 
     const uint8_t HalfUnrealScale{ static_cast<uint8_t>(UnrealScale / 2) }; // Used for aligning in the middle of a voxel
+
+	const uint8_t VegetationDrawDistance{ 3 }; // This is for smaller vegetation objects (grass/flowers)
+	const uint8_t TreeDrawDistance{ 5 };
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -113,10 +116,8 @@ public:
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
 	const float TreeSpawnChance{ 0.0014f };
 	const float FlowerSpawnChance{ 0.03f };	// Showcase settings: 0.03f		// Testing settings: 0.03f
-	const float GrassSpawnChance{ 0.05f };	// Showcase settings: 0.08f		// Testing settings: 0.05f
-	const float NPCSpawnChance{ 0.052f };	// Showcase settings: 0.082f	// Testing settings: 0.052f
-	const uint8_t VegetationDrawDistance{ 3 }; 
-
+	const float GrassSpawnChance{ 0.08f };	// Showcase settings: 0.08f		// Testing settings: 0.05f
+	const float NPCSpawnChance{ 0.082f };	// Showcase settings: 0.082f	// Testing settings: 0.052f
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };
@@ -195,6 +196,7 @@ public:
 
 	void CheckAndReturnGrassNotInRange(TArray<FIntPoint>& coordinates, TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove);
 	void CheckAndReturnFlowersNotInRange(TArray<FIntPoint>& coordinates, TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove);
+	void CheckAndReturnTreesNotInRange(TArray<FIntPoint>& coordinates, TQueue<ATree*>* TreeActorsToRemove);
 
 	// Remove single objects, usually used by NPCs when eating/killing them
 	void RemoveSingleGrassFromMap(UCustomProceduralMeshComponent* grass);
