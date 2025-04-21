@@ -12,6 +12,7 @@ UChunkLocationData::UChunkLocationData() :
 	TreesToSpawnSemaphore(new FairSemaphore(1)),
 	VegetationChunkSemaphore(new FairSemaphore(1)),
 	TreeChunkSemaphore(new FairSemaphore(1)),
+	NpcChunkSemaphore(new FairSemaphore(1)),
 	SurfaceVoxelPointsSemaphore(new FairSemaphore(1)) {
 }
 
@@ -27,6 +28,7 @@ UChunkLocationData::~UChunkLocationData() {
 	delete SurfaceVoxelPointsSemaphore;
 	delete VegetationChunkSemaphore;
 	delete TreeChunkSemaphore;
+	delete NpcChunkSemaphore;
 }
 
 void UChunkLocationData::SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings) {
@@ -101,6 +103,14 @@ void UChunkLocationData::AddTreeChunkSpawnPosition(FIntPoint& chunkPosition) {
 	TreeChunkSemaphore->Release();
 }
 
+void UChunkLocationData::AddNpcChunkSpawnPosition(FIntPoint& chunkPosition) {
+	NpcChunkSemaphore->Acquire();
+	if (!NpcChunkSpawnPoints.Contains(chunkPosition)) {
+		NpcChunkSpawnPoints.Add(chunkPosition, nullptr);
+	}
+	NpcChunkSemaphore->Release();
+}
+
 void UChunkLocationData::RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosition) {
 	VegetationChunkSemaphore->Acquire();
 	if (VegetationChunkSpawnPoints.Contains(chunkPosition)) {
@@ -130,6 +140,18 @@ void UChunkLocationData::RemoveTreeChunkSpawnPosition(FIntPoint& chunkPosition) 
 	}
 
 	TreeChunkSemaphore->Release();
+}
+
+void UChunkLocationData::RemoveNpcChunkSpawnPosition(FIntPoint& chunkPosition) {
+	NpcChunkSemaphore->Acquire();
+	if (NpcChunkSpawnPoints.Contains(chunkPosition)) {
+		NpcChunkSpawnPoints.Remove(chunkPosition);
+	}
+
+	if (npcInRangeSpawnPositions.Contains(chunkPosition)) {
+		npcInRangeSpawnPositions.Remove(chunkPosition);
+	}
+	NpcChunkSemaphore->Release();
 }
 
 void UChunkLocationData::CheckForSpawnPointsInRange() {
@@ -190,6 +212,22 @@ void UChunkLocationData::CheckForSpawnPointsInRange() {
 	}
 	TreesToSpawnSemaphore->Release();
 	TreeChunkSemaphore->Release();
+
+	// Checking the NPC spawn area
+	NpcChunkSemaphore->Acquire();
+	NPCToSpawnSemaphore->Acquire();
+	for (const TPair<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*>& NpcPair : NpcChunkSpawnPoints) {
+		if (npcSpawnPositions.Contains(NpcPair.Key)) {
+			if (npcInRangeSpawnPositions.Find(NpcPair.Key) == nullptr) {
+				npcInRangeSpawnPositions.Add(
+					NpcPair.Key,
+					&npcSpawnPositions[NpcPair.Key]
+				);
+			}
+		}
+	}
+	NPCToSpawnSemaphore->Release();
+	NpcChunkSemaphore->Release();
 }
 
 void UChunkLocationData::CheckAndAddVegetationNotInRange(  
@@ -217,6 +255,18 @@ void UChunkLocationData::CheckAndAddTreesNotInRange(TQueue<ATree*>* TreeActorsTo
 	WTSR->CheckAndReturnTreesNotInRange(Keys, TreeActorsToRemove);
 
 	TreeChunkSemaphore->Release();
+}
+
+void UChunkLocationData::CheckAndAddNpcsNotInRange(TQueue<ABasicNPC*>* NpcActorsToRemove) {
+	NpcChunkSemaphore->Acquire();
+
+	// Get the Chunk Coordinates from Tree Chunk Spawn Points
+	TArray<FIntPoint> Keys;
+	NpcChunkSpawnPoints.GetKeys(Keys);
+
+	WTSR->CheckAndReturnNpcsNotInRange(Keys, NpcActorsToRemove);
+
+	NpcChunkSemaphore->Release();	
 }
 
 TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions() {
@@ -276,10 +326,10 @@ TArray<TPair<FVoxelObjectLocationData, AnimalType>> UChunkLocationData::getNPCSp
 	NPCToSpawnSemaphore->Acquire();
 	
 	// Get the first item from the map // TODO Maybe extractt this into a function, as all getSpawnPosition use the same logic
-	if (!NPCSpawnPositions.IsEmpty()) {
-		for (const TPair<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>>& pair : NPCSpawnPositions) {
+	if (!npcSpawnPositions.IsEmpty()) {
+		for (const TPair<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>>& pair : npcSpawnPositions) {
 			output = pair.Value;
-			NPCSpawnPositions.Remove(pair.Key);
+			npcSpawnPositions.Remove(pair.Key);
 			break;
 		}
 	}
@@ -345,6 +395,25 @@ TArray<FVoxelObjectLocationData> UChunkLocationData::getFlowerSpawnPositionInRan
 	return output;
 }
 
+TArray<TPair<FVoxelObjectLocationData, AnimalType>> UChunkLocationData::getNPCSpawnPositionInRange() {
+	TArray<TPair<FVoxelObjectLocationData, AnimalType>> output;
+	NpcChunkSemaphore->Acquire();
+
+	for (TPair<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*>& pair : npcInRangeSpawnPositions) {
+		if (TArray<TPair<FVoxelObjectLocationData, AnimalType>>* FoundPtr = npcSpawnPositions.Find(pair.Key)) {
+			TArray<TPair<FVoxelObjectLocationData, AnimalType>>* OriginalPtr = FoundPtr;
+			if (pair.Value == OriginalPtr && pair.Value->Num() > 0) {
+				output = *pair.Value;
+				pair.Value->Empty();
+				break;
+			}
+		}
+	}
+
+	NpcChunkSemaphore->Release();
+	return output;
+}
+
 void UChunkLocationData::addTreeSpawnPosition(const FVoxelObjectLocationData position) {
 	TreesToSpawnSemaphore->Acquire();
 
@@ -391,11 +460,11 @@ void UChunkLocationData::addNPCSpawnPosition(const TPair<FVoxelObjectLocationDat
 	NPCToSpawnSemaphore->Acquire();
 	
 	// If it exists, add the new NPC position to the existing array
-	if (NPCSpawnPositions.Contains(positionAndType.Key.ObjectWorldCoords)) {
-		NPCSpawnPositions[positionAndType.Key.ObjectWorldCoords].Add(positionAndType);
+	if (npcSpawnPositions.Contains(positionAndType.Key.ObjectWorldCoords)) {
+		npcSpawnPositions[positionAndType.Key.ObjectWorldCoords].Add(positionAndType);
 	} else {
 		// If not, create a new array with the new NPC position
-		NPCSpawnPositions.Add(positionAndType.Key.ObjectWorldCoords, TArray<TPair<FVoxelObjectLocationData, AnimalType>>({ positionAndType }));
+		npcSpawnPositions.Add(positionAndType.Key.ObjectWorldCoords, TArray<TPair<FVoxelObjectLocationData, AnimalType>>({ positionAndType }));
 	}
 
 	NPCToSpawnSemaphore->Release();
@@ -441,10 +510,10 @@ void UChunkLocationData::addNPCSpawnPositions(const TArray<TPair<FVoxelObjectLoc
     NPCToSpawnSemaphore->Acquire();
     for (const TPair<FVoxelObjectLocationData, AnimalType>& entry : positionsAndTypes) {
         const FIntPoint& key = entry.Key.ObjectWorldCoords;
-        if (NPCSpawnPositions.Contains(key)) {
-            NPCSpawnPositions[key].Add(entry);
+        if (npcSpawnPositions.Contains(key)) {
+            npcSpawnPositions[key].Add(entry);
         } else {
-            NPCSpawnPositions.Add(key, TArray<TPair<FVoxelObjectLocationData, AnimalType>>({ entry }));
+            npcSpawnPositions.Add(key, TArray<TPair<FVoxelObjectLocationData, AnimalType>>({ entry }));
         }
     }
     NPCToSpawnSemaphore->Release();
@@ -496,7 +565,7 @@ void UChunkLocationData::RemoveNPCSpawnPosition(const FIntPoint& point) {
 	NPCToSpawnSemaphore->Acquire();
 
 	// Iterating over the map and removing the key and value
-	for (TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>>::TIterator SpawnPosition(NPCSpawnPositions); SpawnPosition; ++SpawnPosition) {
+	for (TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>>::TIterator SpawnPosition(npcSpawnPositions); SpawnPosition; ++SpawnPosition) {
 		if (SpawnPosition.Key() == point) {
 			SpawnPosition.RemoveCurrent();
 			break;

@@ -85,6 +85,7 @@ void AChunkWorld::spawnInitialWorld() {
 	int maxSpiralRings = WTSR->DrawDistance;
 	int vegetationMax = WTSR->VegetationDrawDistance;
 	int treeMax = WTSR->TreeDrawDistance;
+	int npcMax = WTSR->NpcDrawDistance;
 
 	while (currentSpiralRing <= maxSpiralRings) {
 		for (int x = -currentSpiralRing; x < currentSpiralRing; x++) {
@@ -107,6 +108,10 @@ void AChunkWorld::spawnInitialWorld() {
 
 				if (ringDistance <= treeMax) {
 					CLDR->AddTreeChunkSpawnPosition(ChunkWorldCoords);
+				}
+
+				if (ringDistance <= npcMax) {
+					CLDR->AddNpcChunkSpawnPosition(ChunkWorldCoords);
 				}
 
 				avoidPosition.insert(currentPair);
@@ -368,10 +373,6 @@ void AChunkWorld::RemoveVegetationSpawnPointsAndActors(const FIntPoint& destroyP
 	NPCPositionsToSpawn.RemoveAll([&](const TPair<FVoxelObjectLocationData, AnimalType>& Item) {
 		return Item.Key.ObjectWorldCoords == destroyPosition;
 		});
-
-	// Add spawned NPCs to a remove list to remove over multiple frames
-	TArray<ABasicNPC*> npcsToRemove = WTSR->GetAndRemoveNpcFromMap(destroyPosition);
-	NpcActorsToRemove.Append(npcsToRemove);
 }
 
 void AChunkWorld::DestroyTreeActors() {
@@ -426,40 +427,22 @@ void AChunkWorld::DestroyFlowerActors() {
 			   FlowerActorsToRemove.Enqueue(flowerToRemove);
 		   }
        }  
-
     }
 }
 
 void AChunkWorld::DestroyNpcActors() {
-	// Remove NPC actors
+	// Remove flower actors
 	int removedNpcCounter = 0;
-	for (int32 npcIndex = 0; npcIndex < NpcActorsToRemove.Num();) {
-		if (removedNpcCounter >= npcToRemovePerFrame) {
-			break;
-		}
-
-		ABasicNPC* npcToRemove = NpcActorsToRemove[npcIndex];
-		if (npcToRemove) {
-			npcToRemove->Destroy();
-			WTSR->NPCCount--;
-		} else {
-			CLDR->AddUnspawnedNpcToDestroy(npcToRemove);
-		}
-
-		NpcActorsToRemove.RemoveAt(npcIndex);
-		removedNpcCounter++;
-	}
-
-	// Check for any previously unspawned NPC that could be now destroyed 
-	ABasicNPC* unspawnedNpc = nullptr;
-	CLDR->AddUnspawnedNpcToDestroy(unspawnedNpc);
-	if (unspawnedNpc) {
-		// Destroy if it's valid and part of the world
-		if (IsValid(unspawnedNpc) && unspawnedNpc->IsActorInitialized()) {
-			unspawnedNpc->Destroy();
-		} else {
-			// Add back to the list and wait for the NPC to be spawned.
-			CLDR->AddUnspawnedNpcToDestroy(unspawnedNpc);
+	while (!NpcActorsToRemove.IsEmpty() && removedNpcCounter < npcToRemovePerFrame) {
+		ABasicNPC* npcToRemove = nullptr;
+		if (NpcActorsToRemove.Dequeue(npcToRemove) && npcToRemove) {
+			if (IsValid(npcToRemove)) {
+				npcToRemove->Destroy();
+				WTSR->NPCCount--;
+				removedNpcCounter++;
+			} else {
+				NpcActorsToRemove.Enqueue(npcToRemove);
+			}
 		}
 	}
 }
@@ -585,7 +568,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	if (!isLocationTaskRunning && (isPlayerMovingOnAxisX || isPlayerMovingOnAxisZ)) {
 		isLocationTaskRunning.AtomicSet(true);
-		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR, &GrassActorsToRemove, &FlowerActorsToRemove, &TreeActorsToRemove);
+		chunksLocationRunnable = new ChunksLocationRunnable(PlayerPosition, WTSR, CLDR, &GrassActorsToRemove, &FlowerActorsToRemove, &TreeActorsToRemove, &NpcActorsToRemove);
 		chunksLocationThread = FRunnableThread::Create(chunksLocationRunnable, TEXT("chunksLocationThread"), 0, TPri_Normal);
 	}
 
@@ -749,6 +732,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		CLDR->CheckForSpawnPointsInRange();
 		CLDR->CheckAndAddVegetationNotInRange(&GrassActorsToRemove, &FlowerActorsToRemove);
 		CLDR->CheckAndAddTreesNotInRange(&TreeActorsToRemove);
+		CLDR->CheckAndAddNpcsNotInRange(&NpcActorsToRemove);
 		FramesCounterCheckSpawnedPointsInRange = 0;
 	}
 	FramesCounterCheckSpawnedPointsInRange++; 
@@ -800,7 +784,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	}
 
 	// Append NPC positions waiting to be spawned
-	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPosition();
+	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPositionInRange();
 	NPCPositionsToSpawn.Append(NPCSpawnPositions);
 
 	// Spawn a few flowers in the current frame
@@ -810,9 +794,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 10) { // TODO TESTING Spawning just one NPC to test path adjustment
-			 //SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
-		}
+		SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		//if (WTSR->NPCCount < 10) { // TODO TESTING Spawning just one NPC to test path adjustment
+		//}
 
 		WTSR->NPCCount++;
 

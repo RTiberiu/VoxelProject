@@ -144,7 +144,7 @@ private:
 	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCPositionsToSpawn;
 	const int npcToSpawnPerFrame = 2;
 
-	TArray<ABasicNPC*> NpcActorsToRemove;
+	TQueue<ABasicNPC*> NpcActorsToRemove;
 	const int npcToRemovePerFrame = 2;
 
 	const int FramesToCheckForSpawnPointsInRange = 20;

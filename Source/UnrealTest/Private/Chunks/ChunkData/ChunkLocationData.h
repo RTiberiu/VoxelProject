@@ -42,8 +42,10 @@ public:
 
     void AddVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
     void AddTreeChunkSpawnPosition(FIntPoint& chunkPosition);
+    void AddNpcChunkSpawnPosition(FIntPoint& chunkPosition);
     void RemoveVegetationChunkSpawnPosition(FIntPoint& chunkPosition);
     void RemoveTreeChunkSpawnPosition(FIntPoint& chunkPosition);
+    void RemoveNpcChunkSpawnPosition(FIntPoint& chunkPosition);
     void CheckForSpawnPointsInRange();
     void CheckAndAddVegetationNotInRange(
         TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove,
@@ -51,6 +53,7 @@ public:
     );
 
     void CheckAndAddTreesNotInRange(TQueue<ATree*>* TreeActorsToRemove);
+    void CheckAndAddNpcsNotInRange(TQueue<ABasicNPC*>* NpcActorsToRemove);
 
 
     TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
@@ -129,7 +132,7 @@ private:
     TQueue<FVoxelObjectLocationData> locationDataForComputedMeshes;
     TQueue<FVoxelObjectMeshData> computedMeshData;
 
-    // Queue for storing vegetation spawn points data
+    // Queue for storing all vegetation spawn points data (even outside of the LOD range)
     FairSemaphore* TreesToSpawnSemaphore;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>> treesSpawnPositions;
 
@@ -140,21 +143,23 @@ private:
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>> flowersSpawnPositions;
 
     FairSemaphore* NPCToSpawnSemaphore;
-    TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>> NPCSpawnPositions;
+    TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>> npcSpawnPositions;
 
     // Map to store the current Chunk Points where Vegetation should spawn
     // Note: This holds a reference to the grassSpawnPositions/flowersSpawnPositions
     // and when clearing those maps, the references should also be cleared from this one.
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> VegetationChunkSpawnPoints;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> TreeChunkSpawnPoints;
+    TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*> NpcChunkSpawnPoints;
+
     FairSemaphore* VegetationChunkSemaphore;
     FairSemaphore* TreeChunkSemaphore;
+    FairSemaphore* NpcChunkSemaphore;
 
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> grassInRangeSpawnPositions;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> flowersInRangeSpawnPositions;
     TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> treesInRangeSpawnPositions;
-
-
+    TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*> npcInRangeSpawnPositions;
 
     FairSemaphore* MeshDataSemaphore;
 

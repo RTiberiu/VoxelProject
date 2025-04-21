@@ -8,6 +8,7 @@
 #include "..\..\Utils\CustomMesh\CustomProceduralMeshComponent.h"
 
 class ATree;
+class ABasicNPC;
 class ABinaryChunk;
 class UWorldTerrainSettings; // forward declaration to the world settings
 class UChunkLocationData;
@@ -15,7 +16,8 @@ class UChunkLocationData;
 enum SpawnPointType {
 	VEGETATION,
 	CHUNKS,
-	TREES
+	TREES,
+	NPCS
 };
 
 class ChunksLocationRunnable : public FRunnable {
@@ -26,7 +28,8 @@ public:
 		UChunkLocationData* InChunkLocationDataRef,
 		TQueue<UCustomProceduralMeshComponent*>* InGrassActorsToRemove,
 		TQueue<UCustomProceduralMeshComponent*>* InFlowerActorsToRemove,
-		TQueue<ATree*>* InTreeActorsToRemove
+		TQueue<ATree*>* InTreeActorsToRemove,
+		TQueue<ABasicNPC*>* InNpcActorsToRemove
 		);
 	virtual ~ChunksLocationRunnable() override;
 
@@ -49,6 +52,7 @@ private:
 	TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove;
 	TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove;
 	TQueue<ATree*>* TreeActorsToRemove;
+	TQueue<ABasicNPC*>* NpcActorsToRemove;
 
 	FVector PlayerPosition;
 

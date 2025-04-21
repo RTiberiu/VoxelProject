@@ -35,6 +35,7 @@ public:
 
 	const uint8_t VegetationDrawDistance{ 3 }; // This is for smaller vegetation objects (grass/flowers)
 	const uint8_t TreeDrawDistance{ 5 };
+	const uint8_t NpcDrawDistance{ 2 };
 
 	// Single chunk settings
 	const uint16_t chunkHeight{ 248 }; // 4 bits
@@ -197,6 +198,7 @@ public:
 	void CheckAndReturnGrassNotInRange(TArray<FIntPoint>& coordinates, TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove);
 	void CheckAndReturnFlowersNotInRange(TArray<FIntPoint>& coordinates, TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove);
 	void CheckAndReturnTreesNotInRange(TArray<FIntPoint>& coordinates, TQueue<ATree*>* TreeActorsToRemove);
+	void CheckAndReturnNpcsNotInRange(TArray<FIntPoint>& coordinates, TQueue<ABasicNPC*>* NpcActorsToRemove);
 
 	// Remove single objects, usually used by NPCs when eating/killing them
 	void RemoveSingleGrassFromMap(UCustomProceduralMeshComponent* grass);

@@ -12,14 +12,16 @@ ChunksLocationRunnable::ChunksLocationRunnable(
 	UChunkLocationData* InChunkLocationDataRef,
 	TQueue<UCustomProceduralMeshComponent*>* InGrassActorsToRemove,
 	TQueue<UCustomProceduralMeshComponent*>* InFlowerActorsToRemove,
-	TQueue<ATree*>* InTreeActorsToRemove
+	TQueue<ATree*>* InTreeActorsToRemove,
+	TQueue<ABasicNPC*>* InNpcActorsToRemove
 ) : 
 	PlayerPosition(PlayerPosition), 
 	isRunning(false), 
 	isTaskComplete(false),
 	GrassActorsToRemove(InGrassActorsToRemove),
 	FlowerActorsToRemove(InFlowerActorsToRemove),
-	TreeActorsToRemove(InTreeActorsToRemove)
+	TreeActorsToRemove(InTreeActorsToRemove),
+	NpcActorsToRemove(InNpcActorsToRemove)
 {
 	WorldTerrainSettingsRef = InWorldTerrainSettingsRef;
 	ChunkLocationDataRef = InChunkLocationDataRef;
@@ -43,6 +45,7 @@ uint32 ChunksLocationRunnable::Run() {
 
 		UpdateSpawnPoints(VEGETATION);
 		UpdateSpawnPoints(TREES);
+		UpdateSpawnPoints(NPCS);
 
 		// Update the initial position for the next frame
 		WTSR->updateInitialPlayerPosition(PlayerPosition);
@@ -79,6 +82,8 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 		DrawDistance = WTSR->VegetationDrawDistance;
 	} else if (SpawnType == TREES) {
 		DrawDistance = WTSR->TreeDrawDistance;
+	} else if (SpawnType == NPCS) {
+		DrawDistance = WTSR->NpcDrawDistance;
 	}
 
 	// Add and remove chunks on the X axis 
@@ -135,8 +140,17 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 				for (ATree* TreeActor : treesToRemove) {
 					TreeActorsToRemove->Enqueue(TreeActor);
 				}
+			} else if (SpawnType == NPCS) {
+				CLDR->AddNpcChunkSpawnPosition(newChunkCoords);
+				CLDR->RemoveNpcChunkSpawnPosition(oldChunkCoords);
+
+				// Add spawned NPCs to a remove list to remove over multiple frames
+				TArray<ABasicNPC*> npcsToRemove = WTSR->GetAndRemoveNpcFromMap(oldChunkCoords);
+				for (ABasicNPC* NpcActor : npcsToRemove) {
+					NpcActorsToRemove->Enqueue(NpcActor);
+				}
 			}
-		}
+		} 
 	}
 	
 
@@ -195,6 +209,15 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 				TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(oldChunkCoords);
 				for (ATree* TreeActor : treesToRemove) {
 					TreeActorsToRemove->Enqueue(TreeActor);
+				}
+			} else if (SpawnType == NPCS) {
+				CLDR->AddNpcChunkSpawnPosition(newChunkCoords);
+				CLDR->RemoveNpcChunkSpawnPosition(oldChunkCoords);
+
+				// Add spawned NPCs to a remove list to remove over multiple frames
+				TArray<ABasicNPC*> npcsToRemove = WTSR->GetAndRemoveNpcFromMap(oldChunkCoords);
+				for (ABasicNPC* NpcActor : npcsToRemove) {
+					NpcActorsToRemove->Enqueue(NpcActor);
 				}
 			}
 		}

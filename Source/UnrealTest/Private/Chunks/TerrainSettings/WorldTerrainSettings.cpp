@@ -484,6 +484,26 @@ void UWorldTerrainSettings::CheckAndReturnTreesNotInRange(TArray<FIntPoint>& coo
 	TreeMapSemaphore->Release();
 }
 
+void UWorldTerrainSettings::CheckAndReturnNpcsNotInRange(TArray<FIntPoint>& coordinates, TQueue<ABasicNPC*>* NpcActorsToRemove) {
+	NpcMapSemaphore->Acquire();
+
+	// Iterate over the keys of SpawnedNpcMap  
+	for (TMap<FIntPoint, TArray<ABasicNPC*>>::TIterator NpcMapIterator = SpawnedNpcMap.CreateIterator(); NpcMapIterator; ++NpcMapIterator) {
+		const FIntPoint& Key = NpcMapIterator.Key();
+
+		// Check if the key is not in the provided coordinates  
+		if (!coordinates.Contains(Key)) {
+			// Add each NPC actor to the queue  
+			for (ABasicNPC* NpcActor : NpcMapIterator.Value()) {
+				NpcActorsToRemove->Enqueue(NpcActor);
+			}
+			// Remove the key from the map  
+			NpcMapIterator.RemoveCurrent();
+		}
+	}
+	NpcMapSemaphore->Release();
+}
+
 void UWorldTerrainSettings::RemoveSingleGrassFromMap(UCustomProceduralMeshComponent* grass) {
     GrassMapSemaphore->Acquire();
 
