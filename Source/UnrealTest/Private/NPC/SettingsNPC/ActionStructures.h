@@ -10,7 +10,8 @@ enum ActionType {
 	RestAfterImprovedFood,
 	TradeFood,
 	Roam,
-	Flee
+	Flee,
+	None
 };
 
 struct NpcAction {

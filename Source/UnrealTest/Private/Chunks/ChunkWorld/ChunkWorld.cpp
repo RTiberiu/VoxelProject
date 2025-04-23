@@ -461,6 +461,24 @@ void AChunkWorld::updatePlayerCurrentPosition(FVector& PlayerPosition) {
 void AChunkWorld::BeginPlay() {
 	Super::BeginPlay();
 
+	// --- ADDING TESTING SPAWN POSITIONS FOR THE ANIMALS (DELETE AFTER) ---
+	FVector position1 = FVector(626, 744, 6190);
+	FVector position2 = FVector(626, 984, 6190);
+	FVector position3 = FVector(992, 928, 6250);
+	FVector position4 = FVector(992, 1108, 6250);
+
+	AnimalType animal1 = AnimalType::Tiger;
+	AnimalType animal2 = AnimalType::Peacock;
+	AnimalType animal3 = AnimalType::Peacock;
+	AnimalType animal4 = AnimalType::Peacock;
+
+    TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));  
+    TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));  
+    TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));  
+    TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4)); 
+
+	// --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
+
 	spawnInitialWorld();
 
 	generateTreeMeshVariations();
@@ -708,7 +726,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			spawnedTreesThisFrame = true;
 		}
 
-		SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
+		// SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->TreeCount++;
 
 		// Print the tree count every 50
@@ -748,7 +766,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
+		// SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->GrassCount++;
 
 		// Print the grass count every 50
@@ -771,7 +789,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
+		// SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->FlowerCount++;
 
 		// Print the flower count every 50
@@ -783,6 +801,17 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		spawnedFlowerCounter++;
 	}
 
+
+	// TESTING ANIMAL ACTIONS (DELETE AFTER)
+	if (WTSR->NPCCount < 4) {
+		int counterTest = 0;
+		while (counterTest < 4) {
+			SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
+			counterTest++;
+			WTSR->NPCCount++;
+		}
+	}
+	
 	// Append NPC positions waiting to be spawned
 	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPositionInRange();
 	NPCPositionsToSpawn.Append(NPCSpawnPositions);
@@ -794,9 +823,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
-		//if (WTSR->NPCCount < 10) { // TODO TESTING Spawning just one NPC to test path adjustment
-		//}
+		if (WTSR->NPCCount < 0) { // TODO TESTING Spawning just one NPC to test path adjustment
+			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		}
 
 		WTSR->NPCCount++;
 

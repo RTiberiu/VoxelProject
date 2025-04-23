@@ -161,6 +161,9 @@ private:
 	int lastLoggedChunkCount = 0;
 
 
+	// TESTING ACTIONS (DELETE AFTER)
+	// This array holds some positions for the animals, testing their spawning position
+	TArray<TPair<FVoxelObjectLocationData, AnimalType>> TestingPositions;
 
 protected:
 	// Called when the game starts or when spawned
