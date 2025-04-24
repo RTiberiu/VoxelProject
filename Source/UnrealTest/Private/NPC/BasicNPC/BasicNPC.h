@@ -191,6 +191,8 @@ private:
 	bool waitForNextPositionCheck;
 	float OccupiedDelayTimer = 0.0f; // Accumulates time when target location is occupied by another NPC
 	const float OccupiedDelayThreshold = 0.5f; // Delay in seconds before trying again to move to the next location
+	float FrustrationCounter = 0.0f; // Accumulates time when the NPC is not able to reach the target location
+	const float FrustrationThreshold = 1.0f; // Time in seconds before the NPC gives up on moving to the target location
 
 	// TESTING TICK CALLS
 	float DelayBeforeFirstPathRequest;

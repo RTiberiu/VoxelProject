@@ -647,13 +647,14 @@ bool UChunkLocationData::IsSurfacePointValid(const double& X, const double& Z) {
     const double modX = FMath::Max(((static_cast<int>(X) % chunkSize) + chunkSize) % chunkSize - 1, 0);
     const double modZ = FMath::Max(((static_cast<int>(Z) % chunkSize) + chunkSize) % chunkSize - 1, 0);
 
-    for (const FVector2D& point : avoidPoints) {
-        if (point.X == modX && point.Y == modZ) {
-            return false;
-        }
-    }
+	bool isAvoidedPoint = avoidPoints.Contains(FVector2D(modX, modZ));
+	if (isAvoidedPoint) {
+		return false;
+	}
 
-    return true;
+	// Check if any point is occupied by a current NPC
+	FIntPoint point = FIntPoint(modX, modZ);	
+    return !IsLocationOccupied(point);
 }
 
 bool UChunkLocationData::IsLocationOccupied(const FVector& currentPosition, const FVector& nextPosition, ABasicNPC* npcAtLocation) {
@@ -662,11 +663,6 @@ bool UChunkLocationData::IsLocationOccupied(const FVector& currentPosition, cons
 	if (OccupiedVoxels.Contains(nextPositionPoint)) {
 		return true;
 	} 
-
-	// TODO Also remove the previous point where the NPC initially was (thus opening it to others NPC)
-	// 
-	// Also also, add the occupiedvoxels position when spawning the NPC initially 
-	// (so their original location is occupied before they move)
 
 	// Remove the previous NPC location to allow other NPCs to move to that position
 	FIntPoint previousPoint = FIntPoint(currentPosition.X, currentPosition.Y);
@@ -680,7 +676,19 @@ bool UChunkLocationData::IsLocationOccupied(const FVector& currentPosition, cons
 	return false;
 }
 
+bool UChunkLocationData::IsLocationOccupied(const FIntPoint& position) {
+	if (OccupiedVoxels.Contains(position)) {
+		return true;
+	}
+
+	return false;
+}
+
 void UChunkLocationData::AddOccupiedVoxelPosition(const FVector& position, ABasicNPC* npcAtLocation) {
 	FIntPoint point = FIntPoint(position.X, position.Y);
 	OccupiedVoxels.Add(point, npcAtLocation);
+}
+
+TMap<FIntPoint, ABasicNPC*> UChunkLocationData::GetOccupiedVoxels() const {
+	return OccupiedVoxels;
 }

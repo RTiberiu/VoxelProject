@@ -466,16 +466,25 @@ void AChunkWorld::BeginPlay() {
 	FVector position2 = FVector(626, 984, 6190);
 	FVector position3 = FVector(992, 928, 6250);
 	FVector position4 = FVector(992, 1108, 6250);
+	FVector position5 = FVector(1097, 427, 6190);
+	FVector position6 = FVector(1097, 197, 6250);
+	FVector position7 = FVector(1329, 214, 6490);
 
 	AnimalType animal1 = AnimalType::Tiger;
 	AnimalType animal2 = AnimalType::Peacock;
 	AnimalType animal3 = AnimalType::Peacock;
-	AnimalType animal4 = AnimalType::Peacock;
+	AnimalType animal4 = AnimalType::Tiger;
+	AnimalType animal5 = AnimalType::Peacock;
+	AnimalType animal6 = AnimalType::Peacock;
+	AnimalType animal7 = AnimalType::Peacock;
 
     TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));  
     TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));  
     TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));  
-    TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4)); 
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position6, FIntPoint(0, 1)), animal6));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position7, FIntPoint(0, 1)), animal7));
 
 	// --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
 
@@ -803,9 +812,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 
 	// TESTING ANIMAL ACTIONS (DELETE AFTER)
-	if (WTSR->NPCCount < 3) {
+	if (WTSR->NPCCount < 7) {
 		int counterTest = 0;
-		while (counterTest < 3) {
+		while (counterTest < 7) {
 			SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
 			counterTest++;
 			WTSR->NPCCount++;

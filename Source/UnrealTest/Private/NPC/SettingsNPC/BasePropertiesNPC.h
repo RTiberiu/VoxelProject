@@ -319,10 +319,10 @@ const BasicNpcAttributes PeacockBasicAttributes = {
 	0.1f,	// chaseDesire
 	900.0f, // awarenessRadius
 	3000,	// fleeingRadius
-	1.0f,   // reactionSpeed
+	0.5f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
-	1.0f,	// survivalInstinct
+	0.0f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
 };
