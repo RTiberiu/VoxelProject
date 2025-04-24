@@ -3,6 +3,7 @@
 #include "..\..\Chunks\TerrainSettings\WorldTerrainSettings.h"
 #include "DecisionSystemNPC.h"
 #include "KismetProceduralMeshLibrary.h"
+#include "..\..\Chunks\ChunkData\ChunkLocationData.h"
 
 #include "GameFramework/PawnMovementComponent.h"
 
@@ -310,6 +311,14 @@ void ABasicNPC::ConsumePathAndMoveToLocation(const float& DeltaSeconds) {
 	// If the NPC is close enough to the target, consider it reached and move to the next point
 	if (FVector::Dist(newPosition, targetLocation) < 1.0f) {
 		pathToTarget->path.pop_front();
+
+		// Remove the previous position from the occupied map
+		CLDR->RemoveOccupiedVoxelPosition(currentLocation);
+
+		// Add new position as occupied (used for pathfinding collision)
+		CLDR->AddOccupiedVoxelPosition(targetLocation, this);
+
+		// Make the current location the target location
 		currentLocation = targetLocation;
 
 		targetLocationIsAvailable = false;
@@ -421,19 +430,19 @@ const FIntPoint& ABasicNPC::GetNpcWorldLocation() {
 	return NPCWorldLocation;
 }
 
-std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ABasicNPC::GetClosestInVisionList(VisionList list) {
+std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ABasicNPC::GetClosestInVisionList(VisionList list, bool ChooseOptimalAction) {
 	switch (list) {
 	case Threat:
-		return GetClosestInList(ThreatsInRange);
+		return GetClosestInList(ThreatsInRange, ChooseOptimalAction);
 		break;
 	case Allies:
-		return GetClosestInList(AlliesInRange);
+		return GetClosestInList(AlliesInRange, ChooseOptimalAction);
 		break;
 	case NpcFood:
-		return GetClosestInList(FoodNpcInRange);
+		return GetClosestInList(FoodNpcInRange, ChooseOptimalAction);
 		break;
 	case FoodSource:
-		return GetClosestInList(FoodSourceInRange);
+		return GetClosestInList(FoodSourceInRange, ChooseOptimalAction);
 		break;
 	}
 
@@ -828,16 +837,16 @@ void ABasicNPC::RemoveOverlappingBasicFoodSource(UPrimitiveComponent* Overlappin
 	}
 }
 
-ABasicNPC* ABasicNPC::GetClosestInList(const TArray<ABasicNPC*>& list) {
+ABasicNPC* ABasicNPC::GetClosestInList(const TArray<ABasicNPC*>& list, bool ChooseOptimalAction) {
 	return GetClosestInListGeneric<ABasicNPC>(list, [](ABasicNPC* npc) -> FVector {
 		return npc->GetCurrentLocation();
-		});
+		}, ChooseOptimalAction);
 }
 
-UCustomProceduralMeshComponent* ABasicNPC::GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list) {
+UCustomProceduralMeshComponent* ABasicNPC::GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list, bool ChooseOptimalAction) {
 	return GetClosestInListGeneric<UCustomProceduralMeshComponent>(list, [](UCustomProceduralMeshComponent* comp) -> FVector {
 		return comp->GetComponentLocation();
-		});
+		}, ChooseOptimalAction);
 }
 
 void ABasicNPC::BeginPlay() {
@@ -878,8 +887,13 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 			// Terminate the action early if the frustration reaches the threshold
 			if (FrustrationCounter >= FrustrationThreshold) {
 				UE_LOG(LogTemp, Warning, TEXT("Action discarded due to frustration threshold being reached. %s"), *this->GetName());
-				SignalEndOfAction();
+				frutrationTriggered = true;
 				FrustrationCounter = 0.0f;
+
+				UE_LOG(LogTemp, Warning, TEXT("Path discarded:"));
+				pathToTarget->print();
+
+				SignalEndOfAction();
 			}
 		}
 
@@ -899,15 +913,27 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 		isTargetSet = true;
 
 		// Request action and set the target
-		NpcAction NextAction = DecisionSys->GetAction();
+		// If the action is requested based on frustration, a less optimal action is chosen (to avoid the same collision)
+		NpcAction NextAction = DecisionSys->GetAction(!frutrationTriggered);
 		targetLocation = NextAction.TargetLocation;
 		animationToRunAtTarget = NextAction.AnimationToRunAtTarget;
 		actionType = NextAction.ActionType;
 		actionTarget = NextAction.Target;
 
-		if (actionType == ActionType::AttackNpc) {
-			UE_LOG(LogTemp, Warning, TEXT("New action for %s is: AttacKNPC"), *this->GetName());
+		// TODO TESTING (DELETE IF AFTER)
+		if (frutrationTriggered) {
+			if (actionType == ActionType::AttackNpc) {
+				UE_LOG(LogTemp, Warning, TEXT("New action for %s is: AttacKNPC"), *this->GetName());
+			}
+
+			UE_LOG(LogTemp, Warning, TEXT("%s requests a new pathfinding task from %s to %s"),
+				*this->GetName(),
+				*currentLocation.ToString(),
+				*targetLocation.ToString());
 		}
+
+		// Reset frustration after each action
+		frutrationTriggered = false;
 
 		// Adjust location for grass and flower, otherwise the pathfinding will go for the adjacent voxel
 		if (actionType == ActionType::AttackFoodSource) {
@@ -920,11 +946,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 			runTargetAnimation = true;
 			return;
 		}
-
-        UE_LOG(LogTemp, Warning, TEXT("%s requests a new pathfinding task from %s to %s"),  
-           *this->GetName(),  
-           *currentLocation.ToString(),  
-           *targetLocation.ToString());
+        
 		PathfindingManager->AddPathfindingTask(this, currentLocation, targetLocation);
 	}
 

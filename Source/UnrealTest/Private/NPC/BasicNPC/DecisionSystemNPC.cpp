@@ -21,7 +21,7 @@ void UDecisionSystemNPC::Initialize(ABasicNPC* InOwner, const AnimalType& animal
 	}
 }
 
-NpcAction UDecisionSystemNPC::GetAction() {
+NpcAction UDecisionSystemNPC::GetAction(bool ChooseOptimalAction) {
 	// Action order :
 	// 
 	// 1. Enemy around or chasing->Run
@@ -45,7 +45,7 @@ NpcAction UDecisionSystemNPC::GetAction() {
 	return FirstValidAction({
 		ShouldFlee(RandomNo), // Check if NPC should flee from enemies if they exist
 		//ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
-		ShouldAttackNpc(RandomNo), // Check if NPC should chase for food 
+		ShouldAttackNpc(RandomNo, ChooseOptimalAction), // Check if NPC should chase for food 
 		//ShouldEatBasicFoodSource(RandomNo), // Check if NPC should gather food 
 		//ShouldAttemptFoodTrade(RandomNo), // Check if NPC should share food for allies
 		//ShouldRoam(), // The NPC should roam in a random direction
@@ -106,7 +106,7 @@ NpcAction UDecisionSystemNPC::ShouldRestAfterMeals() {
 	return NoneAction;
 }
 
-NpcAction UDecisionSystemNPC::ShouldAttackNpc(const float& RandomNo) {
+NpcAction UDecisionSystemNPC::ShouldAttackNpc(const float& RandomNo, bool ChooseOptimalAction) {
 	//UE_LOG(LogTemp, Warning, TEXT("ShouldAttackNpc function is executed."));
 
 	// Check if NPC should chase for food 
@@ -114,8 +114,10 @@ NpcAction UDecisionSystemNPC::ShouldAttackNpc(const float& RandomNo) {
 		const bool shouldChasePrey = RandomNo < AnimalAttributes.chaseDesire;
 
 		if (shouldChasePrey) {
-			std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ClosestVariant = Owner->GetClosestInVisionList(VisionList::NpcFood);
+			std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ClosestVariant = Owner->GetClosestInVisionList(VisionList::NpcFood, ChooseOptimalAction);
 			ABasicNPC* TargetPrey = std::get<ABasicNPC*>(ClosestVariant);
+
+			if (TargetPrey == nullptr) return NoneAction;
 			return NpcAction(TargetPrey->GetCurrentLocation(), AnimationType::Attack, ActionType::AttackNpc, TargetPrey);
 		}
 	}
@@ -123,7 +125,7 @@ NpcAction UDecisionSystemNPC::ShouldAttackNpc(const float& RandomNo) {
 	return NoneAction;
 }
 
-NpcAction UDecisionSystemNPC::ShouldEatBasicFoodSource(const float& RandomNo) {
+NpcAction UDecisionSystemNPC::ShouldEatBasicFoodSource(const float& RandomNo, bool ChooseOptimalAction) {
 	// Check if NPC should gather food 
 	if (Owner->IsFoodSourceInRange()) {
 		const bool isHungry = AnimalAttributes.currentHunger > 50;
@@ -131,7 +133,7 @@ NpcAction UDecisionSystemNPC::ShouldEatBasicFoodSource(const float& RandomNo) {
 
 		if (isHungry || wantsToHoard) {
 			// Find food 
-			std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ClosestVariant = Owner->GetClosestInVisionList(VisionList::FoodSource);
+			std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ClosestVariant = Owner->GetClosestInVisionList(VisionList::FoodSource, ChooseOptimalAction);
 
 			UCustomProceduralMeshComponent* TargetFood = std::get<UCustomProceduralMeshComponent*>(ClosestVariant);
 			return NpcAction(TargetFood->GetComponentLocation(), AnimationType::Attack, ActionType::AttackFoodSource, TargetFood);
@@ -141,7 +143,7 @@ NpcAction UDecisionSystemNPC::ShouldEatBasicFoodSource(const float& RandomNo) {
 	return NoneAction;
 }
 
-NpcAction UDecisionSystemNPC::ShouldAttemptFoodTrade(const float& RandomNo) {
+NpcAction UDecisionSystemNPC::ShouldAttemptFoodTrade(const float& RandomNo, bool ChooseOptimalAction) {
    // Check if NPC should share food for allies  
    if (Owner->IsAllyInRange()) {  
        const bool shouldGiveFood = RandomNo < AnimalAttributes.desireToRecruitAllies;  
@@ -149,7 +151,7 @@ NpcAction UDecisionSystemNPC::ShouldAttemptFoodTrade(const float& RandomNo) {
 
        if (shouldGiveFood && hasEnoughFoodToShare) {  
            // Share food with ally in range  
-           std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ClosestVariant = Owner->GetClosestInVisionList(VisionList::Allies);  
+           std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ClosestVariant = Owner->GetClosestInVisionList(VisionList::Allies, ChooseOptimalAction);
            ABasicNPC* TargetAlly = std::get<ABasicNPC*>(ClosestVariant);  
            return NpcAction(TargetAlly->GetCurrentLocation(), AnimationType::Spin, ActionType::TradeFood, TargetAlly);  
        }  

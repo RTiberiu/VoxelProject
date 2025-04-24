@@ -61,7 +61,7 @@ public:
 
 	const FIntPoint& GetNpcWorldLocation();
 
-	std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> GetClosestInVisionList(VisionList list);
+	std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> GetClosestInVisionList(VisionList list, bool ChooseOptimalAction);
 
 	FVector& GetCurrentLocation();
 
@@ -193,6 +193,7 @@ private:
 	const float OccupiedDelayThreshold = 0.5f; // Delay in seconds before trying again to move to the next location
 	float FrustrationCounter = 0.0f; // Accumulates time when the NPC is not able to reach the target location
 	const float FrustrationThreshold = 1.0f; // Time in seconds before the NPC gives up on moving to the target location
+	bool frutrationTriggered = false; // Flag to check if the frustration threshold was reached
 
 	// TESTING TICK CALLS
 	float DelayBeforeFirstPathRequest;
@@ -218,30 +219,55 @@ private:
 	void RemoveOverlappingBasicFoodSource(UPrimitiveComponent* OverlappingFood);
 
 	// Helper functions to get the closest item in the vision lists
-	ABasicNPC* GetClosestInList(const TArray<ABasicNPC*>& list);
-	UCustomProceduralMeshComponent* GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list);
+	ABasicNPC* GetClosestInList(const TArray<ABasicNPC*>& list, bool ChooseOptimalAction);
+	UCustomProceduralMeshComponent* GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list, bool ChooseOptimalAction);
 
-	// Avoid repeating the same compare the closest object logic
-	template<typename T>
-	T* GetClosestInListGeneric(const TArray<T*>& list, TFunctionRef<FVector(T*)> GetLocation) const {
-		if (list.Num() == 0) {
-			return nullptr;
-		}
+    // Avoid repeating the same compare the closest object logic  
+    template<typename T>  
+    T* GetClosestInListGeneric(const TArray<T*>& list, TFunctionRef<FVector(T*)> GetLocation, bool ChooseOptimalAction) const {  
+       if (list.Num() == 0) {  
+           return nullptr;  
+       }  
 
-		T* closest = nullptr;
-		float closestDistance = FLT_MAX;
+       T* closest = nullptr;  
+       T* secondClosest = nullptr;  
+       float closestDistance = FLT_MAX;  
+       float secondClosestDistance = FLT_MAX;  
 
-		for (T* element : list) {
-			if (element) {
-				float distance = FVector::Dist(currentLocation, GetLocation(element));
-				if (distance < closestDistance) {
-					closestDistance = distance;
-					closest = element;
-				}
-			}
-		}
-		return closest;
-	}
+       for (T* element : list) {  
+           if (element) {  
+               float distance = FVector::Dist(currentLocation, GetLocation(element));  
+               if (distance < closestDistance) {  
+                   secondClosest = closest;  
+                   secondClosestDistance = closestDistance;  
+
+                   closest = element;  
+                   closestDistance = distance;  
+               } else if (distance < secondClosestDistance) {  
+                   secondClosest = element;  
+                   secondClosestDistance = distance;  
+               }  
+           }  
+       }  
+
+	   if (!ChooseOptimalAction) {
+		   if (closest) {
+			   UE_LOG(LogTemp, Warning, TEXT("Closest: %s, Distance: %f"),
+				   *GetLocation(closest).ToString(), closestDistance);
+		   } else {
+			   UE_LOG(LogTemp, Warning, TEXT("Closest: nullptr"));
+		   }
+
+		   if (secondClosest) {
+			   UE_LOG(LogTemp, Warning, TEXT("Second Closest: %s, Distance: %f"),
+				   *GetLocation(secondClosest).ToString(), secondClosestDistance);
+		   } else {
+			   UE_LOG(LogTemp, Warning, TEXT("Second Closest: nullptr"));
+		   }
+	   }
+
+       return ChooseOptimalAction ? closest : secondClosest;  
+    }
 
 	// Store objects in the NPC's perceptation sphere 
 	TArray<ABasicNPC*> ThreatsInRange;

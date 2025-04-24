@@ -104,6 +104,7 @@ public:
     bool IsLocationOccupied(const FVector& currentPosition, const FVector& nextPosition, ABasicNPC* npcAtLocation);
     bool IsLocationOccupied(const FIntPoint& position);
     void AddOccupiedVoxelPosition(const FVector& position, ABasicNPC* npcAtLocation);
+    void RemoveOccupiedVoxelPosition(const FVector& position);
 	TMap<FIntPoint, ABasicNPC*> GetOccupiedVoxels() const;
 
 private:

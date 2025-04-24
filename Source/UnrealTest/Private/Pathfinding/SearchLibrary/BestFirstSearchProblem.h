@@ -5,7 +5,6 @@
 #include "Node.h"
 #include "Path.h"
 #include "..\SearchProblem\VoxelSearchState.h"
-#include "ActionStatePair.h"
 
 class BestFirstSearchProblem {
 public:
@@ -17,13 +16,6 @@ public:
 
     void StopSearching();
 
-protected:
-    void addChildBinary(std::list<Node*>& fringe, Node* childNode);
-    void addChildBinary(std::list<Node*>& fringe, Node* node, int left, int right);
-
-    bool isGoal(VoxelSearchState* state);
-    Path* constructPath(Node* node);
-
 private:
     VoxelSearchState* goalState;
     VoxelSearchState* startState;
@@ -32,5 +24,12 @@ private:
     const int failSearchThreshold = 6000;
 
     FThreadSafeBool stopSearching;
+
+protected:
+    void addChildBinary(std::list<Node*>& fringe, Node* childNode);
+    void addChildBinary(std::list<Node*>& fringe, Node* node, int left, int right);
+
+    bool isGoal(VoxelSearchState* state);
+    Path* constructPath(Node* node);
 };
 

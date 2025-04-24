@@ -6,7 +6,6 @@
 #include "..\SearchProblem\VoxelSearchState.h"
 #include "ActionStatePair.h"
 
-
 /**
 * TODO Update this description
  * This class models a path that traces the route from a root node to a node in the tree.

@@ -1,4 +1,6 @@
 #include "VoxelSearchState.h"
+#include "Chunks/ChunkData/ChunkLocationData.h"
+#include "VoxelSearchAction.h"
 
 // Constructor
 VoxelSearchState::VoxelSearchState(FVector& InPosition, UChunkLocationData* InChunkLocationDataRef) : position(InPosition), ChunkLocationDataRef(InChunkLocationDataRef) {
@@ -23,8 +25,10 @@ std::size_t VoxelSearchState::hashCode() const {
 }
 
 // Get all the possible positions that can be reached from the current position
-std::vector<ActionStatePair*> VoxelSearchState::successor() const {
+std::vector<ActionStatePair*> VoxelSearchState::successor(VoxelSearchState* goalState) const {
     
+    FVector& goalStatePosition = goalState->getPosition();
+
     std::vector<ActionStatePair*> successors;
 
     // Possible moves (left, right, up, down, up-left, up-right, down-left, down-right)
@@ -39,11 +43,15 @@ std::vector<ActionStatePair*> VoxelSearchState::successor() const {
     for (const FVector& move : possibleMoves) {
         FVector newPosition = position + move;
 
-        // Validate position is not occupied by a solid object (currently just by a tree)
-        bool isValid = CLDR->IsSurfacePointValid(newPosition.X, newPosition.Y);
 
-        if (!isValid) {
-            continue;
+        // Only check for occupancy, if the new position is different than the goal state
+        // This allows to move to an NPC's location, even when the voxel is occupied.
+        if (!newPosition.Equals(goalStatePosition)) {
+            // Validate position is not occupied by a solid object (currently just by a tree or another NPC)
+            bool isValid = CLDR->IsSurfacePointValid(newPosition.X, newPosition.Y);
+            if (!isValid) {
+                continue;
+            }
         }
 
         VoxelSearchAction* newAction = new VoxelSearchAction(newPosition);

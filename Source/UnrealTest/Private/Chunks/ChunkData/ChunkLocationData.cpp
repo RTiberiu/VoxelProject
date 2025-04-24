@@ -652,8 +652,9 @@ bool UChunkLocationData::IsSurfacePointValid(const double& X, const double& Z) {
 		return false;
 	}
 
-	// Check if any point is occupied by a current NPC
-	FIntPoint point = FIntPoint(modX, modZ);	
+	// Check if any point is occupied by a current NPC 
+	FIntPoint point = FIntPoint(X * WTSR->UnrealScale + WTSR->HalfUnrealScale, Z * WTSR->UnrealScale + WTSR->HalfUnrealScale); // Adjusting 2D points to Unreal's scale
+	// TODO Double check this  adjustment
     return !IsLocationOccupied(point);
 }
 
@@ -677,11 +678,16 @@ bool UChunkLocationData::IsLocationOccupied(const FVector& currentPosition, cons
 }
 
 bool UChunkLocationData::IsLocationOccupied(const FIntPoint& position) {
-	if (OccupiedVoxels.Contains(position)) {
-		return true;
-	}
+	return OccupiedVoxels.Contains(position);
+}
 
-	return false;
+void UChunkLocationData::RemoveOccupiedVoxelPosition(const FVector& position) {  
+   FIntPoint point = FIntPoint(position.X, position.Y);  
+
+   // Remove the position from the OccupiedVoxels map if it exists  
+   if (OccupiedVoxels.Contains(point)) {  
+       OccupiedVoxels.Remove(point);  
+   }  
 }
 
 void UChunkLocationData::AddOccupiedVoxelPosition(const FVector& position, ABasicNPC* npcAtLocation) {

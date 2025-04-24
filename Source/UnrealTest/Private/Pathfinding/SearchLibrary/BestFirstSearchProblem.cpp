@@ -67,7 +67,7 @@ Path* BestFirstSearchProblem::search() {
             return constructPath(node); // construct path and return path
         }
 
-        std::vector<ActionStatePair*> childrenNodes = node->state->successor(); // get successors
+        std::vector<ActionStatePair*> childrenNodes = node->state->successor(goalState); // get successors
 
         if (childrenNodes.empty()) continue;  // If no successors, don't continue searching
 

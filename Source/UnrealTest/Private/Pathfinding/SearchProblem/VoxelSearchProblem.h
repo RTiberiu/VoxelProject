@@ -1,9 +1,8 @@
 #pragma once
 
-#include "..\SearchLibrary\Node.h"
-#include "..\SearchLibrary\State.h"
-#include "..\SearchLibrary\BestFirstSearchProblem.h"
+#include "Pathfinding\SearchLibrary\BestFirstSearchProblem.h"
 #include "VoxelSearchState.h"
+#include "Pathfinding\SearchLibrary\Node.h"
 
 class VoxelSearchProblem : public BestFirstSearchProblem {
 public:
@@ -15,7 +14,6 @@ public:
     double getManhattanDistanceCost(VoxelSearchState& currentState) const;
 
 private:
-    //VoxelSearchState voxelSearchGoalState;
     VoxelSearchState* voxelSearchGoalState;
     VoxelSearchState* voxelSearchInitialState;
 };

@@ -2,8 +2,9 @@
 
 //#include "..\SearchLibrary\State.h"
 #include "..\SearchLibrary\ActionStatePair.h"
-#include "VoxelSearchAction.h"
-#include "Chunks/ChunkData/ChunkLocationData.h"
+#include <vector>
+//#include "VoxelSearchAction.h"
+//#include "Chunks/ChunkData/ChunkLocationData.h"
 
 class UChunkLocationData;
 
@@ -16,7 +17,7 @@ public:
     std::string toString() const;
     bool equals(const VoxelSearchState* state) const;
     std::size_t hashCode() const;
-    std::vector<ActionStatePair*> successor() const;
+    std::vector<ActionStatePair*> successor(VoxelSearchState* goalState) const;
 
     FVector& getPosition();
 private:
