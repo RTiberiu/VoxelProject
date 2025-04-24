@@ -40,9 +40,10 @@ private:
 	NpcAction ShouldEatBasicFoodSource(const float& RandomNo);
 	NpcAction ShouldAttemptFoodTrade(const float& RandomNo);
 	NpcAction ShouldRoam();
+	NpcAction ShouldRelax();
 
 	NpcAction FirstValidAction(std::initializer_list<NpcAction> Actions);
-	NpcAction NoneAction = NpcAction(FVector::ZeroVector, AnimationType::IdleA, ActionType::None, nullptr);
+	NpcAction NoneAction = NpcAction(FVector::ZeroVector, AnimationType::IdleA, ActionType::NoAction, nullptr);
 
 	// Base and memory attributes for all the animal types
 	const TMap<AnimalType, const BasicNpcAttributes*> AnimalsBaseAttributes = {

@@ -40,19 +40,17 @@ NpcAction UDecisionSystemNPC::GetAction() {
 
 	// TODO Should check if the locations given (for roam and others) are valid first. This is a maybe.
 
-	const float RandomNo = FMath::Rand();
+	const float RandomNo = FMath::FRand();
 
-	NpcAction NextNpcAction = FirstValidAction({
+	return FirstValidAction({
 		ShouldFlee(RandomNo), // Check if NPC should flee from enemies if they exist
-		ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
+		//ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
 		ShouldAttackNpc(RandomNo), // Check if NPC should chase for food 
-		ShouldEatBasicFoodSource(RandomNo), // Check if NPC should gather food 
-		ShouldAttemptFoodTrade(RandomNo), // Check if NPC should share food for allies
-		ShouldRoam() // The NPC should roam in a random direction
+		//ShouldEatBasicFoodSource(RandomNo), // Check if NPC should gather food 
+		//ShouldAttemptFoodTrade(RandomNo), // Check if NPC should share food for allies
+		//ShouldRoam(), // The NPC should roam in a random direction
+		ShouldRelax() // For testing only
 		});
-
-
-	return NextNpcAction;
 }
 
 void UDecisionSystemNPC::ShouldActionBeInterrupted() {
@@ -69,10 +67,19 @@ void UDecisionSystemNPC::NotifyNpcOfNewAction() {
 }
 
 NpcAction UDecisionSystemNPC::ShouldFlee(const float& RandomNo) {
+	//UE_LOG(LogTemp, Warning, TEXT("ShouldFlee function is executed."));
+
 	// Check if NPC should flee from enemies if they exist
 	if (Owner->IsThreatInRange()) {
+		//UE_LOG(LogTemp, Warning, TEXT("\tThreat is in range!."));
+
+		//UE_LOG(LogTemp, Warning, TEXT("\t\tRandomNo: %f"), RandomNo);
+		//UE_LOG(LogTemp, Warning, TEXT("\t\tAnimalAttributes.survivalInstinct: %f"), AnimalAttributes.survivalInstinct);
+
 		const bool runFromEnemy = RandomNo < AnimalAttributes.survivalInstinct;
 		if (runFromEnemy) {
+			//UE_LOG(LogTemp, Warning, TEXT("\t\tShould run from enemy!."));
+
 			// TODO Get the opposite direction of the enemy to not run in the enemy's direction
 			FVector& CurrentLoc = Owner->GetCurrentLocation();
 			FVector fleeingLocation = FVector(CurrentLoc.X + AnimalAttributes.fleeingRadius, CurrentLoc.Y + AnimalAttributes.fleeingRadius, CurrentLoc.Z);
@@ -100,6 +107,8 @@ NpcAction UDecisionSystemNPC::ShouldRestAfterMeals() {
 }
 
 NpcAction UDecisionSystemNPC::ShouldAttackNpc(const float& RandomNo) {
+	//UE_LOG(LogTemp, Warning, TEXT("ShouldAttackNpc function is executed."));
+
 	// Check if NPC should chase for food 
 	if (Owner->IsFoodNpcInRange()) {
 		const bool shouldChasePrey = RandomNo < AnimalAttributes.chaseDesire;
@@ -108,7 +117,6 @@ NpcAction UDecisionSystemNPC::ShouldAttackNpc(const float& RandomNo) {
 			std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ClosestVariant = Owner->GetClosestInVisionList(VisionList::NpcFood);
 			ABasicNPC* TargetPrey = std::get<ABasicNPC*>(ClosestVariant);
 			return NpcAction(TargetPrey->GetCurrentLocation(), AnimationType::Attack, ActionType::AttackNpc, TargetPrey);
-
 		}
 	}
 
@@ -159,12 +167,19 @@ NpcAction UDecisionSystemNPC::ShouldRoam() {
 	const int RandomDirection = FMath::RandRange(0, 7);
 	FVector RoamLocation = CurrentLoc + (Directions[RandomDirection] * AnimalAttributes.roamRadius);
 
-	return NoneAction;
+	return NpcAction(RoamLocation, AnimationType::Walk, ActionType::Roam, nullptr);
+}
+
+NpcAction UDecisionSystemNPC::ShouldRelax() {
+	//UE_LOG(LogTemp, Warning, TEXT("ShouldRelax function is executed."));
+
+	FVector& CurrentLoc = Owner->GetCurrentLocation();
+	return NpcAction(CurrentLoc, AnimationType::Sit, ActionType::RestAfterBasicFood, nullptr);
 }
 
 NpcAction UDecisionSystemNPC::FirstValidAction(std::initializer_list<NpcAction> Actions) {
 	for (const NpcAction& Action : Actions) {
-		if (Action.ActionType != ActionType::None) {
+		if (Action.ActionType != ActionType::NoAction) {
 			return Action;
 		}
 	}

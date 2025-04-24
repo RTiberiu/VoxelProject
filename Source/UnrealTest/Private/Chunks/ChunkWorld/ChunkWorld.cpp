@@ -803,9 +803,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 
 	// TESTING ANIMAL ACTIONS (DELETE AFTER)
-	if (WTSR->NPCCount < 4) {
+	if (WTSR->NPCCount < 3) {
 		int counterTest = 0;
-		while (counterTest < 4) {
+		while (counterTest < 3) {
 			SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
 			counterTest++;
 			WTSR->NPCCount++;

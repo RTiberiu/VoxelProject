@@ -11,7 +11,7 @@ enum ActionType {
 	TradeFood,
 	Roam,
 	Flee,
-	None
+	NoAction
 };
 
 struct NpcAction {

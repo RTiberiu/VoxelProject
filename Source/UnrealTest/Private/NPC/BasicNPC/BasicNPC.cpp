@@ -440,59 +440,118 @@ FVector& ABasicNPC::GetCurrentLocation() {
     return currentLocation;
 }
 
-void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
-    PlayAnimation(animationToRunAtTarget);
+void ABasicNPC::AttackAndReduceHealth(const int& damage, uint8_t attackerEatingSpeed, ABasicNPC* attacker) {
+    UE_LOG(LogTemp, Warning, TEXT("Current HP: %d\n\tAttacked by: %s"),
+        DecisionSys->AnimalAttributes.currentHp,
+        *attacker->GetName());
 
-    
-    switch (actionType) {
-    case ActionType::AttackNpc:
-        SignalEndOfAction();
-        break;
-    case ActionType::AttackFoodSource:
-        EatingCounter += DeltaSeconds;
+    const int newHp = DecisionSys->AnimalAttributes.currentHp - damage;
+    DecisionSys->AnimalAttributes.currentHp = FMath::Max(newHp, 0);
+    UpdateStatsVoxelsMesh(StatsType::HealthPoints);
 
-        if (EatingCounter > DecisionSys->AnimalAttributes.eatingSpeedRateBasic) {
-            // Remove the object when done eating
-            RemoveFoodTargetFromMapAndDestroy();
-            
-            // Update the food attributes
-            UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryBasic, true);
+    // Log the current HP and the name of the attacker  
+    UE_LOG(LogTemp, Warning, TEXT("\tNew HP: %d"),
+        DecisionSys->AnimalAttributes.currentHp);
 
-            // Trigger end of action and reset counter
-            SignalEndOfAction();
-            EatingCounter = 0.0f;
-        }
-        break;
-    case ActionType::RestAfterBasicFood:
-        if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodBasic)) {
-            // Trigger end of action and reset counter
-            SignalEndOfAction();
-            RestCounter = 0.0f;
-        }
+    if (DecisionSys->AnimalAttributes.currentHp == 0) {  
+        UE_LOG(LogTemp, Warning, TEXT("Death triggered for NPC: %s"), *GetName());  
+        TriggerNpcDeath(attackerEatingSpeed);
+        attacker->TriggerFoodRewardOnKill();
+    }  
+}
 
-        break;
+bool ABasicNPC::IsDead() {
+    return isDeathTriggered;
+}
 
-    case ActionType::RestAfterImprovedFood:
-        if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodImproved)) {
-            // Trigger end of action and reset counter
-            SignalEndOfAction();
-            RestCounter = 0.0f;
-        }
-        break;
-    case ActionType::TradeFood:
-        SignalEndOfAction();
-        break;
-    case ActionType::Roam:
-        SignalEndOfAction();
-        break;
-    case ActionType::Flee:
-        SignalEndOfAction();
-        break;
-    }
+void ABasicNPC::TriggerFoodRewardOnKill() {
+    UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryImproved, false);
+}
 
-    // TODO Update attributes
+void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {  
+   PlayAnimation(animationToRunAtTarget);  
 
-    // TODO Set the runTargetAnimation to false when done
+   switch (actionType) {  
+   case ActionType::AttackNpc:  
+
+        // Check if the target is an NPC
+        if (ABasicNPC* TargetNPC = Cast<ABasicNPC>(actionTarget)) {  
+            // Trigger an attack delay based on attack speed (after the first attack) 
+            AttackDelayCounter += DeltaSeconds;
+            if (delayNextAttack && AttackDelayCounter < DecisionSys->AnimalAttributes.attackSpeed) {  
+                return;  
+            } 
+
+            // Reset attack delay
+            delayNextAttack = false;
+
+            // Attack if the target is close enough and not dead  
+            if (!TargetNPC->IsDead() && IsTargetLocationCloseEnough(currentLocation, TargetNPC->GetCurrentLocation())) {  
+                // Reset the counter after the delay is complete  
+                AttackDelayCounter = 0.0f;
+
+                // Attack the NPC
+                TargetNPC->AttackAndReduceHealth(
+                    DecisionSys->AnimalAttributes.hitDamage, 
+                    DecisionSys->AnimalAttributes.eatingSpeedRateImproved, 
+                    this);
+                delayNextAttack = true;
+            }  
+        }  
+
+        SignalEndOfAction();  
+        break;  
+   case ActionType::AttackFoodSource:  
+       EatingCounter += DeltaSeconds;  
+
+       if (EatingCounter > DecisionSys->AnimalAttributes.eatingSpeedRateBasic) {  
+           // Remove the object when done eating  
+           RemoveFoodTargetFromMapAndDestroy();  
+
+           // Update the food attributes  
+           UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryBasic, true);  
+
+           // Trigger end of action and reset counter  
+           SignalEndOfAction();  
+           EatingCounter = 0.0f;  
+       }  
+       break;  
+   case ActionType::RestAfterBasicFood:  
+       if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodBasic)) {  
+           // Trigger end of action and reset counter  
+           SignalEndOfAction();  
+           RestCounter = 0.0f;  
+       }  
+
+       break;  
+
+   case ActionType::RestAfterImprovedFood:  
+       if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodImproved)) {  
+           // Trigger end of action and reset counter  
+           SignalEndOfAction();  
+           RestCounter = 0.0f;  
+       }  
+       break;  
+   case ActionType::TradeFood:  
+       SignalEndOfAction();  
+       break;  
+   case ActionType::Roam:  
+       SignalEndOfAction();  
+       break;  
+   case ActionType::Flee:  
+       SignalEndOfAction();  
+       break;  
+   }  
+
+   // TODO Update attributes  
+
+   // TODO Set the runTargetAnimation to false when done  
+}
+
+bool ABasicNPC::IsTargetLocationCloseEnough(FVector& current, FVector& target) {
+    const float Margin = 30.0f;
+    return FMath::Abs(target.X - current.X) <= Margin &&
+        FMath::Abs(target.Y - current.Y) <= Margin;
 }
 
 // When an action is completed, modify variables to trigger a new action request
@@ -640,7 +699,10 @@ bool ABasicNPC::UpdateStamina(const float& DeltaSeconds, const uint8_t& Threshol
 
 
 // Run the death animation and set that the NPC should be destroyed
-void ABasicNPC::TriggerNpcDeath() {
+void ABasicNPC::TriggerNpcDeath(uint8_t attackerEatingSpeed) {
+    // Set the DespawningTime based on the attacker's eating speed
+    DespawnTime = attackerEatingSpeed;
+
     PlayAnimation(AnimationType::Death, false);
     isDeathTriggered = true;
 }

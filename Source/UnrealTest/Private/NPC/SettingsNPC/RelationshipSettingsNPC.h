@@ -38,7 +38,7 @@ constexpr AnimalType operator&(AnimalType lhs, AnimalType rhs) noexcept {
 }
 
 // Tiger settings
-constexpr AnimalType TigerFoodType = RedPanda | Sloth | Tapir;
+constexpr AnimalType TigerFoodType = RedPanda | Sloth | Tapir | Peacock;
 constexpr AnimalType TigerAllies = Gorilla | Panda | Tiger;
 constexpr AnimalType TigerEnemies = None;
 
@@ -65,7 +65,7 @@ constexpr AnimalType BatEnemies = Cobra;
 // Peacock settings
 constexpr AnimalType PeacockFoodType = None;
 constexpr AnimalType PeacockAllies = Bat | Tapir | Gorilla | Panda | Sloth;
-constexpr AnimalType PeacockEnemies = Cobra;
+constexpr AnimalType PeacockEnemies = Cobra | Tiger;
 
 // Gorilla settings
 constexpr AnimalType GorillaFoodType = None;

@@ -65,6 +65,11 @@ public:
 
 	FVector& GetCurrentLocation();
 
+	// Methods for other NPCs to call to communicate
+	void AttackAndReduceHealth(const int& damage, uint8_t attackerEatingSpeed, ABasicNPC* attacker);
+	bool IsDead();
+	void TriggerFoodRewardOnKill();
+
 private:
 	UWorldTerrainSettings* WorldTerrainSettingsRef;
 	UWorldTerrainSettings*& WTSR = WorldTerrainSettingsRef;
@@ -111,6 +116,8 @@ private:
 
 	void TimelineProgress(float Value);
 
+	bool IsTargetLocationCloseEnough(FVector& current, FVector& target);
+
 	FIntPoint NPCWorldLocation;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -143,6 +150,8 @@ private:
 	float EatingCounter;
 	float RestCounter;
 	float HungerCounter;
+	float AttackDelayCounter;
+	bool delayNextAttack;
 
 	bool targetLocationIsAvailable;
 
@@ -173,11 +182,11 @@ private:
 	bool UpdateStamina(const float& DeltaSeconds, const uint8_t& Threshold);
 
 	// Trigger a death animation and destroy the NPC
-	void TriggerNpcDeath();
+    void TriggerNpcDeath(uint8_t attackerEatingSpeed = 10);
 	void WaitForDespawnThresholdAndDestroy(const float& DeltaSeconds);
 	bool isDeathTriggered;
 	float DespawningCounter = 0.0f;
-	const float DespawnTime = 10.0f;
+	uint8_t DespawnTime = 10.0f;
 
 	bool waitForNextPositionCheck;
 	float OccupiedDelayTimer = 0.0f; // Accumulates time when target location is occupied by another NPC

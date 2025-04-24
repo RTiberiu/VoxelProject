@@ -71,8 +71,8 @@ struct MemoryNpcAttributes {
 const BasicNpcAttributes TigerBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
-	30,		// hitDamage
-	5,		// attackSpeed
+	40,		// hitDamage
+	2,		// attackSpeed
 	200,	// movementSpeed
 	100,	// currentStamina
 	100, 	// maxStamina
@@ -93,7 +93,7 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	0,		// improvedMealsCounter
 	0,		// foodPouch
 	0.9f,   // desireToHoardFood
-	0.9f,	// chaseDesire
+	1.0f,	// chaseDesire
 	500.0f, // awarenessRadius
 	3000,	// fleeingRadius
 	0.5f,   // reactionSpeed
@@ -322,7 +322,7 @@ const BasicNpcAttributes PeacockBasicAttributes = {
 	1.0f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
-	0.7f,	// survivalInstinct
+	1.0f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
 };
