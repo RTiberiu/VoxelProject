@@ -1,6 +1,8 @@
 #include "PathfindingTask.h"
 #include "..\..\Chunks\TerrainSettings\WorldTerrainSettings.h"
 #include "Misc/DateTime.h"
+#include "..\..\Chunks\ChunkData\ChunkLocationData.h"
+
 
 FPathfindingTask::FPathfindingTask(
 	const FVector& InStartLocation,

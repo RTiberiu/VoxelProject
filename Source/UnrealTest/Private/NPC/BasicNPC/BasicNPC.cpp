@@ -17,7 +17,8 @@ ABasicNPC::ABasicNPC() {
 
 	pathToTarget = nullptr;
 	pathIsReady = false;
-	waitForNextPositionCheck = true;
+	waitForNextPositionCheck = false;
+	checkNextPosition = true;
 	targetLocationIsAvailable = false;
 	runTargetAnimation = false;
 	isTargetSet = false;
@@ -310,13 +311,21 @@ void ABasicNPC::ConsumePathAndMoveToLocation(const float& DeltaSeconds) {
 
 	// If the NPC is close enough to the target, consider it reached and move to the next point
 	if (FVector::Dist(newPosition, targetLocation) < 1.0f) {
-		pathToTarget->path.pop_front();
+		
+		// For tomorrow:
+		// I need to check why their original position is not placed correctly, as this might also have an effect.
+		// If that's not the case, then it's just a communication issue between occupied voxels or not.
+		// Basically, I need to allow the NPC to move to an occupied location IF that location is the goal. 
+		// 
+		// Then, everything else should be straight forward. 
 
-		// Remove the previous position from the occupied map
-		CLDR->RemoveOccupiedVoxelPosition(currentLocation);
+		
+		// $$$ TODO These might not be needed since they actually get removed and added in the IsLocationOccupied() check $$$
+		//// Remove the previous position from the occupied map
+		//CLDR->RemoveOccupiedVoxelPosition(currentLocation);
 
-		// Add new position as occupied (used for pathfinding collision)
-		CLDR->AddOccupiedVoxelPosition(targetLocation, this);
+		//// Add new position as occupied (used for pathfinding collision)
+		//CLDR->AddOccupiedVoxelPosition(targetLocation, this);
 
 		// Make the current location the target location
 		currentLocation = targetLocation;
@@ -341,6 +350,7 @@ void ABasicNPC::SetTargetLocation() {
 
 	// Get the first item in the path
 	ActionStatePair* firstItem = pathToTarget->path.front();
+	pathToTarget->path.pop_front();
 
 	if (firstItem) {
 		targetLocation = firstItem->state->getPosition();
@@ -349,14 +359,16 @@ void ABasicNPC::SetTargetLocation() {
 		FrustrationCounter = 0;
 
 		// Trigger a position check for the new target location
-		waitForNextPositionCheck = true;
-
-		// Make sure the first check happens immediately
-		OccupiedDelayTimer = OccupiedDelayThreshold + 1;
+		checkNextPosition = true;
 	}
 }
 
 bool ABasicNPC::IsTargetLocationAvailable() {
+	/*if (this->GetName().Equals("BasicNPC_0")) {
+		UE_LOG(LogTemp, Warning, TEXT("Checking location for BasicNPC_0"));
+		if (pathToTarget)  pathToTarget->print();
+	}*/
+
 	// Wait longer before checking if the next position is still occupied.
 	if (waitForNextPositionCheck) {
 		if (OccupiedDelayTimer > OccupiedDelayThreshold) {
@@ -376,6 +388,7 @@ bool ABasicNPC::IsTargetLocationAvailable() {
 		return false;
 	}
 
+	checkNextPosition = false;
 	return true;
 }
 
@@ -387,6 +400,11 @@ void ABasicNPC::TimelineProgress(float Value) {
 
 void ABasicNPC::SetPathToTargetAndNotify(Path* InPathToTarget) {
 	pathToTarget = InPathToTarget;
+
+	if (this->GetName().Equals("BasicNPC_1")) {
+		UE_LOG(LogTemp, Warning, TEXT("PATH RECEIVED FOR BasicNPC_1:"));
+		pathToTarget->print();
+	}
 
 	if (pathToTarget) {
 		SetTargetLocation();
@@ -430,19 +448,19 @@ const FIntPoint& ABasicNPC::GetNpcWorldLocation() {
 	return NPCWorldLocation;
 }
 
-std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ABasicNPC::GetClosestInVisionList(VisionList list, bool ChooseOptimalAction) {
+std::variant<ABasicNPC*, UCustomProceduralMeshComponent*> ABasicNPC::GetClosestInVisionList(VisionList list, bool ChooseOptimalAction, const int& IncrementTargetInVisionList) {
 	switch (list) {
 	case Threat:
-		return GetClosestInList(ThreatsInRange, ChooseOptimalAction);
+		return GetClosestInList(ThreatsInRange, ChooseOptimalAction, IncrementTargetInVisionList);
 		break;
 	case Allies:
-		return GetClosestInList(AlliesInRange, ChooseOptimalAction);
+		return GetClosestInList(AlliesInRange, ChooseOptimalAction, IncrementTargetInVisionList);
 		break;
 	case NpcFood:
-		return GetClosestInList(FoodNpcInRange, ChooseOptimalAction);
+		return GetClosestInList(FoodNpcInRange, ChooseOptimalAction, IncrementTargetInVisionList);
 		break;
 	case FoodSource:
-		return GetClosestInList(FoodSourceInRange, ChooseOptimalAction);
+		return GetClosestInList(FoodSourceInRange, ChooseOptimalAction, IncrementTargetInVisionList);
 		break;
 	}
 
@@ -837,16 +855,16 @@ void ABasicNPC::RemoveOverlappingBasicFoodSource(UPrimitiveComponent* Overlappin
 	}
 }
 
-ABasicNPC* ABasicNPC::GetClosestInList(const TArray<ABasicNPC*>& list, bool ChooseOptimalAction) {
+ABasicNPC* ABasicNPC::GetClosestInList(const TArray<ABasicNPC*>& list, bool ChooseOptimalAction, const int& IncrementTargetInVisionList) {
 	return GetClosestInListGeneric<ABasicNPC>(list, [](ABasicNPC* npc) -> FVector {
 		return npc->GetCurrentLocation();
-		}, ChooseOptimalAction);
+		}, ChooseOptimalAction, IncrementTargetInVisionList);
 }
 
-UCustomProceduralMeshComponent* ABasicNPC::GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list, bool ChooseOptimalAction) {
+UCustomProceduralMeshComponent* ABasicNPC::GetClosestInList(const TArray<UCustomProceduralMeshComponent*>& list, bool ChooseOptimalAction, const int& IncrementTargetInVisionList) {
 	return GetClosestInListGeneric<UCustomProceduralMeshComponent>(list, [](UCustomProceduralMeshComponent* comp) -> FVector {
 		return comp->GetComponentLocation();
-		}, ChooseOptimalAction);
+		}, ChooseOptimalAction, IncrementTargetInVisionList);
 }
 
 void ABasicNPC::BeginPlay() {
@@ -881,7 +899,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
 	if (pathIsReady) {
 		// Making sure the next position is not occupied by another NPC
-		if (waitForNextPositionCheck) {
+		if (checkNextPosition || waitForNextPositionCheck) {
 			targetLocationIsAvailable = IsTargetLocationAvailable();
 
 			// Terminate the action early if the frustration reaches the threshold
@@ -889,6 +907,9 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 				UE_LOG(LogTemp, Warning, TEXT("Action discarded due to frustration threshold being reached. %s"), *this->GetName());
 				frutrationTriggered = true;
 				FrustrationCounter = 0.0f;
+
+				// Set the current target, to compare it when a new target is selected
+				LastActionTarget = actionTarget;
 
 				UE_LOG(LogTemp, Warning, TEXT("Path discarded:"));
 				pathToTarget->print();
@@ -914,11 +935,19 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
 		// Request action and set the target
 		// If the action is requested based on frustration, a less optimal action is chosen (to avoid the same collision)
-		NpcAction NextAction = DecisionSys->GetAction(!frutrationTriggered);
+		NpcAction NextAction = DecisionSys->GetAction(!frutrationTriggered, sameActionFrustrationCounter);
 		targetLocation = NextAction.TargetLocation;
 		animationToRunAtTarget = NextAction.AnimationToRunAtTarget;
 		actionType = NextAction.ActionType;
 		actionTarget = NextAction.Target;
+
+		// Increment frustration counter, so that a new target in the vision list can get selected
+		// if the same target keeps getting chosen
+		if (LastActionTarget == actionTarget && actionTarget != nullptr) {
+			sameActionFrustrationCounter++;
+		} else {
+			sameActionFrustrationCounter = 0;
+		}
 
 		// TODO TESTING (DELETE IF AFTER)
 		if (frutrationTriggered) {
@@ -930,6 +959,18 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 				*this->GetName(),
 				*currentLocation.ToString(),
 				*targetLocation.ToString());
+		}
+
+		if (this->GetName().Equals("BasicNPC_0")) {
+			if (actionType == ActionType::AttackNpc) {
+				FString LogMessage = FString::Printf(TEXT("Initial action for %s is: AttackNPC\n\tAction Target: %s\n\tTarget Location: %s"),
+					*this->GetName(),
+					actionTarget ? *actionTarget->GetName() : TEXT("null"),
+					*targetLocation.ToString());
+				UE_LOG(LogTemp, Warning, TEXT("%s"), *LogMessage);
+			}
+
+			if (pathToTarget)  pathToTarget->print();
 		}
 
 		// Reset frustration after each action

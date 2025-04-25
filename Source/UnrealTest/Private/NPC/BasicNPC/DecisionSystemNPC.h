@@ -19,7 +19,7 @@ public:
 
 	void Initialize(ABasicNPC* InOwner, const AnimalType& animalType);
 
-	NpcAction GetAction(bool ChooseOptimalAction);
+	NpcAction GetAction(bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
 
 	BasicNpcAttributes AnimalAttributes;
 	MemoryNpcAttributes MemoryAttributes;
@@ -36,9 +36,9 @@ private:
 	// Actions
 	NpcAction ShouldFlee(const float& RandomNo);
 	NpcAction ShouldRestAfterMeals();
-	NpcAction ShouldAttackNpc(const float& RandomNo, bool ChooseOptimalAction);
-	NpcAction ShouldEatBasicFoodSource(const float& RandomNo, bool ChooseOptimalAction);
-	NpcAction ShouldAttemptFoodTrade(const float& RandomNo, bool ChooseOptimalAction);
+	NpcAction ShouldAttackNpc(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
+	NpcAction ShouldEatBasicFoodSource(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
+	NpcAction ShouldAttemptFoodTrade(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
 	NpcAction ShouldRoam();
 	NpcAction ShouldRelax();
 

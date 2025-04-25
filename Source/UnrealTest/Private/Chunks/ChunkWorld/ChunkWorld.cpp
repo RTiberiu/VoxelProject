@@ -462,29 +462,41 @@ void AChunkWorld::BeginPlay() {
 	Super::BeginPlay();
 
 	// --- ADDING TESTING SPAWN POSITIONS FOR THE ANIMALS (DELETE AFTER) ---
-	FVector position1 = FVector(626, 744, 6190);
-	FVector position2 = FVector(626, 984, 6190);
-	FVector position3 = FVector(992, 928, 6250);
-	FVector position4 = FVector(992, 1108, 6250);
-	FVector position5 = FVector(1097, 427, 6190);
-	FVector position6 = FVector(1097, 197, 6250);
-	FVector position7 = FVector(1329, 214, 6490);
+	FVector position1 = FVector(560, 440, 6130);
+	FVector position2 = FVector(560, 560, 6130);
+	FVector position3 = FVector(560, 930, 6070);
+	FVector position4 = FVector(560, 210, 6130);
+	FVector position5 = FVector(740, 920, 6130);
+	FVector position6 = FVector(560, 1220, 6130);
+	FVector position7 = FVector(1340, 210, 6430);
+	FVector position8 = FVector(970, 270, 6130); 
+	FVector position9 = FVector(970, 330, 6130); 
+	FVector position10 = FVector(1100, 270, 6130); 
+	FVector position11 = FVector(1160, 270, 6190);
 
 	AnimalType animal1 = AnimalType::Tiger;
-	AnimalType animal2 = AnimalType::Peacock;
+	AnimalType animal2 = AnimalType::Tiger;
 	AnimalType animal3 = AnimalType::Peacock;
 	AnimalType animal4 = AnimalType::Tiger;
-	AnimalType animal5 = AnimalType::Peacock;
-	AnimalType animal6 = AnimalType::Peacock;
+	AnimalType animal5 = AnimalType::Peacock; 
+	AnimalType animal6 = AnimalType::Tiger;
 	AnimalType animal7 = AnimalType::Peacock;
+	AnimalType animal8 = AnimalType::Tiger;
+	AnimalType animal9 = AnimalType::Tiger;
+	AnimalType animal10 = AnimalType::Peacock;
+	AnimalType animal11 = AnimalType::Peacock;
 
-    TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));  
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));  
     TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));  
     TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));  
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position6, FIntPoint(0, 1)), animal6));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position7, FIntPoint(0, 1)), animal7));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position8, FIntPoint(0, 1)), animal8));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position9, FIntPoint(0, 1)), animal9));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position10, FIntPoint(0, 1)), animal10));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position11, FIntPoint(0, 1)), animal11));
 
 	// --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
 
@@ -812,9 +824,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 
 	// TESTING ANIMAL ACTIONS (DELETE AFTER)
-	if (WTSR->NPCCount < 7) {
+	if (WTSR->NPCCount < TestingPositions.Num()) {
 		int counterTest = 0;
-		while (counterTest < 7) {
+		while (counterTest < TestingPositions.Num()) {
 			SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
 			counterTest++;
 			WTSR->NPCCount++;
@@ -832,9 +844,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		if (WTSR->NPCCount < 0) { // TODO TESTING Spawning just one NPC to test path adjustment
-			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
-		}
+		//if (WTSR->NPCCount < 5) { // TODO TESTING Spawning just one NPC to test path adjustment
+		//	SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		//}
 
 		WTSR->NPCCount++;
 

@@ -40,7 +40,7 @@ public:
         * which can be customised in the domain specific sub-classes.
         */
     void print() const {
-        /*if (head == nullptr) {
+        if (head == nullptr) {
             UE_LOG(LogTemp, Warning, TEXT("Head of path is nullptr."));
             return;
         }
@@ -49,7 +49,7 @@ public:
             UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(next->action->toString().c_str()));
             UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(next->state->toString().c_str()));
             UE_LOG(LogTemp, Warning, TEXT(""));
-        }*/
+        }
     }
     std::list<ActionStatePair*> path;
 };

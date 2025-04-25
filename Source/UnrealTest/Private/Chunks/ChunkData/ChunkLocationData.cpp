@@ -654,12 +654,15 @@ bool UChunkLocationData::IsSurfacePointValid(const double& X, const double& Z) {
 
 	// Check if any point is occupied by a current NPC 
 	FIntPoint point = FIntPoint(X * WTSR->UnrealScale + WTSR->HalfUnrealScale, Z * WTSR->UnrealScale + WTSR->HalfUnrealScale); // Adjusting 2D points to Unreal's scale
-	// TODO Double check this  adjustment
     return !IsLocationOccupied(point);
 }
 
 bool UChunkLocationData::IsLocationOccupied(const FVector& currentPosition, const FVector& nextPosition, ABasicNPC* npcAtLocation) {
-	FIntPoint nextPositionPoint = FIntPoint(nextPosition.X, nextPosition.Y);
+	FIntPoint nextPositionPoint = FIntPoint(nextPosition.X, nextPosition.Y); 
+
+	// SOMETHING DOESN'T ALIGN HERE.
+	// IN THIS SCENARIO OF 2 NPCS. THE TARGET LOCATION IS DIFFERENT THAN THE OCCUPIED VOXEL. 
+	// I NEED TO DOUBLE CHECK THIS, AS I STILL THINK I SHOULD TRIGGER MAYBE A CHECK FOR THE TARGET LOCATION
 	
 	if (OccupiedVoxels.Contains(nextPositionPoint)) {
 		return true;
