@@ -67,27 +67,20 @@ void UDecisionSystemNPC::NotifyNpcOfNewAction() {
 }
 
 NpcAction UDecisionSystemNPC::ShouldFlee(const float& RandomNo) {
-	//UE_LOG(LogTemp, Warning, TEXT("ShouldFlee function is executed."));
-
 	// Check if NPC should flee from enemies if they exist
-	if (Owner->IsThreatInRange()) {
-		//UE_LOG(LogTemp, Warning, TEXT("\tThreat is in range!."));
-
-		//UE_LOG(LogTemp, Warning, TEXT("\t\tRandomNo: %f"), RandomNo);
-		//UE_LOG(LogTemp, Warning, TEXT("\t\tAnimalAttributes.survivalInstinct: %f"), AnimalAttributes.survivalInstinct);
-
-		const bool runFromEnemy = RandomNo < AnimalAttributes.survivalInstinct;
-		if (runFromEnemy) {
-			//UE_LOG(LogTemp, Warning, TEXT("\t\tShould run from enemy!."));
-
-			// TODO Get the opposite direction of the enemy to not run in the enemy's direction
-			FVector& CurrentLoc = Owner->GetCurrentLocation();
-			FVector fleeingLocation = FVector(CurrentLoc.X + AnimalAttributes.fleeingRadius, CurrentLoc.Y + AnimalAttributes.fleeingRadius, CurrentLoc.Z);
-			return NpcAction(fleeingLocation, AnimationType::IdleA, ActionType::Flee, nullptr);
-		}
+	if (!Owner->IsThreatInRange()) {
+		return NoneAction;
 	}
 
-	return NoneAction;
+	const bool runFromEnemy = RandomNo < AnimalAttributes.survivalInstinct;
+	if (!runFromEnemy) {
+		return NoneAction;
+	}
+
+	// Flee in a random direction
+	FVector CurrentLoc = Owner->GetCurrentLocation();
+	FVector FleeLocRandom = GetRandomLocationAround(CurrentLoc, AnimalAttributes.fleeingRadius);
+    return NpcAction(FleeLocRandom, AnimationType::IdleA, ActionType::Flee, nullptr);
 }
 
 NpcAction UDecisionSystemNPC::ShouldRestAfterMeals() {
@@ -218,8 +211,7 @@ NpcAction UDecisionSystemNPC::ShouldRoam() {
 
 	// The NPC should roam in a random direction
 	FVector& CurrentLoc = Owner->GetCurrentLocation();
-	const int RandomDirection = FMath::RandRange(0, 7);
-	FVector RoamLocation = CurrentLoc + (Directions[RandomDirection] * AnimalAttributes.roamRadius);
+	FVector RoamLocation = GetRandomLocationAround(CurrentLoc, AnimalAttributes.roamRadius);
 
 	return NpcAction(RoamLocation, AnimationType::Walk, ActionType::Roam, nullptr);
 }
@@ -229,6 +221,19 @@ NpcAction UDecisionSystemNPC::ShouldRelax() {
 
 	FVector& CurrentLoc = Owner->GetCurrentLocation();
 	return NpcAction(CurrentLoc, AnimationType::Sit, ActionType::RestAfterBasicFood, nullptr);
+}
+
+FVector UDecisionSystemNPC::GetRandomLocationAround(const FVector& Origin, float Radius) const {
+	// Pick a random angle
+	float RandomAngle = FMath::FRandRange(0.0f, 360.0f);
+
+	// Start with +X unit vector and rotate around Z
+	FVector Dir2D = FVector(1.0f, 0.0f, 0.0f).RotateAngleAxis(RandomAngle, FVector::UpVector);
+
+	// Scale out and preserve original Z
+	FVector Result = Origin + Dir2D * Radius;
+	Result.Z = Origin.Z;
+	return Result;
 }
 
 NpcAction UDecisionSystemNPC::FirstValidAction(std::initializer_list<NpcAction> Actions) {
