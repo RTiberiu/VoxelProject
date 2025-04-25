@@ -747,7 +747,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			spawnedTreesThisFrame = true;
 		}
 
-		// SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
+		SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->TreeCount++;
 
 		// Print the tree count every 50
@@ -787,7 +787,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		// SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
+		SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->GrassCount++;
 
 		// Print the grass count every 50
@@ -810,7 +810,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		// SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
+		SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
 		WTSR->FlowerCount++;
 
 		// Print the flower count every 50

@@ -34,13 +34,13 @@ private:
 	void NotifyNpcOfNewAction();
 
 	// Actions
-	NpcAction ShouldFlee(const float& RandomNo);
-	NpcAction ShouldRestAfterMeals();
-	NpcAction ShouldAttackNpc(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
-	NpcAction ShouldEatBasicFoodSource(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
-	NpcAction ShouldAttemptFoodTrade(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
-	NpcAction ShouldRoam();
-	NpcAction ShouldRelax();
+	FORCENOINLINE NpcAction ShouldFlee(const float& RandomNo);
+	FORCENOINLINE NpcAction ShouldRestAfterMeals();
+	FORCENOINLINE NpcAction ShouldAttackNpc(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
+	FORCENOINLINE NpcAction ShouldEatBasicFoodSource(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
+	FORCENOINLINE NpcAction ShouldAttemptFoodTrade(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList);
+	FORCENOINLINE NpcAction ShouldRoam();
+	FORCENOINLINE NpcAction ShouldRelax();
 
 	NpcAction FirstValidAction(std::initializer_list<NpcAction> Actions);
 	NpcAction NoneAction = NpcAction(FVector::ZeroVector, AnimationType::IdleA, ActionType::NoAction, nullptr);
