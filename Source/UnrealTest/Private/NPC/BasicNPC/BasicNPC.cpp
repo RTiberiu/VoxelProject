@@ -906,6 +906,10 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 	}
 
 	if (pathIsReady) {
+		// Rest if there is not enough stamina to move (not in between locations)
+		bool isResting = ForceRestWhenStaminaIsZero(DeltaSeconds);
+		if (isResting && !targetLocationIsAvailable) return;
+
 		// Making sure the next position is not occupied by another NPC
 		if (checkNextPosition || waitForNextPositionCheck) {
 			targetLocationIsAvailable = IsTargetLocationAvailable();
@@ -925,10 +929,6 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 				SignalEndOfAction();
 			}
 		}
-
-		// Rest if there is not enough stamina to move
-		bool isResting = ForceRestWhenStaminaIsZero(DeltaSeconds);
-		if (isResting) return;
 
 		// Smoothly move to the next location (happens over multiple frames)
 		if (targetLocationIsAvailable) {

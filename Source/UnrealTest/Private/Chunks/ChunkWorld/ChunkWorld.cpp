@@ -489,14 +489,14 @@ void AChunkWorld::BeginPlay() {
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));  
     TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));  
     TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));  
-	/*TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position6, FIntPoint(0, 1)), animal6));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position7, FIntPoint(0, 1)), animal7));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position8, FIntPoint(0, 1)), animal8));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position9, FIntPoint(0, 1)), animal9));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position10, FIntPoint(0, 1)), animal10));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position11, FIntPoint(0, 1)), animal11));*/
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position11, FIntPoint(0, 1)), animal11));
 
 	// --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
 
@@ -844,9 +844,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		//if (WTSR->NPCCount < 5) { // TODO TESTING Spawning just one NPC to test path adjustment
-		//	SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
-		//}
+		if (WTSR->NPCCount < 0) { // TODO TESTING Spawning just one NPC to test path adjustment
+			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+		}
 
 		WTSR->NPCCount++;
 
