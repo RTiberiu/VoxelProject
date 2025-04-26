@@ -548,12 +548,21 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 	case ActionType::AttackFoodSource:
 		EatingCounter += DeltaSeconds;
 
-		if (EatingCounter > DecisionSys->AnimalAttributes.eatingSpeedRateBasic) {
-			// Remove the object when done eating  
-			RemoveFoodTargetFromMapAndDestroy();
+		// Check if the target is still valid and exit early if not
+		if (!IsValid(actionTarget)) {
+			SignalEndOfAction();
+			break;
+		}
 
-			// Update the food attributes  
-			UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryBasic, true);
+		if (EatingCounter > DecisionSys->AnimalAttributes.eatingSpeedRateBasic) {
+			// Remove the food target and update hunger if the target is valid
+			if (IsValid(actionTarget)) {
+				// Remove the object when done eating  
+				RemoveFoodTargetFromMapAndDestroy();
+
+				// Update the food attributes  
+				UpdateFoodAttributes(DecisionSys->AnimalAttributes.hungerRecoveryBasic, true);
+			}
 
 			// Trigger end of action and reset counter  
 			SignalEndOfAction();
@@ -638,12 +647,12 @@ void ABasicNPC::RemoveFoodTargetFromMapAndDestroy() {
 		WTSR->RemoveSingleGrassFromMap(FoodObject);
 	}
 
-	// TODO Potentially also remove from vision list if it doesn't update automatically
-
-	// Destroy object
-	FoodObject->UnregisterComponent();
-	FoodObject->DestroyComponent();
-	WTSR->GrassCount--;
+	// Destroy object if it's still valid
+	if (IsValid(FoodObject)) {
+		FoodObject->UnregisterComponent();
+		FoodObject->DestroyComponent();
+		WTSR->GrassCount--;
+	}
 }
 
 // Update current hunger and food pouch if current hunger reaches the max value

@@ -22,24 +22,6 @@ void UDecisionSystemNPC::Initialize(ABasicNPC* InOwner, const AnimalType& animal
 }
 
 NpcAction UDecisionSystemNPC::GetAction(bool ChooseOptimalAction, const int& IncrementTargetInVisionList) {
-	// Action order :
-	// 
-	// 1. Enemy around or chasing->Run
-	// 2. Hungry->Get food
-	// 3. Tired->Rest
-	// 4. Social->Recruit or hoard food
-
-	// TODO Make decision based on current attributes and the vision lists
-	// Pass decision to the NPC
-
-	// TODO Inside the NPC, they should handle their own attributes
-	// like depleting the stamina. In this example, they should 
-	// stop and rest when it reaches zero, and then continue with their
-	// action. 
-	// Similar attribute checks might be needed.
-
-	// TODO Should check if the locations given (for roam and others) are valid first. This is a maybe.
-
 	const float RandomNo = FMath::FRand();
 
 	return FirstValidAction({
