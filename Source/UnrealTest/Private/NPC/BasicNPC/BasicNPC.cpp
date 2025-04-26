@@ -505,7 +505,7 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 	switch (actionType) {
 	case ActionType::AttackNpc:
 		// Check if target is still valid
-		if (actionTarget == nullptr) {
+		if (!IsValid(actionTarget)) {
 			SignalEndOfAction();
 			break;
 		}
@@ -515,14 +515,15 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 			// Trigger an attack delay based on attack speed (after the first attack) 
 			AttackDelayCounter += DeltaSeconds;
 			if (delayNextAttack && AttackDelayCounter < DecisionSys->AnimalAttributes.attackSpeed) {
-				return;
+				break;
 			}
 
 			// Reset attack delay
 			delayNextAttack = false;
 
 			// Attack if the target is close enough and not dead  
-			if (!TargetNPC->IsDead() && IsTargetLocationCloseEnough(currentLocation, TargetNPC->GetCurrentLocation())) {
+			bool isTargetDead = TargetNPC->IsDead();
+			if (!isTargetDead && IsTargetLocationCloseEnough(currentLocation, TargetNPC->GetCurrentLocation())) {
 				// Reset the counter after the delay is complete  
 				AttackDelayCounter = 0.0f;
 
@@ -532,6 +533,13 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 					DecisionSys->AnimalAttributes.eatingSpeedRateImproved,
 					this);
 				delayNextAttack = true;
+			}
+
+			// Exit without ending the action, up until the target is despawned
+			// This is to make sure the dead NPC will keep getting attacked and
+			// not request a new action
+			if (isTargetDead) {
+				break;
 			}
 		}
 
@@ -961,17 +969,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 				*targetLocation.ToString());
 		}
 
-		if (this->GetName().Equals("BasicNPC_0")) {
-			if (actionType == ActionType::AttackNpc) {
-				FString LogMessage = FString::Printf(TEXT("Initial action for %s is: AttackNPC\n\tAction Target: %s\n\tTarget Location: %s"),
-					*this->GetName(),
-					actionTarget ? *actionTarget->GetName() : TEXT("null"),
-					*targetLocation.ToString());
-				UE_LOG(LogTemp, Warning, TEXT("%s"), *LogMessage);
-			}
-
-			if (pathToTarget)  pathToTarget->print();
-		}
+		
 
 		// Reset frustration after each action
 		frutrationTriggered = false;

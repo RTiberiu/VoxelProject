@@ -5,7 +5,7 @@ struct BasicNpcAttributes {
 	uint8_t currentHp;
 	uint8_t maxHp;
 	uint8_t hitDamage;				// Damage point when attacking another NPC
-	uint8_t attackSpeed;			// How long the animal has to wait before dealing another attack
+	float attackSpeed;			// How long the animal has to wait before dealing another attack
 
 	uint8_t movementSpeed;			// How fast the animal can move in the world.
 
@@ -72,7 +72,7 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	40,		// hitDamage
-	2,		// attackSpeed
+	1.5f,	// attackSpeed
 	200,	// movementSpeed
 	100,	// currentStamina
 	100, 	// maxStamina
@@ -116,7 +116,7 @@ const BasicNpcAttributes TapirBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3,		// attackSpeed
+	3.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
@@ -160,7 +160,7 @@ const BasicNpcAttributes SlothBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3,		// attackSpeed
+	3.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
@@ -205,7 +205,7 @@ const BasicNpcAttributes CobraBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3,		// attackSpeed
+	3.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
@@ -250,7 +250,7 @@ const BasicNpcAttributes BatBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3,		// attackSpeed
+	3.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
@@ -295,7 +295,7 @@ const BasicNpcAttributes PeacockBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3,		// attackSpeed
+	3.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
@@ -340,7 +340,7 @@ const BasicNpcAttributes GorillaBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3,		// attackSpeed
+	3.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
@@ -385,7 +385,7 @@ const BasicNpcAttributes PandaBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3,		// attackSpeed
+	3.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
@@ -430,7 +430,7 @@ const BasicNpcAttributes RedPandaBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3,		// attackSpeed
+	3.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
