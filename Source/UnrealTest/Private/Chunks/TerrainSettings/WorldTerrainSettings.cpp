@@ -679,7 +679,7 @@ void UWorldTerrainSettings::CheckNumberOfElements() {
 }
 
 void UWorldTerrainSettings::initializePerlinNoise(TObjectPtr<FastNoiseLite>& noise) {
-	noise = new FastNoiseLite();
+	noise = new FastNoiseLite(NoiseSeed);
 	noise->SetNoiseType(FastNoiseLite::NoiseType_Perlin);
 	noise->SetFractalType(FastNoiseLite::FractalType_FBm);
 }
