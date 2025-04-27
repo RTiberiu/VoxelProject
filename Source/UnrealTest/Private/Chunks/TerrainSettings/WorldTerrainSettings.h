@@ -118,7 +118,14 @@ public:
 	const float TreeSpawnChance{ 0.0014f };
 	const float FlowerSpawnChance{ 0.03f };	// Showcase settings: 0.03f		// Testing settings: 0.03f
 	const float GrassSpawnChance{ 0.08f };	// Showcase settings: 0.08f		// Testing settings: 0.05f
-	const float NPCSpawnChance{ 0.0815f };	// Showcase settings: 0.082f	// Testing settings: 0.052f
+	const float NPCSpawnChance{ 0.081f };	// Showcase settings: 0.082f	// Testing settings: 0.052f
+
+	// Shadow settings
+	const bool GrassShadow{ true };
+	const bool FlowerShadow{ true };
+	const bool TreeShadow{ true };
+	const bool NpcShadow{ true };
+	const bool ChunkShadow{ true };
 
 	// Trees settings
 	const uint8_t TreeVariations{ 30 };

@@ -236,7 +236,7 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData LocationData, FVector Play
 void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
 	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
-	Mesh->SetCastShadow(true);
+	Mesh->SetCastShadow(WTSR->GrassShadow);
 
 	FVoxelObjectMeshData* MeshData = WTSR->GetRandomGrassMeshData();
 	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), true);
@@ -269,7 +269,7 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector Play
 void AChunkWorld::SpawnFlower(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
 	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
-	Mesh->SetCastShadow(true);
+	Mesh->SetCastShadow(WTSR->FlowerShadow);
 
 	FVoxelObjectMeshData* MeshData = WTSR->GetRandomFlowerMeshData();
 	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), true);
@@ -746,10 +746,20 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		}
 	}
 
-	// Get an updated vegetation and tree chunk spawn points // TODO Maybe get this only a couple of frames
-	VegetationChunkSpawnPoints = CLDR->GetVegetationChunkSpawnPoints();
-	TreeChunkSpawnPoints = CLDR->GetTreeChunkSpawnPoints();
-	NpcChunkSpawnPoints = CLDR->GetNpcChunkSpawnPoints();
+	// Check every few frames for spawned points in range and for vegetation not in range
+	if (FramesCounterCheckSpawnedPointsInRange > FramesToCheckForSpawnPointsInRange) {
+		CLDR->CheckForSpawnPointsInRange();
+		CLDR->CheckAndAddVegetationNotInRange(&GrassActorsToRemove, &FlowerActorsToRemove);
+		CLDR->CheckAndAddTreesNotInRange(&TreeActorsToRemove);
+		CLDR->CheckAndAddNpcsNotInRange(&NpcActorsToRemove);
+		FramesCounterCheckSpawnedPointsInRange = 0;
+		
+		// Get an updated vegetation and tree chunk spawn points
+		VegetationChunkSpawnPoints = CLDR->GetVegetationChunkSpawnPoints();
+		TreeChunkSpawnPoints = CLDR->GetTreeChunkSpawnPoints();
+		NpcChunkSpawnPoints = CLDR->GetNpcChunkSpawnPoints();
+	}
+	FramesCounterCheckSpawnedPointsInRange++;
 	
 	// Append tree positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositionsInRange();
@@ -785,16 +795,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	if (spawnedTreesThisFrame) {
 		return;
 	}
-
-	// Check every few frames for spawned points in range and for vegetation not in range
-	if (FramesCounterCheckSpawnedPointsInRange > FramesToCheckForSpawnPointsInRange) {
-		CLDR->CheckForSpawnPointsInRange();
-		CLDR->CheckAndAddVegetationNotInRange(&GrassActorsToRemove, &FlowerActorsToRemove);
-		CLDR->CheckAndAddTreesNotInRange(&TreeActorsToRemove);
-		CLDR->CheckAndAddNpcsNotInRange(&NpcActorsToRemove);
-		FramesCounterCheckSpawnedPointsInRange = 0;
-	}
-	FramesCounterCheckSpawnedPointsInRange++;
 
 	// Append grass positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPositionInRange();

@@ -17,8 +17,6 @@ ABinaryChunk::ABinaryChunk() {
 
 	Mesh = CreateDefaultSubobject<UProceduralMeshComponent>("Mesh");
 
-	Mesh->SetCastShadow(true);
-
 	// By default the chunk shouldn't have collision
 	hasCollision = false;
 
@@ -110,6 +108,8 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize, const std::string&
 void ABinaryChunk::spawnTerrainChunkMeshes() {	
 
 	Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), hasCollision);
+
+	Mesh->SetCastShadow(WTSR->ChunkShadow);
 
 	// Set up simplified collision
 	if (hasCollision) {

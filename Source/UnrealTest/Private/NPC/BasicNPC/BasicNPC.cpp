@@ -13,8 +13,6 @@ ABasicNPC::ABasicNPC() {
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	RootComponent = SkeletalMesh;
 
-	SkeletalMesh->SetCastShadow(false);
-
 	pathToTarget = nullptr;
 	pathIsReady = false;
 	waitForNextPositionCheck = false;
@@ -168,7 +166,7 @@ void ABasicNPC::InitializeStatsVoxelMeshes() {
 	for (StatsType statsType : StatsTypes) {
 		UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 		Mesh->RegisterComponent();
-		Mesh->SetCastShadow(true);
+		Mesh->SetCastShadow(WTSR->NpcShadow);
 
 		UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
 		if (Material) {
@@ -194,13 +192,9 @@ void ABasicNPC::spawnNPC() {
 	// Load the skeletal mesh
 	USkeletalMesh* LoadedMesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath);
 	if (LoadedMesh) {
+		SkeletalMesh->SetCastShadow(WTSR->NpcShadow);
 		SkeletalMesh->SetSkeletalMesh(LoadedMesh);
 		SkeletalMesh->SetWorldScale3D(FVector(0.65f, 0.65f, 0.65f)); // TODO I might want to scale this in the editor only once
-
-		// Set up simplified collision
-		/*SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		SkeletalMesh->SetCollisionResponseToAllChannels(ECR_Block);
-		SkeletalMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);*/
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Couldn't find sekeletal mesh."));
 	}

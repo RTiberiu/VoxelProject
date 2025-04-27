@@ -17,8 +17,6 @@ ATree::ATree() {
 
 	Mesh = CreateDefaultSubobject<UProceduralMeshComponent>("Mesh");
 
-	Mesh->SetCastShadow(true);
-
 	// By default the tree shouldn't have collision
 	hasCollision = false;
 
@@ -115,6 +113,8 @@ void ATree::printBinary(uint64_t value, int groupSize, const std::string& otherD
 }
 
 void ATree::SpawnTreeMeshes() {
+	Mesh->SetCastShadow(WTSR->TreeShadow);
+	
 	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), hasCollision);
 
 	// Set up simplified collision
