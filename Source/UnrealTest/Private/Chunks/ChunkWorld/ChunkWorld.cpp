@@ -64,7 +64,7 @@ void AChunkWorld::InitializePathfindingManager() {
 
 void AChunkWorld::printExecutionTime(Time& start, Time& end, const char* functionName) {
 	std::chrono::duration<double, std::milli> duration = end - start;
-    UE_LOG(LogTemp, Warning, TEXT("%s() took %d seconds, %d milliseconds to execute."), *FString(functionName), 
+	UE_LOG(LogTemp, Warning, TEXT("%s() took %d seconds, %d milliseconds to execute."), *FString(functionName),
 		static_cast<int>((duration.count() / 1000)) % 60,
 		static_cast<int>(fmod(duration.count(), 1000)));
 }
@@ -78,6 +78,8 @@ void AChunkWorld::spawnInitialWorld() {
 	FIntPoint ChunkWorldCoords = FIntPoint(0, 0);
 	CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 	CLDR->AddVegetationChunkSpawnPosition(ChunkWorldCoords);
+	CLDR->AddTreeChunkSpawnPosition(ChunkWorldCoords);
+	CLDR->AddNpcChunkSpawnPosition(ChunkWorldCoords);
 
 	// Add chunk positions to spawn by going in a spiral from origin position
 	std::set<std::pair<int, int>> avoidPosition = { {0,0} };
@@ -102,21 +104,22 @@ void AChunkWorld::spawnInitialWorld() {
 				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
 				int ringDistance = FMath::Max(FMath::Abs(x), FMath::Abs(z));
-				if (ringDistance <= vegetationMax) {
+				if (ringDistance < vegetationMax) {
 					CLDR->AddVegetationChunkSpawnPosition(ChunkWorldCoords);
 				}
 
-				if (ringDistance <= treeMax) {
+				if (ringDistance < treeMax) {
 					CLDR->AddTreeChunkSpawnPosition(ChunkWorldCoords);
 				}
 
-				if (ringDistance <= npcMax) {
+				if (ringDistance < npcMax) {
 					CLDR->AddNpcChunkSpawnPosition(ChunkWorldCoords);
 				}
 
 				avoidPosition.insert(currentPair);
 			}
 		}
+
 		currentSpiralRing++;
 	}
 }
@@ -247,7 +250,7 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector Play
 	// Setting custom data 
 	Mesh->MeshType = MeshType::Grass;
 	Mesh->ObjectWorldCoords = LocationData.ObjectWorldCoords;
-	
+
 	// Load and apply basic material to the mesh
 	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
 
@@ -381,53 +384,59 @@ void AChunkWorld::DestroyTreeActors() {
 	while (!TreeActorsToRemove.IsEmpty() && removedTreeCounter < treesToRemovePerFrame) {
 
 		ATree* treeToRemove = nullptr;
-		if (TreeActorsToRemove.Dequeue(treeToRemove) && treeToRemove) {
-			if (IsValid(treeToRemove)) {
-				treeToRemove->Destroy();
-				WTSR->TreeCount--;
-				removedTreeCounter++;
-			} else {
-				TreeActorsToRemove.Enqueue(treeToRemove);
-			}
+		TreeActorsToRemove.Peek(treeToRemove);
+
+		if (!IsValid(treeToRemove)) {
+			TreeActorsToRemove.Dequeue(treeToRemove);
+			continue;
 		}
+
+		TreeActorsToRemove.Dequeue(treeToRemove);
+		treeToRemove->Destroy();
+		WTSR->TreeCount--;
+		removedTreeCounter++;
 	}
 }
 
 void AChunkWorld::DestroyGrassActors() {
 	// Remove grass actors
-    int removedGrassCounter = 0;  
-    while (!GrassActorsToRemove.IsEmpty() && removedGrassCounter < grassToRemovePerFrame) {  
+	int removedGrassCounter = 0;
+	while (!GrassActorsToRemove.IsEmpty() && removedGrassCounter < grassToRemovePerFrame) {
 
-		UCustomProceduralMeshComponent* grassToRemove = nullptr;  
-		if (GrassActorsToRemove.Dequeue(grassToRemove) && grassToRemove) {  
-			if (IsValid(grassToRemove)) {
-				grassToRemove->UnregisterComponent();
-				grassToRemove->DestroyComponent();
-				WTSR->GrassCount--;
-				removedGrassCounter++;
-			} else {
-				GrassActorsToRemove.Enqueue(grassToRemove);
-			}
+		UCustomProceduralMeshComponent* grassToRemove = nullptr;
+		GrassActorsToRemove.Peek(grassToRemove);
+
+		if (!IsValid(grassToRemove)) {
+			GrassActorsToRemove.Dequeue(grassToRemove);
+			continue;
 		}
-    }
+
+		GrassActorsToRemove.Dequeue(grassToRemove);
+		grassToRemove->UnregisterComponent();
+		grassToRemove->DestroyComponent();
+		WTSR->GrassCount--;
+		removedGrassCounter++;
+	}
 }
 
 void AChunkWorld::DestroyFlowerActors() {
 	// Remove flower actors
-    int removedFlowerCounter = 0;  
-    while (!FlowerActorsToRemove.IsEmpty() && removedFlowerCounter < flowerToRemovePerFrame) {  
-       UCustomProceduralMeshComponent* flowerToRemove = nullptr;  
-       if (FlowerActorsToRemove.Dequeue(flowerToRemove) && flowerToRemove) { 
-		   if (IsValid(flowerToRemove)) {
-				flowerToRemove->UnregisterComponent();  
-				flowerToRemove->DestroyComponent();  
-				WTSR->FlowerCount--;  
-				removedFlowerCounter++;  
-		   } else {
-			   FlowerActorsToRemove.Enqueue(flowerToRemove);
-		   }
-       }  
-    }
+	int removedFlowerCounter = 0;
+	while (!FlowerActorsToRemove.IsEmpty() && removedFlowerCounter < flowerToRemovePerFrame) {
+		UCustomProceduralMeshComponent* flowerToRemove = nullptr;
+		FlowerActorsToRemove.Peek(flowerToRemove);
+
+		if (!IsValid(flowerToRemove)) {
+			FlowerActorsToRemove.Dequeue(flowerToRemove);
+			continue;
+		}
+
+		FlowerActorsToRemove.Dequeue(flowerToRemove);
+		flowerToRemove->UnregisterComponent();
+		flowerToRemove->DestroyComponent();
+		WTSR->FlowerCount--;
+		removedFlowerCounter++;
+	}
 }
 
 void AChunkWorld::DestroyNpcActors() {
@@ -469,16 +478,16 @@ void AChunkWorld::BeginPlay() {
 	FVector position5 = FVector(740, 920, 6130);
 	FVector position6 = FVector(560, 1220, 6130);
 	FVector position7 = FVector(1340, 210, 6430);
-	FVector position8 = FVector(970, 270, 6130); 
-	FVector position9 = FVector(970, 330, 6130); 
-	FVector position10 = FVector(1100, 270, 6130); 
+	FVector position8 = FVector(970, 270, 6130);
+	FVector position9 = FVector(970, 330, 6130);
+	FVector position10 = FVector(1100, 270, 6130);
 	FVector position11 = FVector(1160, 270, 6190);
 
 	AnimalType animal1 = AnimalType::Tiger;
 	AnimalType animal2 = AnimalType::Tiger;
 	AnimalType animal3 = AnimalType::Peacock;
 	AnimalType animal4 = AnimalType::Tiger;
-	AnimalType animal5 = AnimalType::Peacock; 
+	AnimalType animal5 = AnimalType::Peacock;
 	AnimalType animal6 = AnimalType::Tiger;
 	AnimalType animal7 = AnimalType::Peacock;
 	AnimalType animal8 = AnimalType::Tiger;
@@ -486,19 +495,19 @@ void AChunkWorld::BeginPlay() {
 	AnimalType animal10 = AnimalType::Peacock;
 	AnimalType animal11 = AnimalType::Peacock;
 
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));  
-    TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));  
-    TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));  
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position6, FIntPoint(0, 1)), animal6));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position7, FIntPoint(0, 1)), animal7));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position8, FIntPoint(0, 1)), animal8));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position9, FIntPoint(0, 1)), animal9));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position10, FIntPoint(0, 1)), animal10));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position11, FIntPoint(0, 1)), animal11));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));
+	/* TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position6, FIntPoint(0, 1)), animal6));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position7, FIntPoint(0, 1)), animal7));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position8, FIntPoint(0, 1)), animal8));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position9, FIntPoint(0, 1)), animal9));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position10, FIntPoint(0, 1)), animal10));
+	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position11, FIntPoint(0, 1)), animal11));*/
 
-	// --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
+	 // --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
 
 	spawnInitialWorld();
 
@@ -708,6 +717,11 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		calculateAverageChunkSpawnTime(start, end);
 	}
 
+	// Reduce computing per frame by returning early if a chunk already got spawned this frame
+	if (spawnedChunksThisFrame) {
+		return;
+	}
+
 	// Destroy a chunk and remove it from the map if there is a destroy position in queue
 	FIntPoint chunkToDestroyPosition{};
 	bool doesDestroyPositionExist = CLDR->getChunkToDestroyPosition(chunkToDestroyPosition);
@@ -730,10 +744,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		}
 	}
 
-	// Reduce computing per frame by returning early if a chunk already got spawned this frame
-	if (spawnedChunksThisFrame) {
-		return;
-	}
+	// Get an updated vegetation and tree chunk spawn points // TODO Maybe get this only a couple of frames
+	VegetationChunkSpawnPoints = CLDR->GetVegetationChunkSpawnPoints();
+	TreeChunkSpawnPoints = CLDR->GetTreeChunkSpawnPoints();
 
 	// Append tree positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositionsInRange();
@@ -747,8 +760,12 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			spawnedTreesThisFrame = true;
 		}
 
-		SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
-		WTSR->TreeCount++;
+		// Check if the tree position is still in range, otherwise discard it
+		bool isTreeStillInRange = TreeChunkSpawnPoints.Contains(TreePositionsToSpawn[positionIndex].ObjectWorldCoords);
+		if (isTreeStillInRange) {
+			SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
+			WTSR->TreeCount++;
+		}
 
 		// Print the tree count every 50
 		if (WTSR->TreeCount % 1000 == 0) {
@@ -774,7 +791,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		CLDR->CheckAndAddNpcsNotInRange(&NpcActorsToRemove);
 		FramesCounterCheckSpawnedPointsInRange = 0;
 	}
-	FramesCounterCheckSpawnedPointsInRange++; 
+	FramesCounterCheckSpawnedPointsInRange++;
 
 	// Append grass positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPositionInRange();
@@ -787,9 +804,13 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
-		WTSR->GrassCount++;
-
+		// Check if the grass position is still in range, otherwise discard it
+		bool isGrassStillInRange = VegetationChunkSpawnPoints.Contains(GrassPositionsToSpawn[positionIndex].ObjectWorldCoords);
+		if (isGrassStillInRange) {
+			SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
+			WTSR->GrassCount++;
+		}
+		
 		// Print the grass count every 50
 		/*if (WTSR->GrassCount % 1000 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("Grass count: %d"), WTSR->GrassCount);
@@ -810,8 +831,12 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
-		WTSR->FlowerCount++;
+		// Check if the flower position is still in range, otherwise discard it
+		bool isFlowerStillInRange = VegetationChunkSpawnPoints.Contains(FlowerPositionsToSpawn[positionIndex].ObjectWorldCoords);
+		if (isFlowerStillInRange) {
+			SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
+			WTSR->FlowerCount++;
+		}
 
 		// Print the flower count every 50
 		/*if (WTSR->FlowerCount % 50 == 0) {
@@ -824,15 +849,15 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 
 	// TESTING ANIMAL ACTIONS (DELETE AFTER)
-	if (WTSR->NPCCount < TestingPositions.Num()) {
-		int counterTest = 0;
-		while (counterTest < TestingPositions.Num()) {
-			SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
-			counterTest++;
-			WTSR->NPCCount++;
-		}
-	}
-	
+	//if (WTSR->NPCCount < TestingPositions.Num()) {
+	//	int counterTest = 0;
+	//	while (counterTest < TestingPositions.Num()) {
+	//		SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
+	//		counterTest++;
+	//		WTSR->NPCCount++;
+	//	}
+	//}
+
 	// Append NPC positions waiting to be spawned
 	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPositionInRange();
 	NPCPositionsToSpawn.Append(NPCSpawnPositions);
@@ -844,16 +869,16 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
+		// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		if (WTSR->NPCCount < 0) { // TODO TESTING Spawning just one NPC to test path adjustment
-			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
 		}
 
 		WTSR->NPCCount++;
 
 		// Print the NPC count every 50
-		/*if (WTSR->NPCCount % 200 == 0) {
-			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount); 
-		}*/
+		if (WTSR->NPCCount % 10 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount);
+		}
 
 		NPCPositionsToSpawn.RemoveAt(positionIndex);
 		spawnedNPCCounter++;
@@ -863,7 +888,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	DestroyGrassActors();
 	DestroyFlowerActors();
 	DestroyNpcActors();
-	
+
 	// Enabling and disabling collision for chunks and trees
 	ATree* removeCollisionTree = WTSR->GetTreeToRemoveCollision();
 	ATree* enableCollisionTree = WTSR->GetTreeToEnableCollision();

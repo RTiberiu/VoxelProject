@@ -177,6 +177,13 @@ private:
 	FVector walkStart;
 	FVector walkEnd;
 
+	// Control variables for making the NPC look around after reaching a target voxel
+	bool isLookingAround = false;
+	float lookAroundChance = 0.1f;
+	float lookingAroundCounter = 0.0f;
+	float lookingAroundThreshold = 1.0f;
+	AnimationType lookingDirection;
+
 	void RemoveFoodTargetFromMapAndDestroy();
 	
 	// Methods to update the NPC attributes
@@ -258,9 +265,9 @@ private:
 		if (ChooseOptimalAction) {
 			// Return nullptr if the requested N-th target doesn't exist
 			if (IncrementTargetInVisionList >= distanceArray.Num()) {
-				UE_LOG(LogTemp, Warning,
+				/*UE_LOG(LogTemp, Warning,
 					TEXT("Requested target index %d is out of range (only %d targets). Returning nullptr."),
-					IncrementTargetInVisionList, distanceArray.Num());
+					IncrementTargetInVisionList, distanceArray.Num());*/
 				return nullptr;
 			}
 
@@ -269,11 +276,11 @@ private:
 			T* chosen = distanceArray[TargetIndex].Value;
 			float chosenDist = distanceArray[TargetIndex].Key;
 
-			UE_LOG(LogTemp, Warning,
+			/*UE_LOG(LogTemp, Warning,
 				TEXT("Optimal Target [%d]: %s, Distance: %f"),
 				TargetIndex,
 				*GetLocation(chosen).ToString(),
-				chosenDist);
+				chosenDist);*/
 
 			return chosen;
 		} else {

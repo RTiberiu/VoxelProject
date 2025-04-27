@@ -51,10 +51,11 @@ public:
         TQueue<UCustomProceduralMeshComponent*>* GrassActorsToRemove,
         TQueue<UCustomProceduralMeshComponent*>* FlowerActorsToRemove
     );
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> GetVegetationChunkSpawnPoints() const;
 
     void CheckAndAddTreesNotInRange(TQueue<ATree*>* TreeActorsToRemove);
     void CheckAndAddNpcsNotInRange(TQueue<ABasicNPC*>* NpcActorsToRemove);
-
+    TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> GetTreeChunkSpawnPoints() const;
 
     TArray<FVoxelObjectLocationData> getTreeSpawnPositions();
     TArray<FVoxelObjectLocationData> getGrassSpawnPosition();

@@ -125,12 +125,14 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 				// so they can be removed over multiple frames
                 TArray<UCustomProceduralMeshComponent*> grassToRemove = WTSR->GetAndRemoveGrassFromMap(oldChunkCoords);  
                 for (UCustomProceduralMeshComponent* GrassActor : grassToRemove) {  
-                   GrassActorsToRemove->Enqueue(GrassActor);
+					if (GrassActor == nullptr) continue;
+					GrassActorsToRemove->Enqueue(GrassActor);
                 }
 
                 TArray<UCustomProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(oldChunkCoords);  
                 for (UCustomProceduralMeshComponent* FlowerActor : flowerToRemove) {  
-                   FlowerActorsToRemove->Enqueue(FlowerActor);  
+					if (FlowerActor == nullptr) continue;
+					FlowerActorsToRemove->Enqueue(FlowerActor);  
                 }
 			} else if (SpawnType == TREES) {
 				CLDR->AddTreeChunkSpawnPosition(newChunkCoords);
@@ -138,6 +140,7 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 
 				TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(oldChunkCoords);
 				for (ATree* TreeActor : treesToRemove) {
+					if (TreeActor == nullptr) continue;
 					TreeActorsToRemove->Enqueue(TreeActor);
 				}
 			} else if (SpawnType == NPCS) {
@@ -147,6 +150,7 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 				// Add spawned NPCs to a remove list to remove over multiple frames
 				TArray<ABasicNPC*> npcsToRemove = WTSR->GetAndRemoveNpcFromMap(oldChunkCoords);
 				for (ABasicNPC* NpcActor : npcsToRemove) {
+					if (NpcActor == nullptr) continue;
 					NpcActorsToRemove->Enqueue(NpcActor);
 				}
 			}
@@ -195,11 +199,13 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 				// so they can be removed over multiple frames
 				TArray<UCustomProceduralMeshComponent*> grassToRemove = WTSR->GetAndRemoveGrassFromMap(oldChunkCoords);
 				for (UCustomProceduralMeshComponent* GrassActor : grassToRemove) {
+					if (GrassActor == nullptr) continue;
 					GrassActorsToRemove->Enqueue(GrassActor);
 				}
 
 				TArray<UCustomProceduralMeshComponent*> flowerToRemove = WTSR->GetAndRemoveFlowerFromMap(oldChunkCoords);
 				for (UCustomProceduralMeshComponent* FlowerActor : flowerToRemove) {
+					if (FlowerActor == nullptr) continue;
 					FlowerActorsToRemove->Enqueue(FlowerActor);
 				}
 			} else if (SpawnType == TREES) {
@@ -208,6 +214,7 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 
 				TArray<ATree*> treesToRemove = WTSR->GetAndRemoveTreeFromMap(oldChunkCoords);
 				for (ATree* TreeActor : treesToRemove) {
+					if (TreeActor == nullptr) continue;
 					TreeActorsToRemove->Enqueue(TreeActor);
 				}
 			} else if (SpawnType == NPCS) {
@@ -217,6 +224,7 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 				// Add spawned NPCs to a remove list to remove over multiple frames
 				TArray<ABasicNPC*> npcsToRemove = WTSR->GetAndRemoveNpcFromMap(oldChunkCoords);
 				for (ABasicNPC* NpcActor : npcsToRemove) {
+					if (NpcActor == nullptr) continue;
 					NpcActorsToRemove->Enqueue(NpcActor);
 				}
 			}

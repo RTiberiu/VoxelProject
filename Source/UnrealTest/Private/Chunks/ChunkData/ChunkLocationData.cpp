@@ -154,6 +154,14 @@ void UChunkLocationData::RemoveNpcChunkSpawnPosition(FIntPoint& chunkPosition) {
 	NpcChunkSemaphore->Release();
 }
 
+
+TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> UChunkLocationData::GetVegetationChunkSpawnPoints() const {  
+   VegetationChunkSemaphore->Acquire();  
+   TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> result = VegetationChunkSpawnPoints;  
+   VegetationChunkSemaphore->Release();  
+   return result;  
+}
+
 void UChunkLocationData::CheckForSpawnPointsInRange() {
 	VegetationChunkSemaphore->Acquire();  
 	
@@ -269,6 +277,13 @@ void UChunkLocationData::CheckAndAddNpcsNotInRange(TQueue<ABasicNPC*>* NpcActors
 	NpcChunkSemaphore->Release();	
 }
 
+TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> UChunkLocationData::GetTreeChunkSpawnPoints() const {
+	TreeChunkSemaphore->Acquire();
+	TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> result = TreeChunkSpawnPoints;
+	TreeChunkSemaphore->Release();
+	return result;
+}
+
 TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions() {
 	TArray<FVoxelObjectLocationData> output;
 	TreesToSpawnSemaphore->Acquire();
@@ -340,7 +355,7 @@ TArray<TPair<FVoxelObjectLocationData, AnimalType>> UChunkLocationData::getNPCSp
 
 TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositionsInRange() {
 	TArray<FVoxelObjectLocationData> output;
-	VegetationChunkSemaphore->Acquire();
+	TreeChunkSemaphore->Acquire();
 
 	for (TPair<FIntPoint, TArray<FVoxelObjectLocationData>*>& pair : treesInRangeSpawnPositions) {
 		if (TArray<FVoxelObjectLocationData>* FoundPtr = treesSpawnPositions.Find(pair.Key)) {
@@ -353,7 +368,7 @@ TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositionsInRang
 		}
 	}
 
-	VegetationChunkSemaphore->Release();
+	TreeChunkSemaphore->Release();
 	return output;
 }
 

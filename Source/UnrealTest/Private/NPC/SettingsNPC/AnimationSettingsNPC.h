@@ -7,6 +7,8 @@
 
 enum class AnimationType {
 	IdleA,
+	IdleB,
+	IdleC,
 	Bounce,
 	Clicked,
 	Death,
@@ -68,6 +70,8 @@ private:
 	// Every other animation path for an NPC should follow this structure 
 	const TArray<AnimationType> AnimationKeys = {
 		AnimationType::IdleA,
+		AnimationType::IdleB,
+		AnimationType::IdleC,
 		AnimationType::Bounce,
 		AnimationType::Clicked,
 		AnimationType::Death,
@@ -86,6 +90,8 @@ private:
 
 	const TArray<FString> AnimationNamesPath = {
 			"/Idle_A.Idle_A'",
+			"/Idle_B.Idle_B'",
+			"/Idle_C.Idle_C'",
 			"/Bounce.Bounce'",
 			"/Clicked.Clicked'",
 			"/Death.Death'",

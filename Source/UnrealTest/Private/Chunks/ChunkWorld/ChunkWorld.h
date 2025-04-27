@@ -128,10 +128,10 @@ private:
 
 	// Grass actors to be destroyed and settings
 	TQueue<UCustomProceduralMeshComponent*> GrassActorsToRemove;
-	const int grassToRemovePerFrame = 3;
+	const int grassToRemovePerFrame = 5;
 
 	TArray<FVoxelObjectLocationData> GrassPositionsToSpawn;
-	const int grassToSpawnPerFrame = 3;
+	const int grassToSpawnPerFrame = 5;
 
 	// Flower actors to be destroyed and settings
 	TQueue<UCustomProceduralMeshComponent*> FlowerActorsToRemove;
@@ -156,6 +156,9 @@ private:
 	int updatePlayerCurrentPositionCounter = 0;
 	int updatePlayerCurrentPositionPerFrames = 60;
 	void updatePlayerCurrentPosition(FVector& PlayerPosition);
+
+	TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> VegetationChunkSpawnPoints;
+	TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> TreeChunkSpawnPoints;
 
 	// Control variable for printing the chunk mesh compute time 
 	int lastLoggedChunkCount = 0;

@@ -168,7 +168,7 @@ void ABasicNPC::InitializeStatsVoxelMeshes() {
 	for (StatsType statsType : StatsTypes) {
 		UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 		Mesh->RegisterComponent();
-		Mesh->SetCastShadow(false);
+		Mesh->SetCastShadow(true);
 
 		UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/VoxelBasicMaterial.VoxelBasicMaterial"));
 		if (Material) {
@@ -239,7 +239,7 @@ void ABasicNPC::InitializeVisionCollisionSphere(const float& radius) {
 
 	// Debugging // TODO Remove this when done debugging 
 	CollisionNpcDetectionSphere->SetHiddenInGame(false);
-	CollisionNpcDetectionSphere->SetVisibility(true); // TODO Set to true for debugging
+	CollisionNpcDetectionSphere->SetVisibility(false); // TODO Set to true for debugging
 	CollisionNpcDetectionSphere->SetLineThickness(2.0f);
 }
 
@@ -311,22 +311,6 @@ void ABasicNPC::ConsumePathAndMoveToLocation(const float& DeltaSeconds) {
 
 	// If the NPC is close enough to the target, consider it reached and move to the next point
 	if (FVector::Dist(newPosition, targetLocation) < 1.0f) {
-		
-		// For tomorrow:
-		// I need to check why their original position is not placed correctly, as this might also have an effect.
-		// If that's not the case, then it's just a communication issue between occupied voxels or not.
-		// Basically, I need to allow the NPC to move to an occupied location IF that location is the goal. 
-		// 
-		// Then, everything else should be straight forward. 
-
-		
-		// $$$ TODO These might not be needed since they actually get removed and added in the IsLocationOccupied() check $$$
-		//// Remove the previous position from the occupied map
-		//CLDR->RemoveOccupiedVoxelPosition(currentLocation);
-
-		//// Add new position as occupied (used for pathfinding collision)
-		//CLDR->AddOccupiedVoxelPosition(targetLocation, this);
-
 		// Make the current location the target location
 		currentLocation = targetLocation;
 
@@ -339,6 +323,17 @@ void ABasicNPC::ConsumePathAndMoveToLocation(const float& DeltaSeconds) {
 			DecisionSys->AnimalAttributes.currentStamina - DecisionSys->AnimalAttributes.staminaDepletionRate,
 			0);
 		UpdateStatsVoxelsMesh(StatsType::Stamina);
+
+		// Small chance to make the NPC look around when they reach a target location 
+		// to make their actions less robotic
+		const float random = FMath::FRand();
+		if (random < lookAroundChance) {
+			isLookingAround = true;
+
+			// Looking left or right
+			if (random < 0.5f) lookingDirection = AnimationType::IdleB;
+			else lookingDirection = AnimationType::IdleC;
+		}
 	}
 }
 
@@ -400,11 +395,6 @@ void ABasicNPC::TimelineProgress(float Value) {
 
 void ABasicNPC::SetPathToTargetAndNotify(Path* InPathToTarget) {
 	pathToTarget = InPathToTarget;
-
-	if (this->GetName().Equals("BasicNPC_1")) {
-		UE_LOG(LogTemp, Warning, TEXT("PATH RECEIVED FOR BasicNPC_1:"));
-		pathToTarget->print();
-	}
 
 	if (pathToTarget) {
 		SetTargetLocation();
@@ -472,20 +462,20 @@ FVector& ABasicNPC::GetCurrentLocation() {
 }
 
 void ABasicNPC::AttackAndReduceHealth(const int& damage, uint8_t attackerEatingSpeed, ABasicNPC* attacker) {
-	UE_LOG(LogTemp, Warning, TEXT("Current HP: %d\n\tAttacked by: %s"),
+	/*UE_LOG(LogTemp, Warning, TEXT("Current HP: %d\n\tAttacked by: %s"),
 		DecisionSys->AnimalAttributes.currentHp,
-		*attacker->GetName());
+		*attacker->GetName());*/
 
 	const int newHp = DecisionSys->AnimalAttributes.currentHp - damage;
 	DecisionSys->AnimalAttributes.currentHp = FMath::Max(newHp, 0);
 	UpdateStatsVoxelsMesh(StatsType::HealthPoints);
 
 	// Log the current HP and the name of the attacker  
-	UE_LOG(LogTemp, Warning, TEXT("\tNew HP: %d"),
-		DecisionSys->AnimalAttributes.currentHp);
+	/*UE_LOG(LogTemp, Warning, TEXT("\tNew HP: %d"),
+		DecisionSys->AnimalAttributes.currentHp);*/
 
 	if (DecisionSys->AnimalAttributes.currentHp == 0) {
-		UE_LOG(LogTemp, Warning, TEXT("Death triggered for NPC: %s"), *GetName());
+		// UE_LOG(LogTemp, Warning, TEXT("Death triggered for NPC: %s"), *GetName());
 		TriggerNpcDeath(attackerEatingSpeed);
 		attacker->TriggerFoodRewardOnKill();
 	}
@@ -643,15 +633,16 @@ void ABasicNPC::RemoveFoodTargetFromMapAndDestroy() {
 	UCustomProceduralMeshComponent* FoodObject = static_cast<UCustomProceduralMeshComponent*>(actionTarget);
 	if (FoodObject->MeshType == MeshType::Flower) {
 		WTSR->RemoveSingleFlowerFromMap(FoodObject);
+		WTSR->FlowerCount--;
 	} else if (FoodObject->MeshType == MeshType::Grass) {
 		WTSR->RemoveSingleGrassFromMap(FoodObject);
+		WTSR->GrassCount--;
 	}
 
 	// Destroy object if it's still valid
 	if (IsValid(FoodObject)) {
 		FoodObject->UnregisterComponent();
 		FoodObject->DestroyComponent();
-		WTSR->GrassCount--;
 	}
 }
 
@@ -914,6 +905,18 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 		return;
 	}
 
+	if (isLookingAround) {
+		PlayAnimation(lookingDirection, false);
+
+		lookingAroundCounter += DeltaSeconds;
+		if (lookingAroundCounter >= lookingAroundThreshold) {
+			isLookingAround = false;
+			lookingAroundCounter = 0;
+		} else {
+			return;
+		}
+	}
+
 	if (pathIsReady) {
 		// Rest if there is not enough stamina to move (not in between locations)
 		bool isResting = ForceRestWhenStaminaIsZero(DeltaSeconds);
@@ -925,15 +928,15 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
 			// Terminate the action early if the frustration reaches the threshold
 			if (FrustrationCounter >= FrustrationThreshold) {
-				UE_LOG(LogTemp, Warning, TEXT("Action discarded due to frustration threshold being reached. %s"), *this->GetName());
+				//UE_LOG(LogTemp, Warning, TEXT("Action discarded due to frustration threshold being reached. %s"), *this->GetName());
 				frutrationTriggered = true;
 				FrustrationCounter = 0.0f;
 
 				// Set the current target, to compare it when a new target is selected
 				LastActionTarget = actionTarget;
 
-				UE_LOG(LogTemp, Warning, TEXT("Path discarded:"));
-				pathToTarget->print();
+				//UE_LOG(LogTemp, Warning, TEXT("Path discarded:"));
+				//pathToTarget->print();
 
 				SignalEndOfAction();
 			}
@@ -968,14 +971,14 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
 		// TODO TESTING (DELETE IF AFTER)
 		if (frutrationTriggered) {
-			if (actionType == ActionType::AttackNpc) {
+			/*if (actionType == ActionType::AttackNpc) {
 				UE_LOG(LogTemp, Warning, TEXT("New action for %s is: AttacKNPC"), *this->GetName());
 			}
 
 			UE_LOG(LogTemp, Warning, TEXT("%s requests a new pathfinding task from %s to %s"),
 				*this->GetName(),
 				*currentLocation.ToString(),
-				*targetLocation.ToString());
+				*targetLocation.ToString());*/
 		}
 
 		
