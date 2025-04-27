@@ -444,15 +444,17 @@ void AChunkWorld::DestroyNpcActors() {
 	int removedNpcCounter = 0;
 	while (!NpcActorsToRemove.IsEmpty() && removedNpcCounter < npcToRemovePerFrame) {
 		ABasicNPC* npcToRemove = nullptr;
-		if (NpcActorsToRemove.Dequeue(npcToRemove) && npcToRemove) {
-			if (IsValid(npcToRemove)) {
-				npcToRemove->Destroy();
-				WTSR->NPCCount--;
-				removedNpcCounter++;
-			} else {
-				NpcActorsToRemove.Enqueue(npcToRemove);
-			}
+		NpcActorsToRemove.Peek(npcToRemove);
+
+		if (!IsValid(npcToRemove)) {
+			NpcActorsToRemove.Dequeue(npcToRemove);
+			continue;
 		}
+
+		NpcActorsToRemove.Enqueue(npcToRemove);
+		npcToRemove->Destroy();
+		WTSR->NPCCount--;
+		removedNpcCounter++;
 	}
 }
 
@@ -747,7 +749,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	// Get an updated vegetation and tree chunk spawn points // TODO Maybe get this only a couple of frames
 	VegetationChunkSpawnPoints = CLDR->GetVegetationChunkSpawnPoints();
 	TreeChunkSpawnPoints = CLDR->GetTreeChunkSpawnPoints();
-
+	NpcChunkSpawnPoints = CLDR->GetNpcChunkSpawnPoints();
+	
 	// Append tree positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositionsInRange();
 	TreePositionsToSpawn.Append(treeSpawnPositions);
@@ -869,11 +872,11 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			break;
 		}
 
-		// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
-		if (WTSR->NPCCount < 0) { // TODO TESTING Spawning just one NPC to test path adjustment
+		bool isNpcStillInRange = NpcChunkSpawnPoints.Contains(NPCPositionsToSpawn[positionIndex].Key.ObjectWorldCoords);
+		if (isNpcStillInRange) {
+			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+			WTSR->NPCCount++;
 		}
-
-		WTSR->NPCCount++;
 
 		// Print the NPC count every 50
 		if (WTSR->NPCCount % 10 == 0) {

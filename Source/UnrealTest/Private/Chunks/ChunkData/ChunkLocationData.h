@@ -61,6 +61,7 @@ public:
     TArray<FVoxelObjectLocationData> getGrassSpawnPosition();
     TArray<FVoxelObjectLocationData> getFlowerSpawnPosition();
     TArray<TPair<FVoxelObjectLocationData, AnimalType>> getNPCSpawnPosition();
+    TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*> GetNpcChunkSpawnPoints() const;
 
     TArray<FVoxelObjectLocationData> getTreeSpawnPositionsInRange();
     TArray<FVoxelObjectLocationData> getGrassSpawnPositionInRange();

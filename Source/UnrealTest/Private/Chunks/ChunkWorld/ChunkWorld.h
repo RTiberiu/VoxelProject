@@ -157,8 +157,11 @@ private:
 	int updatePlayerCurrentPositionPerFrames = 60;
 	void updatePlayerCurrentPosition(FVector& PlayerPosition);
 
+	// These maps will be updated frequently in the Tick() and are used to check
+	// if the object spawning is still in the bounds of the draw distance
 	TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> VegetationChunkSpawnPoints;
 	TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> TreeChunkSpawnPoints;
+	TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*> NpcChunkSpawnPoints;
 
 	// Control variable for printing the chunk mesh compute time 
 	int lastLoggedChunkCount = 0;

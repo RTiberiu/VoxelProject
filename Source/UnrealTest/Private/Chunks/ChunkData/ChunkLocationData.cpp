@@ -284,6 +284,13 @@ TMap<FIntPoint, TArray<FVoxelObjectLocationData>*> UChunkLocationData::GetTreeCh
 	return result;
 }
 
+TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*> UChunkLocationData::GetNpcChunkSpawnPoints() const {
+	NpcChunkSemaphore->Acquire();
+	TMap<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*> result = NpcChunkSpawnPoints;
+	NpcChunkSemaphore->Release();
+	return result;
+}
+
 TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositions() {
 	TArray<FVoxelObjectLocationData> output;
 	TreesToSpawnSemaphore->Acquire();
