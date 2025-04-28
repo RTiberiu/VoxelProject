@@ -19,4 +19,5 @@ struct NpcAction {
 	AnimationType AnimationToRunAtTarget;
 	ActionType ActionType;
 	UObject* Target;
+	bool ShouldNotifyOthers = false; // False by default
 };

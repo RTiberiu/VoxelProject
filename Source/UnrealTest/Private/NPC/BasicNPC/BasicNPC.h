@@ -29,6 +29,13 @@ enum VisionList {
 	FoodSource
 };
 
+enum class NotificationType : uint8{
+	Default		= 1,
+	Notifying	= 2,
+	Accepted	= 3,
+	Discarded	= 4
+};
+
 UCLASS()
 class ABasicNPC : public APawn {
 	GENERATED_BODY()
@@ -100,7 +107,7 @@ private:
 	void spawnNPC();
 
 	// NPC Stats related methods
-	void UpdateStatsVoxelsMesh(StatsType statType);
+	void UpdateStatsVoxelsMesh(StatsType statType, NotificationType notificationType = NotificationType::Default);
 	int GetStatsVoxelNumber(const float& CurrentValue, const float& MaxValue);
 	void InitializeStatsVoxelMeshes();
 	TMap<StatsType, UCustomProceduralMeshComponent*> StatsMeshes;
@@ -265,9 +272,6 @@ private:
 		if (ChooseOptimalAction) {
 			// Return nullptr if the requested N-th target doesn't exist
 			if (IncrementTargetInVisionList >= distanceArray.Num()) {
-				/*UE_LOG(LogTemp, Warning,
-					TEXT("Requested target index %d is out of range (only %d targets). Returning nullptr."),
-					IncrementTargetInVisionList, distanceArray.Num());*/
 				return nullptr;
 			}
 
@@ -275,16 +279,9 @@ private:
 			const int32 TargetIndex = IncrementTargetInVisionList;
 			T* chosen = distanceArray[TargetIndex].Value;
 			float chosenDist = distanceArray[TargetIndex].Key;
-
-			/*UE_LOG(LogTemp, Warning,
-				TEXT("Optimal Target [%d]: %s, Distance: %f"),
-				TargetIndex,
-				*GetLocation(chosen).ToString(),
-				chosenDist);*/
-
 			return chosen;
 		} else {
-			// your existing "fallback" behavior: return the second-closest (if any)
+			// return the second closest
 			if (distanceArray.Num() < 2) {
 				return nullptr;
 			}
@@ -297,6 +294,19 @@ private:
 	TArray<ABasicNPC*> AlliesInRange;
 	TArray<ABasicNPC*> FoodNpcInRange;
 	TArray<UCustomProceduralMeshComponent*> FoodSourceInRange;
+
+	// Notify NPCs in the vision list based on the current action
+	void NotifyNpcsAroundOfEvent(ActionType CurrentAction);
+
+	// Handles the notification, based on the action that triggered the notification
+	void ReceiveNotificationOfEvent(ActionType ActionTriggered);
+	bool InterruptAction = false; // Used to trigger an interrupt when notified
+	bool ShowNotificationStat = false; // Used to show the notification stat
+	float ShowNotificationStatCounter = 0.0f;
+	float ShowNotificationStatThreshold = 0.5f; // For how long to show the notification
+
+	bool AcceptAttackFoodSourceNotification();
+	
 
 protected:
 	// Called when the game starts or when spawned

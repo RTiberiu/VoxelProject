@@ -84,7 +84,7 @@ void ABasicNPC::InitializeBrain(const AnimalType& animalType) {
 	InitializeVisionCollisionSphere(DecisionSys->AnimalAttributes.awarenessRadius);
 }
 
-void ABasicNPC::UpdateStatsVoxelsMesh(StatsType statType) {
+void ABasicNPC::UpdateStatsVoxelsMesh(StatsType statType, NotificationType notificationType) {
 	// Get the current and max value for the stat
 	float CurrentValue{ 0 };
 	float MaxValue{ 0 };
@@ -110,12 +110,7 @@ void ABasicNPC::UpdateStatsVoxelsMesh(StatsType statType) {
 	case StatsType::AlliesInPack:
 		break;
 	case StatsType::Notification:
-		FillnessValue = 4;
-
-		// 1 no notification
-		// 2 notifying
-		// 3 accepted notification
-		// 4 discarded notification
+		FillnessValue = static_cast<uint8_t>(notificationType);
 		break;
 	};
 
@@ -343,6 +338,12 @@ void ABasicNPC::ConsumePathAndMoveToLocation(const float& DeltaSeconds) {
 }
 
 void ABasicNPC::SetTargetLocation() {
+	if (InterruptAction) {
+		InterruptAction = false;
+		SignalEndOfAction();
+		return;
+	}
+
 	if (pathToTarget->path.empty()) {
 		runTargetAnimation = true; // Trigger the final animation
 		return;
@@ -880,6 +881,67 @@ UCustomProceduralMeshComponent* ABasicNPC::GetClosestInList(const TArray<UCustom
 		}, ChooseOptimalAction, IncrementTargetInVisionList);
 }
 
+// Notify NPCs in the vision list based on the current action 
+// (alert allies of enemies, food, or trade)
+void ABasicNPC::NotifyNpcsAroundOfEvent(ActionType CurrentAction) {
+	UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Notifying);
+	ShowNotificationStat = true;
+
+	for (ABasicNPC* npc : AlliesInRange) {
+		if (IsValid(npc)) {
+			npc->ReceiveNotificationOfEvent(CurrentAction);
+		}
+	}
+}
+
+void ABasicNPC::ReceiveNotificationOfEvent(ActionType ActionTriggered) {
+	ShowNotificationStat = true;
+	if (actionType == ActionTriggered) {
+		UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Discarded);
+		return;
+	}
+
+	switch(ActionTriggered) {
+	case ActionType::Flee:
+		if (FMath::FRand() < DecisionSys->AnimalAttributes.survivalInstinct) {
+			InterruptAction = true;
+			UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Accepted);
+			return;
+		}
+
+		break;
+	case ActionType::AttackNpc:
+		if (FMath::FRand() < DecisionSys->AnimalAttributes.chaseDesire) {
+			InterruptAction = true;
+			UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Accepted);
+			return;
+		}
+		break;
+	case ActionType::AttackFoodSource:
+		if (AcceptAttackFoodSourceNotification()) {
+			InterruptAction = true;
+			UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Accepted);
+			return;
+		}
+		break;
+	case ActionType::TradeFood:
+		break;
+	}
+
+	UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Discarded);
+}
+
+bool ABasicNPC::AcceptAttackFoodSourceNotification() {
+	// Don't give up chasing an npc for a basic food source
+	if (actionType == ActionType::AttackNpc) {
+		return false;
+	}
+
+	const bool isHungry = DecisionSys->AnimalAttributes.currentHunger > 50;
+	const bool wantsToHoard = FMath::FRand() < DecisionSys->AnimalAttributes.desireToHoardFood;
+	return isHungry || wantsToHoard;
+}
+
 void ABasicNPC::BeginPlay() {
 	Super::BeginPlay();
 
@@ -919,6 +981,16 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 			lookingAroundCounter = 0;
 		} else {
 			return;
+		}
+	}
+
+	// Update the voxel notification stat to default after a certain time
+	if (ShowNotificationStat) {
+		ShowNotificationStatCounter += DeltaSeconds;
+		if (ShowNotificationStatCounter >= ShowNotificationStatThreshold) {
+			ShowNotificationStatCounter = 0.0f;
+			ShowNotificationStat = false;
+			UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Default);
 		}
 	}
 
@@ -965,6 +1037,11 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 		animationToRunAtTarget = NextAction.AnimationToRunAtTarget;
 		actionType = NextAction.ActionType;
 		actionTarget = NextAction.Target;
+
+		// Notify NPCs in the vision list 
+		if (NextAction.ShouldNotifyOthers) {
+			NotifyNpcsAroundOfEvent(actionType);
+		}
 
 		// Increment frustration counter, so that a new target in the vision list can get selected
 		// if the same target keeps getting chosen

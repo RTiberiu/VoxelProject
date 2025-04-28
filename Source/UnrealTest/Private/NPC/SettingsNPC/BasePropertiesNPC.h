@@ -12,7 +12,7 @@ struct BasicNpcAttributes {
 	uint8_t currentStamina;
 	uint8_t maxStamina;
 	uint8_t staminaDepletionRate;
-	uint8_t staminaRecoveryRate;	
+	uint8_t staminaRecoveryRate;
 	uint8_t currentHunger;			// The current hunger value
 	uint8_t maxHunger;				// The total hunger bar
 	uint8_t hungerDepletionRate;
@@ -35,9 +35,9 @@ struct BasicNpcAttributes {
 	float desireToHoardFood;		// (0 - 1) - How much should the NPC want to keep collecting food after the total hunger is satisfied
 
 	float chaseDesire;			// How willing is the animal to chase other targets (animal food sources)
-	
+
 	float awarenessRadius;		// The sphere radius that determines which NPCs or objects are being tracked by the NPC
-	
+
 	uint16_t fleeingRadius;			// (60 * N) - The radius around the NPC from which to pick a point to run towards when being chased. It has to be a multiply of the UnrealScale chosen
 
 	float reactionSpeed;			// How fast should the NPC react to the environment. This determines how quickly the should intrerupt their current action and replace it with another (for example fleeing from an enemy). In reality, this is the time in seconds the NPC will make decisions
@@ -51,6 +51,9 @@ struct BasicNpcAttributes {
 	uint8_t foodOfferAmount; // (10-50) How much food should it offer to an NPC to convince to become ally.
 
 	uint16_t roamRadius; // (60 * N) - How far away should the NPC roam from its current location. It has to be a multiply of the UnrealScale chosen
+
+	float communicationRadius; // Sphere radius to alert other NPCs of an event
+	float communicationDesire; // (0-1) - How willing is the animal to communicate with other NPCs
 };
 
 // Values that change the BasicNpcAttributes based on the outcome of certain actions
@@ -102,6 +105,8 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	1.0f,	// survivalInstinct
 	30,		// foodOfferAmount
 	600,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes TigerMemoryAttributes = {
@@ -146,6 +151,8 @@ const BasicNpcAttributes TapirBasicAttributes = {
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes TapirMemoryAttributes = {
@@ -190,6 +197,8 @@ const BasicNpcAttributes SlothBasicAttributes = {
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes SlothMemoryAttributes = {
@@ -235,6 +244,8 @@ const BasicNpcAttributes CobraBasicAttributes = {
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes CobraMemoryAttributes = {
@@ -280,6 +291,8 @@ const BasicNpcAttributes BatBasicAttributes = {
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes BatMemoryAttributes = {
@@ -325,6 +338,8 @@ const BasicNpcAttributes PeacockBasicAttributes = {
 	1.0f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes PeacockMemoryAttributes = {
@@ -370,6 +385,8 @@ const BasicNpcAttributes GorillaBasicAttributes = {
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes GorillaMemoryAttributes = {
@@ -415,6 +432,8 @@ const BasicNpcAttributes PandaBasicAttributes = {
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes PandaMemoryAttributes = {
@@ -460,6 +479,8 @@ const BasicNpcAttributes RedPandaBasicAttributes = {
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
+	700.0f, // communicationRadius
+	0.5f,   // communicationDesire
 };
 
 const MemoryNpcAttributes RedPandaMemoryAttributes = {
