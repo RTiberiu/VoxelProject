@@ -45,7 +45,6 @@ private:
 	const uint8_t StatsVoxelDimensions{ 3 };
 	const uint8_t VoxelCubeStart{ 3 };
 
-
 	void createStatsBinarySolidColumnsYXZ();
 
 	TArray<FVector> getUniqueStatsPoints();

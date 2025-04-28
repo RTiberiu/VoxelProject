@@ -88,6 +88,7 @@ void ABasicNPC::UpdateStatsVoxelsMesh(StatsType statType) {
 	// Get the current and max value for the stat
 	float CurrentValue{ 0 };
 	float MaxValue{ 0 };
+	int FillnessValue{ 0 };
 
 	switch (statType) {
 	case StatsType::Stamina:
@@ -108,10 +109,20 @@ void ABasicNPC::UpdateStatsVoxelsMesh(StatsType statType) {
 		break;
 	case StatsType::AlliesInPack:
 		break;
+	case StatsType::Notification:
+		FillnessValue = 4;
+
+		// 1 no notification
+		// 2 notifying
+		// 3 accepted notification
+		// 4 discarded notification
+		break;
 	};
 
-	// TODO Calculate the actual fillness value
-	const int FillnessValue = GetStatsVoxelNumber(CurrentValue, MaxValue);
+	// Only get the fillness values for the other stat types
+	if (statType != StatsType::Notification) {
+		FillnessValue = GetStatsVoxelNumber(CurrentValue, MaxValue);
+	}
 
 	// Get the correct stat mesh and update it 
 	UCustomProceduralMeshComponent* Mesh = StatsMeshes[statType];
@@ -879,7 +890,7 @@ void ABasicNPC::BeginPlay() {
 		AIController->Possess(this);
 	}
 
-	PlayAnimation(AnimationType::IdleA);
+	PlayAnimation(AnimationType::IdleA); 
 }
 
 void ABasicNPC::Tick(float DeltaSeconds) {

@@ -24,6 +24,10 @@ const TArray<StatsType>& UStatsVoxelsMeshNPC::GetStatsTypes() {
 	return StatTypes;
 }
 
+const TMap<int, TArray<FColor>>& UStatsVoxelsMeshNPC::GetStatsColors() {
+	return StatsColors;
+}
+
 const FVector& UStatsVoxelsMeshNPC::GetStatsVoxelOffset(StatsType statsType) {
 	return StatsVoxelOffsets[statsType];
 }

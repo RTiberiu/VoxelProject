@@ -42,6 +42,9 @@ private:
 	FORCENOINLINE NpcAction ShouldRoam();
 	FORCENOINLINE NpcAction ShouldRelax();
 
+	// Actions helpers 
+	void NotifyNpcsAroundOfEvent(ActionType CurrentAction);
+
 	// Used by ShouldRoam and ShouldFlee to select a random location to move
 	FVector GetRandomLocationAround(const FVector& Origin, float Radius) const;
 

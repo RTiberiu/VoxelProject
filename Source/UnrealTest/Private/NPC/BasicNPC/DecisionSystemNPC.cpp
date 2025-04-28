@@ -25,12 +25,12 @@ NpcAction UDecisionSystemNPC::GetAction(bool ChooseOptimalAction, const int& Inc
 	const float RandomNo = FMath::FRand();
 
 	return FirstValidAction({
-		ShouldFlee(RandomNo), // Check if NPC should flee from enemies if they exist
-		ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
-		ShouldAttackNpc(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should chase for food 
-		ShouldEatBasicFoodSource(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should gather food 
+		//ShouldFlee(RandomNo), // Check if NPC should flee from enemies if they exist
+		//ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
+		//ShouldAttackNpc(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should chase for food 
+		//ShouldEatBasicFoodSource(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should gather food 
 		// ShouldAttemptFoodTrade(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should share food for allies
-		ShouldRoam(), // The NPC should roam in a random direction
+		//ShouldRoam(), // The NPC should roam in a random direction
 		ShouldRelax() // For testing only
 		});
 }
@@ -203,6 +203,67 @@ NpcAction UDecisionSystemNPC::ShouldRelax() {
 
 	FVector& CurrentLoc = Owner->GetCurrentLocation();
 	return NpcAction(CurrentLoc, AnimationType::Sit, ActionType::RestAfterBasicFood, nullptr);
+}
+
+// Notify NPCs in the vision list based on the current action 
+// (alert allies of enemies, food, or trade)
+void UDecisionSystemNPC::NotifyNpcsAroundOfEvent(ActionType CurrentAction) {
+
+	// TODO 
+	// Check if the NPC should notify those around him
+	// and embed that into the NpcAction
+	// 
+	// This allows the NPC itself to notify other NPCs 
+	// directly from the private vision lists. 
+	// 
+	// Things to add to NpcAction:
+	// bool ShouldNotifyOthers
+	// 
+	// Inside of BasicNPC, add another switch
+	// where depending on the ActionType, 
+	// it will select the correct vision list and notify
+	// all NPCs in a loop.
+	// 
+	// What happens when a notification is received?
+	// 
+	// The NPC receiving the notification should assess if 
+	// the notification is important enough to interrupt the current
+	// action or not. This is done based on their attributes. 
+	// 
+	// Interrupt the current action ONLY at a target location (not in between)
+	// 
+	// This will automatically request a new action by the DecisionSystem
+	// 
+	// How to display that an NPC is sending a notification, is notified, or that
+	// they interrupted their action?
+	// 
+	// Options:
+	// - Either play a sound at that location (might be annoying when too many do it at the same time)
+	// - Show it in the attributes voxels: 
+	//			- Turn the voxel purple for notifying
+	//			- green for accepting (interrupting the action)
+	//			- red for discarding the notification
+	// I think option 2 is much better 
+	// 
+	// This means I can make a full pyramid then, adding just one more voxel with these 3 color options
+	// 
+	//
+	//
+	//
+
+	switch (CurrentAction) {
+	case ActionType::Flee:
+		
+
+		break;
+	case ActionType::AttackNpc:
+		break;
+	case ActionType::AttackFoodSource:
+		break;
+	case ActionType::TradeFood:
+		break;
+	}
+
 }
 
 FVector UDecisionSystemNPC::GetRandomLocationAround(const FVector& Origin, float Radius) const {

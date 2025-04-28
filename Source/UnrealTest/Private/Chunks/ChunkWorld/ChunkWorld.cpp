@@ -497,19 +497,19 @@ void AChunkWorld::BeginPlay() {
 	AnimalType animal10 = AnimalType::Peacock;
 	AnimalType animal11 = AnimalType::Peacock;
 
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));
-	/* TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position6, FIntPoint(0, 1)), animal6));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position7, FIntPoint(0, 1)), animal7));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position8, FIntPoint(0, 1)), animal8));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position9, FIntPoint(0, 1)), animal9));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position10, FIntPoint(0, 1)), animal10));
-	 TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position11, FIntPoint(0, 1)), animal11));*/
+	// TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));
+	//TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));
+   //  TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
+   /* TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position6, FIntPoint(0, 1)), animal6));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position7, FIntPoint(0, 1)), animal7));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position8, FIntPoint(0, 1)), animal8));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position9, FIntPoint(0, 1)), animal9));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position10, FIntPoint(0, 1)), animal10));
+	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position11, FIntPoint(0, 1)), animal11));*/
 
-	 // --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
+	// --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
 
 	spawnInitialWorld();
 
@@ -753,14 +753,14 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		CLDR->CheckAndAddTreesNotInRange(&TreeActorsToRemove);
 		CLDR->CheckAndAddNpcsNotInRange(&NpcActorsToRemove);
 		FramesCounterCheckSpawnedPointsInRange = 0;
-		
+
 		// Get an updated vegetation and tree chunk spawn points
 		VegetationChunkSpawnPoints = CLDR->GetVegetationChunkSpawnPoints();
 		TreeChunkSpawnPoints = CLDR->GetTreeChunkSpawnPoints();
 		NpcChunkSpawnPoints = CLDR->GetNpcChunkSpawnPoints();
 	}
 	FramesCounterCheckSpawnedPointsInRange++;
-	
+
 	// Append tree positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositionsInRange();
 	TreePositionsToSpawn.Append(treeSpawnPositions);
@@ -813,7 +813,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 			SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
 			WTSR->GrassCount++;
 		}
-		
+
 		// Print the grass count every 50
 		/*if (WTSR->GrassCount % 1000 == 0) {
 			UE_LOG(LogTemp, Log, TEXT("Grass count: %d"), WTSR->GrassCount);
@@ -852,14 +852,14 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 
 	// TESTING ANIMAL ACTIONS (DELETE AFTER)
-	//if (WTSR->NPCCount < TestingPositions.Num()) {
-	//	int counterTest = 0;
-	//	while (counterTest < TestingPositions.Num()) {
-	//		SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
-	//		counterTest++;
-	//		WTSR->NPCCount++;
-	//	}
-	//}
+	if (WTSR->NPCCount < TestingPositions.Num()) {
+		int counterTest = 0;
+		while (counterTest < TestingPositions.Num()) {
+			SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
+			counterTest++;
+			WTSR->NPCCount++;
+		}
+	}
 
 	// Append NPC positions waiting to be spawned
 	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPositionInRange();
@@ -874,13 +874,13 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 		bool isNpcStillInRange = NpcChunkSpawnPoints.Contains(NPCPositionsToSpawn[positionIndex].Key.ObjectWorldCoords);
 		if (isNpcStillInRange) {
-			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition);
+			// SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition); // TODO Uncomment after testing
 			WTSR->NPCCount++;
 		}
 
 		// Print the NPC count every 50
 		if (WTSR->NPCCount % 10 == 0) {
-			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount);
+			// UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount); // TODO Uncomment after testing
 		}
 
 		NPCPositionsToSpawn.RemoveAt(positionIndex);
