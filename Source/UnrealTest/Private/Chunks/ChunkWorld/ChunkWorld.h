@@ -74,6 +74,8 @@ private:
 	FThreadSafeBool isInitialWorldGenerated;
 
 	void spawnInitialWorld();
+	void AddTestingConfigurations();
+	bool UsingTestConfiguration = false;
 
 	// Generating all the vegetation meshes variations and adding them to a cached list
 	void generateTreeMeshVariations();
@@ -105,8 +107,8 @@ private:
 	void SpawnTrees(FVoxelObjectLocationData LocationData, FVector PlayerPosition);
 	TSubclassOf<AActor> Tree;
 
-	void SpawnGrass(FVoxelObjectLocationData LocationData, FVector PlayerPosition);
-	void SpawnFlower(FVoxelObjectLocationData LocationData, FVector PlayerPosition);
+	void SpawnGrass(FVoxelObjectLocationData LocationData);
+	void SpawnFlower(FVoxelObjectLocationData LocationData);
 	void SpawnNPC(TPair<FVoxelObjectLocationData, AnimalType> LocationAndType, FVector PlayerPosition);
 
 	// NPC Settings
@@ -118,6 +120,12 @@ private:
 	void DestroyGrassActors();
 	void DestroyFlowerActors();
 	void DestroyNpcActors();
+
+	// Helper functions to handle spawn positions and spawn objects over multiple frames (used in Tick())
+	void SpawnMultipleGrassObjects();
+	void SpawnMultipleFlowerObjects();
+	void SpawnMultipleNpcObjects();
+	void SpawnMultipleTreeObjects(const FVector& PlayerPosition);
 
 	// Tree actors to be destroyed and settings
 	TQueue<ATree*> TreeActorsToRemove;
@@ -165,11 +173,6 @@ private:
 
 	// Control variable for printing the chunk mesh compute time 
 	int lastLoggedChunkCount = 0;
-
-
-	// TESTING ACTIONS (DELETE AFTER)
-	// This array holds some positions for the animals, testing their spawning position
-	TArray<TPair<FVoxelObjectLocationData, AnimalType>> TestingPositions;
 
 protected:
 	// Called when the game starts or when spawned

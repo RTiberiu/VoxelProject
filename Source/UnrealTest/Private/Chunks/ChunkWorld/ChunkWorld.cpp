@@ -11,7 +11,8 @@
 #include "..\..\NPC\SettingsNPC\RelationshipSettingsNPC.h"
 #include <Kismet/GameplayStatics.h>
 
-#include "ProceduralMeshComponent.h" // MAYBE
+#include "ProceduralMeshComponent.h"
+#include "..\..\Utils\TestingConfigurations\TestingConfigurations.h"
 
 #include <set>
 
@@ -124,6 +125,18 @@ void AChunkWorld::spawnInitialWorld() {
 	}
 }
 
+void AChunkWorld::AddTestingConfigurations() {
+	UsingTestConfiguration = true;
+
+	const FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+
+	const auto& NotificationPositions = TestingConfig::GetNotificationTest();
+	for (int Index = WTSR->NPCCount; Index < NotificationPositions.Num(); Index++) {
+		SpawnNPC(NotificationPositions[Index], PlayerPosition);
+		WTSR->NPCCount++;
+	}
+}
+
 void AChunkWorld::generateTreeMeshVariations() {
 	Time start = std::chrono::high_resolution_clock::now();
 
@@ -233,7 +246,7 @@ void AChunkWorld::SpawnTrees(FVoxelObjectLocationData LocationData, FVector Play
 	}
 }
 
-void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
+void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData) {
 	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
 	Mesh->SetCastShadow(WTSR->GrassShadow);
@@ -266,7 +279,7 @@ void AChunkWorld::SpawnGrass(FVoxelObjectLocationData LocationData, FVector Play
 }
 
 // TODO Combine spawngrass and spawnflower into one method
-void AChunkWorld::SpawnFlower(FVoxelObjectLocationData LocationData, FVector PlayerPosition) {
+void AChunkWorld::SpawnFlower(FVoxelObjectLocationData LocationData) {
 	UCustomProceduralMeshComponent* Mesh = NewObject<UCustomProceduralMeshComponent>(this);
 	Mesh->RegisterComponent();
 	Mesh->SetCastShadow(WTSR->FlowerShadow);
@@ -458,6 +471,122 @@ void AChunkWorld::DestroyNpcActors() {
 	}
 }
 
+void AChunkWorld::SpawnMultipleGrassObjects() {
+	// Append grass positions waiting to be spawned
+	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPositionInRange();
+	GrassPositionsToSpawn.Append(grassSpawnPositions);
+
+	// Spawn a few trees in the current frame
+	int spawnedGrassCounter = 0;
+	for (int32 positionIndex = 0; positionIndex < GrassPositionsToSpawn.Num();) {
+		if (spawnedGrassCounter >= grassToSpawnPerFrame) {
+			break;
+		}
+
+		// Check if the grass position is still in range, otherwise discard it
+		bool isGrassStillInRange = VegetationChunkSpawnPoints.Contains(GrassPositionsToSpawn[positionIndex].ObjectWorldCoords);
+		if (isGrassStillInRange) {
+			// SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
+			WTSR->GrassCount++;
+		}
+
+		// Print the grass count every 50
+		/*if (WTSR->GrassCount % 1000 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("Grass count: %d"), WTSR->GrassCount);
+		}*/
+
+		GrassPositionsToSpawn.RemoveAt(positionIndex);
+		spawnedGrassCounter++;
+	}
+}
+
+void AChunkWorld::SpawnMultipleFlowerObjects() {
+	// Append flower positions waiting to be spawned
+	TArray<FVoxelObjectLocationData> flowerSpawnPositions = CLDR->getFlowerSpawnPositionInRange();
+	FlowerPositionsToSpawn.Append(flowerSpawnPositions);
+
+	// Spawn a few flowers in the current frame
+	int spawnedFlowerCounter = 0;
+	for (int32 positionIndex = 0; positionIndex < FlowerPositionsToSpawn.Num();) {
+		if (spawnedFlowerCounter >= flowerToSpawnPerFrame) {
+			break;
+		}
+
+		// Check if the flower position is still in range, otherwise discard it
+		bool isFlowerStillInRange = VegetationChunkSpawnPoints.Contains(FlowerPositionsToSpawn[positionIndex].ObjectWorldCoords);
+		if (isFlowerStillInRange) {
+			// SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
+			WTSR->FlowerCount++;
+		}
+
+		// Print the flower count every 50
+		/*if (WTSR->FlowerCount % 50 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("Flower count: %d"), WTSR->FlowerCount);
+		}*/
+
+		FlowerPositionsToSpawn.RemoveAt(positionIndex);
+		spawnedFlowerCounter++;
+	}
+
+}
+
+void AChunkWorld::SpawnMultipleNpcObjects() {
+	// Append NPC positions waiting to be spawned
+	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPositionInRange();
+	NPCPositionsToSpawn.Append(NPCSpawnPositions);
+
+	// Spawn a few flowers in the current frame
+	int spawnedNPCCounter = 0;
+	for (int32 positionIndex = 0; positionIndex < NPCPositionsToSpawn.Num();) {
+		if (spawnedNPCCounter >= npcToSpawnPerFrame) {
+			break;
+		}
+
+		bool isNpcStillInRange = NpcChunkSpawnPoints.Contains(NPCPositionsToSpawn[positionIndex].Key.ObjectWorldCoords);
+		if (isNpcStillInRange) {
+			//SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition); // TODO Uncomment after testing
+			WTSR->NPCCount++;
+		}
+
+		// Print the NPC count every 50
+		if (WTSR->NPCCount % 10 == 0) {
+			// UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount); // TODO Uncomment after testing
+		}
+
+		NPCPositionsToSpawn.RemoveAt(positionIndex);
+		spawnedNPCCounter++;
+	}
+}
+
+void AChunkWorld::SpawnMultipleTreeObjects(const FVector& PlayerPosition) {
+	// Append tree positions waiting to be spawned
+	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositionsInRange();
+	TreePositionsToSpawn.Append(treeSpawnPositions);
+
+	int spawnedTreeCounter = 0;
+	for (int32 positionIndex = 0; positionIndex < TreePositionsToSpawn.Num();) {
+		if (spawnedTreeCounter >= treesToSpawnPerFrame) {
+			spawnedTreesThisFrame = true;
+			break;
+		}
+
+		// Check if the tree position is still in range, otherwise discard it
+		bool isTreeStillInRange = TreeChunkSpawnPoints.Contains(TreePositionsToSpawn[positionIndex].ObjectWorldCoords);
+		if (isTreeStillInRange) {
+			SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
+			WTSR->TreeCount++;
+		}
+
+		// Print the tree count every 50
+		if (WTSR->TreeCount % 1000 == 0) {
+			UE_LOG(LogTemp, Log, TEXT("Tree count: %d"), WTSR->TreeCount);
+		}
+
+		TreePositionsToSpawn.RemoveAt(positionIndex);
+		spawnedTreeCounter++;
+	}
+}
+
 // Update the player's current position that will be used for pathfinding
 void AChunkWorld::updatePlayerCurrentPosition(FVector& PlayerPosition) {
 	if (updatePlayerCurrentPositionCounter >= updatePlayerCurrentPositionPerFrames) {
@@ -471,45 +600,6 @@ void AChunkWorld::updatePlayerCurrentPosition(FVector& PlayerPosition) {
 // Called when the game starts or when spawned
 void AChunkWorld::BeginPlay() {
 	Super::BeginPlay();
-
-	// --- ADDING TESTING SPAWN POSITIONS FOR THE ANIMALS (DELETE AFTER) ---
-	FVector position1 = FVector(560, 440, 6130);
-	FVector position2 = FVector(560, 560, 6130);
-	FVector position3 = FVector(560, 930, 6070);
-	FVector position4 = FVector(560, 210, 6130);
-	FVector position5 = FVector(740, 920, 6130);
-	FVector position6 = FVector(560, 1220, 6130);
-	FVector position7 = FVector(1340, 210, 6430);
-	FVector position8 = FVector(970, -30, 6130);
-	FVector position9 = FVector(970, 330, 6130);
-	FVector position10 = FVector(1100, 270, 6130);
-	FVector position11 = FVector(1160, 270, 6190);
-
-	AnimalType animal1 = AnimalType::Tiger;
-	AnimalType animal2 = AnimalType::Tiger;
-	AnimalType animal3 = AnimalType::Peacock;
-	AnimalType animal4 = AnimalType::Tiger;
-	AnimalType animal5 = AnimalType::Peacock;
-	AnimalType animal6 = AnimalType::Tiger;
-	AnimalType animal7 = AnimalType::Peacock;
-	AnimalType animal8 = AnimalType::Tiger;
-	AnimalType animal9 = AnimalType::Tiger;
-	AnimalType animal10 = AnimalType::Peacock;
-	AnimalType animal11 = AnimalType::Peacock;
-
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));
-	// TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));
-   //  TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
-   //TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
-	//TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position6, FIntPoint(0, 1)), animal6));
-	//TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position7, FIntPoint(0, 1)), animal7));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position8, FIntPoint(0, 1)), animal8));
-	//TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position9, FIntPoint(0, 1)), animal9));
-	//TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position10, FIntPoint(0, 1)), animal10));
-	//TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position11, FIntPoint(0, 1)), animal11));
-
-	// --- END OF TESTING SPAWN POSITION FOR THE ANIMALS ---
 
 	spawnInitialWorld();
 
@@ -761,34 +851,8 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	}
 	FramesCounterCheckSpawnedPointsInRange++;
 
-	// Append tree positions waiting to be spawned
-	TArray<FVoxelObjectLocationData> treeSpawnPositions = CLDR->getTreeSpawnPositionsInRange();
-	TreePositionsToSpawn.Append(treeSpawnPositions);
-
-	// Spawn a few trees in the current frame
-	int spawnedTreeCounter = 0;
-	for (int32 positionIndex = 0; positionIndex < TreePositionsToSpawn.Num();) {
-		if (spawnedTreeCounter >= treesToSpawnPerFrame) {
-			break;
-			spawnedTreesThisFrame = true;
-		}
-
-		// Check if the tree position is still in range, otherwise discard it
-		bool isTreeStillInRange = TreeChunkSpawnPoints.Contains(TreePositionsToSpawn[positionIndex].ObjectWorldCoords);
-		if (isTreeStillInRange) {
-			SpawnTrees(TreePositionsToSpawn[positionIndex], PlayerPosition);
-			WTSR->TreeCount++;
-		}
-
-		// Print the tree count every 50
-		if (WTSR->TreeCount % 1000 == 0) {
-			UE_LOG(LogTemp, Log, TEXT("Tree count: %d"), WTSR->TreeCount);
-		}
-
-		TreePositionsToSpawn.RemoveAt(positionIndex);
-		spawnedTreeCounter++;
-	}
-
+	// Spawn and remove a few Tree objects
+	SpawnMultipleTreeObjects(PlayerPosition);
 	DestroyTreeActors();
 
 	// Reduce computing per frame by returning early if a tree already got spawned this frame
@@ -796,98 +860,15 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		return;
 	}
 
-	// Append grass positions waiting to be spawned
-	TArray<FVoxelObjectLocationData> grassSpawnPositions = CLDR->getGrassSpawnPositionInRange();
-	GrassPositionsToSpawn.Append(grassSpawnPositions);
+	AddTestingConfigurations(); // Uncomment to use the testing configurations instead
 
-	// Spawn a few trees in the current frame
-	int spawnedGrassCounter = 0;
-	for (int32 positionIndex = 0; positionIndex < GrassPositionsToSpawn.Num();) {
-		if (spawnedGrassCounter >= grassToSpawnPerFrame) {
-			break;
-		}
-
-		// Check if the grass position is still in range, otherwise discard it
-		bool isGrassStillInRange = VegetationChunkSpawnPoints.Contains(GrassPositionsToSpawn[positionIndex].ObjectWorldCoords);
-		if (isGrassStillInRange) {
-			// SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
-			WTSR->GrassCount++;
-		}
-
-		// Print the grass count every 50
-		/*if (WTSR->GrassCount % 1000 == 0) {
-			UE_LOG(LogTemp, Log, TEXT("Grass count: %d"), WTSR->GrassCount);
-		}*/
-
-		GrassPositionsToSpawn.RemoveAt(positionIndex);
-		spawnedGrassCounter++;
+	if (!UsingTestConfiguration) {
+		SpawnMultipleGrassObjects();
+		SpawnMultipleFlowerObjects();
+		SpawnMultipleNpcObjects();
 	}
 
-	// Append flower positions waiting to be spawned
-	TArray<FVoxelObjectLocationData> flowerSpawnPositions = CLDR->getFlowerSpawnPositionInRange();
-	FlowerPositionsToSpawn.Append(flowerSpawnPositions);
-
-	// Spawn a few flowers in the current frame
-	int spawnedFlowerCounter = 0;
-	for (int32 positionIndex = 0; positionIndex < FlowerPositionsToSpawn.Num();) {
-		if (spawnedFlowerCounter >= flowerToSpawnPerFrame) {
-			break;
-		}
-
-		// Check if the flower position is still in range, otherwise discard it
-		bool isFlowerStillInRange = VegetationChunkSpawnPoints.Contains(FlowerPositionsToSpawn[positionIndex].ObjectWorldCoords);
-		if (isFlowerStillInRange) {
-			// SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
-			WTSR->FlowerCount++;
-		}
-
-		// Print the flower count every 50
-		/*if (WTSR->FlowerCount % 50 == 0) {
-			UE_LOG(LogTemp, Log, TEXT("Flower count: %d"), WTSR->FlowerCount);
-		}*/
-
-		FlowerPositionsToSpawn.RemoveAt(positionIndex);
-		spawnedFlowerCounter++;
-	}
-
-
-	// TESTING ANIMAL ACTIONS (DELETE AFTER)
-	if (WTSR->NPCCount < TestingPositions.Num()) {
-		int counterTest = 0;
-		while (counterTest < TestingPositions.Num()) {
-			SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
-			counterTest++;
-			WTSR->NPCCount++;
-		}
-	}
-
-	// Append NPC positions waiting to be spawned
-	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPositionInRange();
-	NPCPositionsToSpawn.Append(NPCSpawnPositions);
-
-	// Spawn a few flowers in the current frame
-	int spawnedNPCCounter = 0;
-	for (int32 positionIndex = 0; positionIndex < NPCPositionsToSpawn.Num();) {
-		if (spawnedNPCCounter >= npcToSpawnPerFrame) {
-			break;
-		}
-
-		bool isNpcStillInRange = NpcChunkSpawnPoints.Contains(NPCPositionsToSpawn[positionIndex].Key.ObjectWorldCoords);
-		if (isNpcStillInRange) {
-			//SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition); // TODO Uncomment after testing
-			WTSR->NPCCount++;
-		}
-
-		// Print the NPC count every 50
-		if (WTSR->NPCCount % 10 == 0) {
-			// UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount); // TODO Uncomment after testing
-		}
-
-		NPCPositionsToSpawn.RemoveAt(positionIndex);
-		spawnedNPCCounter++;
-	}
-
-	// Destroy a few vegetation aactors
+	// Destroy a few vegetation actors and NPCs
 	DestroyGrassActors();
 	DestroyFlowerActors();
 	DestroyNpcActors();
