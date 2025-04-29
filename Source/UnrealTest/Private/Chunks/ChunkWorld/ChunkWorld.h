@@ -17,6 +17,7 @@
 #include "Pathfinding/PathfindingThreadPool/PathfindingThreadManager.h"
 
 #include "..\..\Utils\CustomMesh\CustomProceduralMeshComponent.h"
+#include "..\..\Utils\TestingConfigurations\TestingConfigurations.h"
 
 #include <chrono>
 #include "CoreMinimal.h"
@@ -74,8 +75,9 @@ private:
 	FThreadSafeBool isInitialWorldGenerated;
 
 	void spawnInitialWorld();
-	void AddTestingConfigurations();
+	void UseTestingConfigurations(ConfigToRun configToRun);
 	bool UsingTestConfiguration = false;
+	bool SpawnedConfigOnce = false;
 
 	// Generating all the vegetation meshes variations and adding them to a cached list
 	void generateTreeMeshVariations();
@@ -126,6 +128,9 @@ private:
 	void SpawnMultipleFlowerObjects();
 	void SpawnMultipleNpcObjects();
 	void SpawnMultipleTreeObjects(const FVector& PlayerPosition);
+
+	void UpdateChunksCollision();
+	void UpdateTreesCollision();
 
 	// Tree actors to be destroyed and settings
 	TQueue<ATree*> TreeActorsToRemove;

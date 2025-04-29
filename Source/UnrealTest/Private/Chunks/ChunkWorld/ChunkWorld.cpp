@@ -12,7 +12,6 @@
 #include <Kismet/GameplayStatics.h>
 
 #include "ProceduralMeshComponent.h"
-#include "..\..\Utils\TestingConfigurations\TestingConfigurations.h"
 
 #include <set>
 
@@ -125,16 +124,53 @@ void AChunkWorld::spawnInitialWorld() {
 	}
 }
 
-void AChunkWorld::AddTestingConfigurations() {
+void AChunkWorld::UseTestingConfigurations(ConfigToRun configToRun) {
 	UsingTestConfiguration = true;
+
+	if (SpawnedConfigOnce) {
+		return;
+	}
 
 	const FVector PlayerPosition = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 
-	const auto& NotificationPositions = TestingConfig::GetNotificationTest();
-	for (int Index = WTSR->NPCCount; Index < NotificationPositions.Num(); Index++) {
-		SpawnNPC(NotificationPositions[Index], PlayerPosition);
+	TestConfigParameters ConfigData;
+
+	switch (configToRun) {
+	case NotificationAttackNpc:
+		ConfigData = TestingConfig::GetNotificationAttackNpcTest();
+		break;
+
+	case NotificationAttackFoodSource:
+		ConfigData = TestingConfig::GetNotificationAttackFoodTest();
+		break;
+
+	default:
+		return;
+	}
+
+	// Spawn all NPCs
+	for (int Index = WTSR->NPCCount; Index < ConfigData.NpcPositions.Num(); Index++) {
+		SpawnNPC(ConfigData.NpcPositions[Index], PlayerPosition);
 		WTSR->NPCCount++;
 	}
+
+	// Spawn all Grass
+	if (WTSR->GrassCount == 0) {
+		for (int Index = WTSR->GrassCount; Index < ConfigData.Grass.Num(); Index++) {
+			SpawnGrass(ConfigData.Grass[Index]);
+			WTSR->GrassCount++;
+		}
+	}
+
+	// Spawn all Flowers
+	if (WTSR->FlowerCount == 0) {
+		for (int Index = WTSR->FlowerCount; Index < ConfigData.Flowers.Num(); Index++) {
+			SpawnFlower(ConfigData.Flowers[Index]);
+			WTSR->FlowerCount++;
+		}
+	}
+
+	SpawnedConfigOnce = true;
 }
 
 void AChunkWorld::generateTreeMeshVariations() {
@@ -587,6 +623,36 @@ void AChunkWorld::SpawnMultipleTreeObjects(const FVector& PlayerPosition) {
 	}
 }
 
+void AChunkWorld::UpdateChunksCollision() {
+	// Enabling and disabling collision for chunks 
+	ABinaryChunk* removeCollisionChunk = WTSR->GetChunkToRemoveCollision();
+	ABinaryChunk* enableCollisionChunk = WTSR->GetChunkToEnableCollision();
+
+	
+
+	if (IsValid(removeCollisionChunk) && removeCollisionChunk->IsActorInitialized()) {
+		removeCollisionChunk->UpdateCollision(false);
+	}
+
+	if (IsValid(enableCollisionChunk) && enableCollisionChunk->IsActorInitialized()) {
+		enableCollisionChunk->UpdateCollision(true);
+	}
+}
+
+void AChunkWorld::UpdateTreesCollision() {
+	// Enabling and disabling collision for trees 
+	ATree* removeCollisionTree = WTSR->GetTreeToRemoveCollision();
+	ATree* enableCollisionTree = WTSR->GetTreeToEnableCollision();
+
+	if (IsValid(removeCollisionTree) && removeCollisionTree->IsActorInitialized()) {
+		removeCollisionTree->UpdateCollision(false);
+	}
+
+	if (IsValid(enableCollisionTree) && enableCollisionTree->IsActorInitialized()) {
+		enableCollisionTree->UpdateCollision(true);
+	}
+}
+
 // Update the player's current position that will be used for pathfinding
 void AChunkWorld::updatePlayerCurrentPosition(FVector& PlayerPosition) {
 	if (updatePlayerCurrentPositionCounter >= updatePlayerCurrentPositionPerFrames) {
@@ -809,10 +875,13 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		calculateAverageChunkSpawnTime(start, end);
 	}
 
+	UpdateChunksCollision();
+
 	// Reduce computing per frame by returning early if a chunk already got spawned this frame
 	if (spawnedChunksThisFrame) {
 		return;
 	}
+
 
 	// Destroy a chunk and remove it from the map if there is a destroy position in queue
 	FIntPoint chunkToDestroyPosition{};
@@ -855,12 +924,14 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	SpawnMultipleTreeObjects(PlayerPosition);
 	DestroyTreeActors();
 
+	UpdateTreesCollision();
+
 	// Reduce computing per frame by returning early if a tree already got spawned this frame
 	if (spawnedTreesThisFrame) {
 		return;
 	}
 
-	AddTestingConfigurations(); // Uncomment to use the testing configurations instead
+	UseTestingConfigurations(ConfigToRun::NotificationAttackFoodSource); // Uncomment to use the testing configurations instead
 
 	if (!UsingTestConfiguration) {
 		SpawnMultipleGrassObjects();
@@ -872,29 +943,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	DestroyGrassActors();
 	DestroyFlowerActors();
 	DestroyNpcActors();
-
-	// Enabling and disabling collision for chunks and trees
-	ATree* removeCollisionTree = WTSR->GetTreeToRemoveCollision();
-	ATree* enableCollisionTree = WTSR->GetTreeToEnableCollision();
-
-	ABinaryChunk* removeCollisionChunk = WTSR->GetChunkToRemoveCollision();
-	ABinaryChunk* enableCollisionChunk = WTSR->GetChunkToEnableCollision();
-
-	if (IsValid(removeCollisionTree) && removeCollisionTree->IsActorInitialized()) {
-		removeCollisionTree->UpdateCollision(false);
-	}
-
-	if (IsValid(enableCollisionTree) && enableCollisionTree->IsActorInitialized()) {
-		enableCollisionTree->UpdateCollision(true);
-	}
-
-	if (IsValid(removeCollisionChunk) && removeCollisionChunk->IsActorInitialized()) {
-		removeCollisionChunk->UpdateCollision(false);
-	}
-
-	if (IsValid(enableCollisionChunk) && enableCollisionChunk->IsActorInitialized()) {
-		enableCollisionChunk->UpdateCollision(true);
-	}
 }
 
 void AChunkWorld::calculateAverageChunkSpawnTime(const Time& startTime, const Time& endTime) {

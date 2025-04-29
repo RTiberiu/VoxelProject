@@ -23,18 +23,51 @@
 //{ FVoxelObjectLocationData(FVector(970, 330, 6130), FIntPoint(0, 1)), AnimalType::Tiger },
 //{ FVoxelObjectLocationData(FVector(1100, 270, 6130), FIntPoint(0, 1)), AnimalType::Peacock },
 //{ FVoxelObjectLocationData(FVector(1160, 270, 6190), FIntPoint(0, 1)), AnimalType::Peacock }
-namespace TestingConfig {
 
+enum ConfigToRun {
+    NotificationAttackNpc,
+    NotificationAttackFoodSource
+};
+
+struct TestConfigParameters {
+    TArray<TPair<FVoxelObjectLocationData, AnimalType>> NpcPositions;
+    TArray<FVoxelObjectLocationData> Grass;
+    TArray<FVoxelObjectLocationData> Flowers;
+};
+
+namespace TestingConfig {
     // Use only ShouldAttackNpc() and ShouldRelax()
-    inline const TArray<TPair<FVoxelObjectLocationData, AnimalType>>& GetNotificationTest() {
-        static TArray<TPair<FVoxelObjectLocationData, AnimalType>> Cached = {
-            { FVoxelObjectLocationData(FVector(560, 440, 6130), FIntPoint(0, 1)), AnimalType::Tiger },
-            { FVoxelObjectLocationData(FVector(560, 930, 6070), FIntPoint(0, 1)), AnimalType::Peacock },
-            { FVoxelObjectLocationData(FVector(970, -30, 6130), FIntPoint(0, 1)), AnimalType::Tiger },
+    inline TestConfigParameters GetNotificationAttackNpcTest() {
+        return TestConfigParameters{
+            // NpcPositions
+            {
+                { FVoxelObjectLocationData(FVector(560, 440, 6130), FIntPoint(0, 1)), AnimalType::Tiger },
+                { FVoxelObjectLocationData(FVector(560, 930, 6070), FIntPoint(0, 1)), AnimalType::Peacock },
+                { FVoxelObjectLocationData(FVector(970, -30, 6130), FIntPoint(0, 1)), AnimalType::Tiger }
+            },
+            // Grass (none)
+            {},
+            // Flowers (none)
+            {}
         };
-        return Cached;
     }
 
+    // Use only ShouldEatBasicFoodSource() and ShouldRelax()
+    inline TestConfigParameters GetNotificationAttackFoodTest() {
+        return TestConfigParameters{
+            // NpcPositions
+            {
+                { FVoxelObjectLocationData(FVector(560, 440, 6130), FIntPoint(0, 1)), AnimalType::Tiger },
+                { FVoxelObjectLocationData(FVector(970, -30, 6130), FIntPoint(0, 1)), AnimalType::Tiger }
+            },
+            // Grass
+            {
+                FVoxelObjectLocationData(FVector(515, 705, 6060), FIntPoint(0, 0))
+            },
+            // Flowers (none)
+            {}
+        };
+    }
 
 
     // TODO Create more scenarios like this and spawn the objects.
