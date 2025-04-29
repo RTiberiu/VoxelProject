@@ -364,15 +364,26 @@ TArray<FVoxelObjectLocationData> UChunkLocationData::getTreeSpawnPositionsInRang
 	TArray<FVoxelObjectLocationData> output;
 	TreeChunkSemaphore->Acquire();
 
+	FIntPoint KeyToRemove;
+	bool found = false;
+
 	for (TPair<FIntPoint, TArray<FVoxelObjectLocationData>*>& pair : treesInRangeSpawnPositions) {
 		if (TArray<FVoxelObjectLocationData>* FoundPtr = treesSpawnPositions.Find(pair.Key)) {
 			TArray<FVoxelObjectLocationData>* OriginalPtr = FoundPtr;
 			if (pair.Value == OriginalPtr && pair.Value->Num() > 0) {
 				output = *pair.Value;
 				pair.Value->Empty();
+
+				// Storing the key to remove it from the map
+				KeyToRemove = pair.Key;
+				found = true;
 				break;
 			}
 		}
+	}
+
+	if (found) {
+		treesInRangeSpawnPositions.Remove(KeyToRemove);
 	}
 
 	TreeChunkSemaphore->Release();
@@ -383,16 +394,29 @@ TArray<FVoxelObjectLocationData> UChunkLocationData::getGrassSpawnPositionInRang
 	TArray<FVoxelObjectLocationData> output;  
 	VegetationChunkSemaphore->Acquire();
 
+	FIntPoint KeyToRemove;
+	bool found = false;
+
 	for (TPair<FIntPoint, TArray<FVoxelObjectLocationData>*>& pair : grassInRangeSpawnPositions) {  
 		if (TArray<FVoxelObjectLocationData>* FoundPtr = grassSpawnPositions.Find(pair.Key)) {
-			TArray<FVoxelObjectLocationData>* OriginalPtr = FoundPtr;
-			if (pair.Value == OriginalPtr && pair.Value->Num() > 0) {
+			bool isOriginalPtr = pair.Value == FoundPtr;
+			bool isNotEmpty = pair.Value->Num() > 0;
+			if (isOriginalPtr && isNotEmpty) {
 				output = *pair.Value;
+
+				// Storing the key to remove it from the map
+				KeyToRemove = pair.Key;
+				found = true;
+
 				pair.Value->Empty();
 				break;
 			}
 		}
 	}  
+
+	if (found) {
+		grassInRangeSpawnPositions.Remove(KeyToRemove);
+	}
 
 	VegetationChunkSemaphore->Release();
 	return output;  
@@ -402,15 +426,27 @@ TArray<FVoxelObjectLocationData> UChunkLocationData::getFlowerSpawnPositionInRan
 	TArray<FVoxelObjectLocationData> output;
 	VegetationChunkSemaphore->Acquire();
 
+	FIntPoint KeyToRemove;
+	bool found = false;
+
 	for (TPair<FIntPoint, TArray<FVoxelObjectLocationData>*>& pair : flowersInRangeSpawnPositions) {
 		if (TArray<FVoxelObjectLocationData>* FoundPtr = flowersSpawnPositions.Find(pair.Key)) {
 			TArray<FVoxelObjectLocationData>* OriginalPtr = FoundPtr;
 			if (pair.Value == OriginalPtr && pair.Value->Num() > 0) {
 				output = *pair.Value;
 				pair.Value->Empty();
+
+				// Storing the key to remove it from the map
+				KeyToRemove = pair.Key;
+				found = true;
 				break;
 			}
 		}
+	}
+
+
+	if (found) {
+		flowersInRangeSpawnPositions.Remove(KeyToRemove);
 	}
 
 	VegetationChunkSemaphore->Release();
@@ -421,15 +457,26 @@ TArray<TPair<FVoxelObjectLocationData, AnimalType>> UChunkLocationData::getNPCSp
 	TArray<TPair<FVoxelObjectLocationData, AnimalType>> output;
 	NpcChunkSemaphore->Acquire();
 
+	FIntPoint KeyToRemove;
+	bool found = false;
+
 	for (TPair<FIntPoint, TArray<TPair<FVoxelObjectLocationData, AnimalType>>*>& pair : npcInRangeSpawnPositions) {
 		if (TArray<TPair<FVoxelObjectLocationData, AnimalType>>* FoundPtr = npcSpawnPositions.Find(pair.Key)) {
 			TArray<TPair<FVoxelObjectLocationData, AnimalType>>* OriginalPtr = FoundPtr;
 			if (pair.Value == OriginalPtr && pair.Value->Num() > 0) {
 				output = *pair.Value;
 				pair.Value->Empty();
+
+				// Storing the key to remove it from the map
+				KeyToRemove = pair.Key;
+				found = true;
 				break;
 			}
 		}
+	}
+
+	if (found) {
+		npcInRangeSpawnPositions.Remove(KeyToRemove);
 	}
 
 	NpcChunkSemaphore->Release();

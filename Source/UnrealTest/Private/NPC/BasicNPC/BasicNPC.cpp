@@ -481,7 +481,6 @@ void ABasicNPC::AttackAndReduceHealth(const int& damage, uint8_t attackerEatingS
 		DecisionSys->AnimalAttributes.currentHp);*/
 
 	if (DecisionSys->AnimalAttributes.currentHp == 0) {
-		// UE_LOG(LogTemp, Warning, TEXT("Death triggered for NPC: %s"), *GetName());
 		TriggerNpcDeath(attackerEatingSpeed);
 		attacker->TriggerFoodRewardOnKill();
 	}
@@ -720,7 +719,7 @@ void ABasicNPC::UpdateHunger(const float& DeltaSeconds) {
 
 		// Check if NPC should die of starvation
 		if (DecisionSys->AnimalAttributes.currentHunger == 0) {
-			// TriggerNpcDeath(); // TODO Uncomment this after done testing, to allow NPCs to die
+			TriggerNpcDeath();
 		}
 
 		HungerCounter = 0.0f;
@@ -1009,7 +1008,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 
 	// TESTING ONLY -- PREVENTING THE NPC TO MAKE ANY MOVES FOR THE FIRST N SECONDS
-	if (DelayBeforeFirstPathRequest < 2.0f) {
+	if (DelayBeforeFirstPathRequest < 1.0f) {
 		DelayBeforeFirstPathRequest += DeltaSeconds;
 		return;
 	}

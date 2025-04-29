@@ -69,7 +69,6 @@ namespace TestingConfig {
         };
     }
 
-
     // TODO Create more scenarios like this and spawn the objects.
 
 }

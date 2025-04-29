@@ -111,7 +111,7 @@ private:
 
 	void SpawnGrass(FVoxelObjectLocationData LocationData);
 	void SpawnFlower(FVoxelObjectLocationData LocationData);
-	void SpawnNPC(TPair<FVoxelObjectLocationData, AnimalType> LocationAndType, FVector PlayerPosition);
+	void SpawnNPC(TPair<FVoxelObjectLocationData, AnimalType> LocationAndType);
 
 	// NPC Settings
 	TSubclassOf<AActor> NPC;
@@ -132,6 +132,9 @@ private:
 	void UpdateChunksCollision();
 	void UpdateTreesCollision();
 
+	void SpawnSingleChunk(const FVector& PlayerPosition);
+	void DestroySingleChunk();
+
 	// Tree actors to be destroyed and settings
 	TQueue<ATree*> TreeActorsToRemove;
 	const int treesToRemovePerFrame = 1;
@@ -141,10 +144,10 @@ private:
 
 	// Grass actors to be destroyed and settings
 	TQueue<UCustomProceduralMeshComponent*> GrassActorsToRemove;
-	const int grassToRemovePerFrame = 5;
+	const int grassToRemovePerFrame = 3;
 
 	TArray<FVoxelObjectLocationData> GrassPositionsToSpawn;
-	const int grassToSpawnPerFrame = 5;
+	const int grassToSpawnPerFrame = 3;
 
 	// Flower actors to be destroyed and settings
 	TQueue<UCustomProceduralMeshComponent*> FlowerActorsToRemove;
@@ -155,13 +158,13 @@ private:
 
 	// NPC actors to be destroyed and settings
 	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCPositionsToSpawn;
-	const int npcToSpawnPerFrame = 2;
+	const int npcToSpawnPerFrame = 1;
 
 	TQueue<ABasicNPC*> NpcActorsToRemove;
-	const int npcToRemovePerFrame = 2;
+	const int npcToRemovePerFrame = 1;
 
 	const int FramesToCheckForSpawnPointsInRange = 20;
-	int FramesCounterCheckSpawnedPointsInRange = 0;
+	int FramesCounterCheckSpawnedPointsInRange = 21; // Trigger an immediate check
 
 	bool spawnedTreesThisFrame;
 	bool spawnedChunksThisFrame;
