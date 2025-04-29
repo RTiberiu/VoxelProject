@@ -239,7 +239,7 @@ void ABasicNPC::InitializeVisionCollisionSphere(const float& radius) {
 
 	// Debugging // TODO Remove this when done debugging 
 	CollisionNpcDetectionSphere->SetHiddenInGame(false);
-	CollisionNpcDetectionSphere->SetVisibility(false); // TODO Set to true for debugging
+	CollisionNpcDetectionSphere->SetVisibility(true); // TODO Set to true for debugging
 	CollisionNpcDetectionSphere->SetLineThickness(2.0f);
 }
 
@@ -365,7 +365,7 @@ void ABasicNPC::SetTargetLocation() {
 }
 
 bool ABasicNPC::IsTargetLocationAvailable() {
-	/*if (this->GetName().Equals("BasicNPC_0")) {
+	/*if (this->GetName().Equals("BasicNPC_0")) {  // TODO DELETE THIS AFTER
 		UE_LOG(LogTemp, Warning, TEXT("Checking location for BasicNPC_0"));
 		if (pathToTarget)  pathToTarget->print();
 	}*/
@@ -432,8 +432,8 @@ bool ABasicNPC::IsAllyInRange() {
 	return AlliesInRange.Num() > 0;
 }
 
-bool ABasicNPC::IsFoodNpcInRange() {
-	return FoodNpcInRange.Num() > 0;
+bool ABasicNPC::IsFoodNpcInRange() {  
+   return FoodNpcInRange.Num() > 0;  
 }
 
 bool ABasicNPC::IsFoodSourceInRange() {
@@ -883,7 +883,7 @@ UCustomProceduralMeshComponent* ABasicNPC::GetClosestInList(const TArray<UCustom
 
 // Notify NPCs in the vision list based on the current action 
 // (alert allies of enemies, food, or trade)
-void ABasicNPC::NotifyNpcsAroundOfEvent(ActionType CurrentAction) {
+void ABasicNPC::NotifyNpcsAroundOfEvent(const NpcAction& CurrentAction) {
 	UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Notifying);
 	ShowNotificationStat = true;
 
@@ -894,14 +894,41 @@ void ABasicNPC::NotifyNpcsAroundOfEvent(ActionType CurrentAction) {
 	}
 }
 
-void ABasicNPC::ReceiveNotificationOfEvent(ActionType ActionTriggered) {
+void ABasicNPC::ReceiveNotificationOfEvent(const NpcAction& ActionTriggered) {
+	if (this->GetName().Equals("BasicNPC_2")) { // TODO DELETE THIS AFTER
+		if (actionType == ActionType::AttackNpc) {
+			UE_LOG(LogTemp, Warning, TEXT("ReceiveNotificationOfEvent():\tBasicNPC_2 current Action is AttackNPC. Target:"));
+
+			if (actionTarget) {
+				UE_LOG(LogTemp, Warning, TEXT("\t\tTarget is %s"), *actionTarget->GetName());
+			} else {
+				UE_LOG(LogTemp, Warning, TEXT("\t\tTarget is null (no target in range)"));
+			}
+
+			if (FoodNpcInRange.Num() > 0) {
+				for (ABasicNPC* FoodNpc : FoodNpcInRange) {
+					if (FoodNpc) {
+						UE_LOG(LogTemp, Warning, TEXT("\t\t\tFood NPC in range: %s"), *FoodNpc->GetName());
+					}
+				}
+			} else {
+				UE_LOG(LogTemp, Warning, TEXT("\t\t\tNo Food NPCs in range."));
+			}
+		}
+
+		if (ActionTriggered.ActionType == ActionType::AttackNpc) {
+			UE_LOG(LogTemp, Warning, TEXT("ReceiveNotificationOfEvent():\tBasicNPC_2 RECEIVED Action to AttackNPC."));
+		}
+	}
+
+
 	ShowNotificationStat = true;
-	if (actionType == ActionTriggered) {
+	if (actionType == ActionTriggered.ActionType) {
 		UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Discarded);
 		return;
 	}
 
-	switch(ActionTriggered) {
+	switch(ActionTriggered.ActionType) {
 	case ActionType::Flee:
 		if (FMath::FRand() < DecisionSys->AnimalAttributes.survivalInstinct) {
 			InterruptAction = true;
@@ -912,15 +939,21 @@ void ABasicNPC::ReceiveNotificationOfEvent(ActionType ActionTriggered) {
 		break;
 	case ActionType::AttackNpc:
 		if (FMath::FRand() < DecisionSys->AnimalAttributes.chaseDesire) {
-			InterruptAction = true;
 			UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Accepted);
+			
+			// Replace current action and request a path to that location
+			ReplaceCurrentActionWithNotifiedAction(ActionTriggered);
+			TriggerPathfindingTask();
 			return;
 		}
 		break;
 	case ActionType::AttackFoodSource:
 		if (AcceptAttackFoodSourceNotification()) {
-			InterruptAction = true;
 			UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Accepted);
+
+			// Replace current action and request a path to that location
+			ReplaceCurrentActionWithNotifiedAction(ActionTriggered);
+			TriggerPathfindingTask();
 			return;
 		}
 		break;
@@ -929,6 +962,14 @@ void ABasicNPC::ReceiveNotificationOfEvent(ActionType ActionTriggered) {
 	}
 
 	UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Discarded);
+}
+
+void ABasicNPC::ReplaceCurrentActionWithNotifiedAction(const NpcAction& ActionTriggered) {
+	targetLocation = ActionTriggered.TargetLocation;
+	animationToRunAtTarget = ActionTriggered.AnimationToRunAtTarget;
+	actionType = ActionTriggered.ActionType;
+	actionTarget = ActionTriggered.Target;
+	isTargetSet = true;
 }
 
 bool ABasicNPC::AcceptAttackFoodSourceNotification() {
@@ -940,6 +981,15 @@ bool ABasicNPC::AcceptAttackFoodSourceNotification() {
 	const bool isHungry = DecisionSys->AnimalAttributes.currentHunger > 50;
 	const bool wantsToHoard = FMath::FRand() < DecisionSys->AnimalAttributes.desireToHoardFood;
 	return isHungry || wantsToHoard;
+}
+
+void ABasicNPC::TriggerPathfindingTask() {
+	// Adjust location for grass and flower, otherwise the pathfinding will go for the adjacent voxel
+	if (actionType == ActionType::AttackFoodSource) {
+		targetLocation = FVector(targetLocation.X + WTSR->HalfUnrealScale, targetLocation.Y + WTSR->HalfUnrealScale, targetLocation.Z);
+	}
+
+	PathfindingManager->AddPathfindingTask(this, currentLocation, targetLocation);
 }
 
 void ABasicNPC::BeginPlay() {
@@ -1038,9 +1088,31 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 		actionType = NextAction.ActionType;
 		actionTarget = NextAction.Target;
 
+		if (this->GetName().Equals("BasicNPC_2")) { // TODO DELETE THIS AFTER
+			if (NextAction.ActionType == ActionType::AttackNpc) {
+				UE_LOG(LogTemp, Warning, TEXT("Tick():\tBasicNPC_2 current Action is AttackNPC. Target:"));
+
+				if (actionTarget) {
+					UE_LOG(LogTemp, Warning, TEXT("\t\tTarget is %s"), *actionTarget->GetName());
+				} else {
+					UE_LOG(LogTemp, Warning, TEXT("\t\tTarget is null (no target in range)"));
+				}
+
+				if (FoodNpcInRange.Num() > 0) {
+					for (ABasicNPC* FoodNpc : FoodNpcInRange) {
+						if (FoodNpc) {
+							UE_LOG(LogTemp, Warning, TEXT("Food NPC in range: %s"), *FoodNpc->GetName());
+						}
+					}
+				} else {
+					UE_LOG(LogTemp, Warning, TEXT("No Food NPCs in range."));
+				}
+			}
+		}
+
 		// Notify NPCs in the vision list 
 		if (NextAction.ShouldNotifyOthers) {
-			NotifyNpcsAroundOfEvent(actionType);
+			NotifyNpcsAroundOfEvent(NextAction);
 		}
 
 		// Increment frustration counter, so that a new target in the vision list can get selected
@@ -1068,19 +1140,14 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 		// Reset frustration after each action
 		frutrationTriggered = false;
 
-		// Adjust location for grass and flower, otherwise the pathfinding will go for the adjacent voxel
-		if (actionType == ActionType::AttackFoodSource) {
-			targetLocation = FVector(targetLocation.X + WTSR->HalfUnrealScale, targetLocation.Y + WTSR->HalfUnrealScale, targetLocation.Z);
-		}
-
 		// If resting, avoid triggering a pathfinding request and return early
 		bool isResting = actionType == ActionType::RestAfterBasicFood || actionType == ActionType::RestAfterImprovedFood;
 		if (isResting) {
 			runTargetAnimation = true;
 			return;
 		}
-        
-		PathfindingManager->AddPathfindingTask(this, currentLocation, targetLocation);
+
+		TriggerPathfindingTask();
 	}
 
 	if (runTargetAnimation) {

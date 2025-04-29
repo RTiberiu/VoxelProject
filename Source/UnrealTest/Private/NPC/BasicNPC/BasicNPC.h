@@ -151,7 +151,7 @@ private:
 	bool isTargetSet;
 	FVector targetLocation;
 	AnimationType animationToRunAtTarget;
-	ActionType actionType;
+	ActionType actionType = ActionType::NoAction;
 	UObject* actionTarget;
 
 	FVector timelineStartPos;
@@ -296,17 +296,19 @@ private:
 	TArray<UCustomProceduralMeshComponent*> FoodSourceInRange;
 
 	// Notify NPCs in the vision list based on the current action
-	void NotifyNpcsAroundOfEvent(ActionType CurrentAction);
+	void NotifyNpcsAroundOfEvent(const NpcAction& CurrentAction);
 
 	// Handles the notification, based on the action that triggered the notification
-	void ReceiveNotificationOfEvent(ActionType ActionTriggered);
+	void ReceiveNotificationOfEvent(const NpcAction& ActionTriggered);
 	bool InterruptAction = false; // Used to trigger an interrupt when notified
 	bool ShowNotificationStat = false; // Used to show the notification stat
 	float ShowNotificationStatCounter = 0.0f;
-	float ShowNotificationStatThreshold = 0.5f; // For how long to show the notification
+	float ShowNotificationStatThreshold = 1.5f; // For how long to show the notification
 
+	void ReplaceCurrentActionWithNotifiedAction(const NpcAction& ActionTriggered);
 	bool AcceptAttackFoodSourceNotification();
-	
+
+	void TriggerPathfindingTask();
 
 protected:
 	// Called when the game starts or when spawned

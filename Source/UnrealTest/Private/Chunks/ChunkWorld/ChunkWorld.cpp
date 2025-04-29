@@ -480,7 +480,7 @@ void AChunkWorld::BeginPlay() {
 	FVector position5 = FVector(740, 920, 6130);
 	FVector position6 = FVector(560, 1220, 6130);
 	FVector position7 = FVector(1340, 210, 6430);
-	FVector position8 = FVector(970, 270, 6130);
+	FVector position8 = FVector(970, -30, 6130);
 	FVector position9 = FVector(970, 330, 6130);
 	FVector position10 = FVector(1100, 270, 6130);
 	FVector position11 = FVector(1160, 270, 6190);
@@ -498,7 +498,7 @@ void AChunkWorld::BeginPlay() {
 	AnimalType animal11 = AnimalType::Peacock;
 
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position1, FIntPoint(0, 1)), animal1));
-	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));
+	// TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position2, FIntPoint(0, 1)), animal2));
 	TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position3, FIntPoint(0, 1)), animal3));
    //  TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position4, FIntPoint(0, 1)), animal4));
    //TestingPositions.Add(TPair<FVoxelObjectLocationData, AnimalType>(FVoxelObjectLocationData(position5, FIntPoint(0, 1)), animal5));
@@ -810,7 +810,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		// Check if the grass position is still in range, otherwise discard it
 		bool isGrassStillInRange = VegetationChunkSpawnPoints.Contains(GrassPositionsToSpawn[positionIndex].ObjectWorldCoords);
 		if (isGrassStillInRange) {
-			SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
+			// SpawnGrass(GrassPositionsToSpawn[positionIndex], PlayerPosition);
 			WTSR->GrassCount++;
 		}
 
@@ -837,7 +837,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 		// Check if the flower position is still in range, otherwise discard it
 		bool isFlowerStillInRange = VegetationChunkSpawnPoints.Contains(FlowerPositionsToSpawn[positionIndex].ObjectWorldCoords);
 		if (isFlowerStillInRange) {
-			SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
+			// SpawnFlower(FlowerPositionsToSpawn[positionIndex], PlayerPosition);
 			WTSR->FlowerCount++;
 		}
 
@@ -852,14 +852,14 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 
 	// TESTING ANIMAL ACTIONS (DELETE AFTER)
-	//if (WTSR->NPCCount < TestingPositions.Num()) {
-	//	int counterTest = 0;
-	//	while (counterTest < TestingPositions.Num()) {
-	//		SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
-	//		counterTest++;
-	//		WTSR->NPCCount++;
-	//	}
-	//}
+	if (WTSR->NPCCount < TestingPositions.Num()) {
+		int counterTest = 0;
+		while (counterTest < TestingPositions.Num()) {
+			SpawnNPC(TestingPositions[counterTest], PlayerPosition); // TESTING ANIMAL ACTIONS (DELETE AFTER)
+			counterTest++;
+			WTSR->NPCCount++;
+		}
+	}
 
 	// Append NPC positions waiting to be spawned
 	TArray<TPair<FVoxelObjectLocationData, AnimalType>> NPCSpawnPositions = CLDR->getNPCSpawnPositionInRange();
@@ -874,7 +874,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 		bool isNpcStillInRange = NpcChunkSpawnPoints.Contains(NPCPositionsToSpawn[positionIndex].Key.ObjectWorldCoords);
 		if (isNpcStillInRange) {
-			SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition); // TODO Uncomment after testing
+			//SpawnNPC(NPCPositionsToSpawn[positionIndex], PlayerPosition); // TODO Uncomment after testing
 			WTSR->NPCCount++;
 		}
 

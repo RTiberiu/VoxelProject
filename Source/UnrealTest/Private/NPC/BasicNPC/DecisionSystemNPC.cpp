@@ -25,12 +25,12 @@ NpcAction UDecisionSystemNPC::GetAction(bool ChooseOptimalAction, const int& Inc
 	const float RandomNo = FMath::FRand();
 
 	return FirstValidAction({
-		ShouldFlee(RandomNo), // Check if NPC should flee from enemies if they exist
-		ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
+		// ShouldFlee(RandomNo), // Check if NPC should flee from enemies if they exist
+		// ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
 		ShouldAttackNpc(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should chase for food 
-		ShouldEatBasicFoodSource(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should gather food 
+		// ShouldEatBasicFoodSource(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should gather food 
 		// ShouldAttemptFoodTrade(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should share food for allies
-		ShouldRoam(), // The NPC should roam in a random direction
+		// ShouldRoam(), // The NPC should roam in a random direction
 		ShouldRelax() // For testing only
 		});
 }

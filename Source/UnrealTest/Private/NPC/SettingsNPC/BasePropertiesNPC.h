@@ -106,7 +106,7 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	30,		// foodOfferAmount
 	600,	// roamRadius
 	700.0f, // communicationRadius
-	0.5f,   // communicationDesire
+	1.0f,   // communicationDesire
 };
 
 const MemoryNpcAttributes TigerMemoryAttributes = {
