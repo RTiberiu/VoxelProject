@@ -239,7 +239,7 @@ void ABasicNPC::InitializeVisionCollisionSphere(const float& radius) {
 
 	// Debugging // TODO Remove this when done debugging 
 	CollisionNpcDetectionSphere->SetHiddenInGame(false);
-	CollisionNpcDetectionSphere->SetVisibility(true); // TODO Set to true for debugging
+	CollisionNpcDetectionSphere->SetVisibility(false); // TODO Set to true for debugging
 	CollisionNpcDetectionSphere->SetLineThickness(2.0f);
 }
 

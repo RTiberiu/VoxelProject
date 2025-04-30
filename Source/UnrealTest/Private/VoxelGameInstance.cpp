@@ -8,11 +8,39 @@
 // Sets default values
 AVoxelGameInstance::AVoxelGameInstance() {
     PrimaryActorTick.bCanEverTick = false;
+
+    InputComponent = CreateDefaultSubobject<UInputComponent>(TEXT("InputComponent"));
+    InputComponent->bBlockInput = false;
+}
+
+void AVoxelGameInstance::RespawnWorld() {
+    // Grab the current level name and open it again 
+    FString CurrentMapName = GetWorld()->GetMapName();
+    FString ShortName = FPackageName::GetShortName(CurrentMapName);
+    UGameplayStatics::OpenLevel(this, FName(*ShortName));
 }
 
 void AVoxelGameInstance::BeginPlay() {
 	Super::BeginPlay();
 
+    InitializeWorld();
+
+    // Grab the first local player controller
+    if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0)) {
+        EnableInput(PlayerController);
+
+        // Bind the "TriggerWorldRespawn" action to respawn world 
+        InputComponent->BindAction("TriggerWorldRespawn", IE_Pressed, this, &AVoxelGameInstance::RespawnWorld);
+    } else {
+        UE_LOG(LogTemp, Warning, TEXT("AVoxelGameInstance: couldn't find PlayerController to bind input."));
+    }
+}
+
+void AVoxelGameInstance::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+    CleanupWorld();
+}
+
+void AVoxelGameInstance::InitializeWorld() {
     if (GEngine) {
         GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, TEXT("VoxelGameInstance Initialized!"));
     }
@@ -33,9 +61,9 @@ void AVoxelGameInstance::BeginPlay() {
 
     // Spawn PerlinNoiseSettings for allowing value changes in the editor
     perlinNoiseSettings = GetWorld()->SpawnActor<APerlinNoiseSettings>(
-            APerlinNoiseSettings::StaticClass(),
-            FVector::ZeroVector,                  
-            FRotator::ZeroRotator               
+        APerlinNoiseSettings::StaticClass(),
+        FVector::ZeroVector,
+        FRotator::ZeroRotator
     );
 
     // Generate the stats voxel meshes used for NPCs to show their attributes
@@ -61,7 +89,7 @@ void AVoxelGameInstance::BeginPlay() {
         chunkWorld->SetPerlinNoiseSettings(perlinNoiseSettings);
         chunkWorld->SetAnimationSettingsNpc(animationSettingsNpcRef);
         chunkWorld->InitializePathfindingManager();
-		chunkWorld->SetStatsVoxelsMeshNPC(statsVoxelsMeshNPC);
+        chunkWorld->SetStatsVoxelsMeshNPC(statsVoxelsMeshNPC);
 
         // Finish spawning the chunk world
         UGameplayStatics::FinishSpawningActor(chunkWorld, FTransform(FRotator::ZeroRotator, FVector::ZeroVector));
@@ -71,7 +99,7 @@ void AVoxelGameInstance::BeginPlay() {
     }
 }
 
-void AVoxelGameInstance::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+void AVoxelGameInstance::CleanupWorld() {
     // Removing added objects from root
     if (worldTerrainSettings) {
         worldTerrainSettings->RemoveFromRoot();
@@ -89,13 +117,11 @@ void AVoxelGameInstance::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     }
 
     if (chunkWorld) {
-        chunkWorld->RemoveFromRoot();
         chunkWorld->Destroy();
         chunkWorld = nullptr;
     }
 
     if (perlinNoiseSettings) {
-        perlinNoiseSettings->RemoveFromRoot();
         perlinNoiseSettings->Destroy();
         perlinNoiseSettings = nullptr;
     }

@@ -444,7 +444,6 @@ void AChunkWorld::DestroyGrassActors() {
 		}
 
 		GrassActorsToRemove.Dequeue(grassToRemove);
-		grassToRemove->UnregisterComponent();
 		grassToRemove->DestroyComponent();
 		WTSR->GrassCount--;
 		removedGrassCounter++;
@@ -465,7 +464,6 @@ void AChunkWorld::DestroyFlowerActors() {
 		}
 
 		FlowerActorsToRemove.Dequeue(flowerToRemove);
-		flowerToRemove->UnregisterComponent();
 		flowerToRemove->DestroyComponent();
 		WTSR->FlowerCount--;
 		removedFlowerCounter++;
@@ -485,7 +483,7 @@ void AChunkWorld::DestroyNpcActors() {
 			continue;
 		}
 
-		NpcActorsToRemove.Enqueue(npcToRemove);
+		NpcActorsToRemove.Dequeue(npcToRemove);
 		npcToRemove->Destroy();
 		WTSR->NPCCount--;
 		removedNpcCounter++;

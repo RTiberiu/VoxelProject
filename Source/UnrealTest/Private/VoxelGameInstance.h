@@ -22,6 +22,9 @@ public:
 	// Sets default values for this actor's properties
 	AVoxelGameInstance();
 
+	UFUNCTION(BlueprintCallable)
+	void RespawnWorld();
+
 private:
 	UWorldTerrainSettings* worldTerrainSettings;
 	UChunkLocationData* chunkLocationData;
@@ -29,6 +32,9 @@ private:
 	APerlinNoiseSettings* perlinNoiseSettings;
 	UAnimationSettingsNPC* animationSettingsNpcRef;
 	UStatsVoxelsMeshNPC* statsVoxelsMeshNPC;
+
+	void InitializeWorld();
+	void CleanupWorld();
 
 	void GenerateStatsVoxelMeshes();
 protected:
