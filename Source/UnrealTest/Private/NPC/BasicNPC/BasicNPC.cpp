@@ -359,6 +359,14 @@ void ABasicNPC::SetTargetLocation() {
 		// Reset the frustration counter when a new target is set
 		FrustrationCounter = 0;
 
+		// Return early to prevent a position check if it's the last target and 
+		// the action is to attack an NPC (this is to make sure the overlap can
+		// happen)
+		if (pathToTarget->path.empty() && actionType == ActionType::AttackNpc) {
+			targetLocationIsAvailable = true;
+			return;
+		}
+
 		// Trigger a position check for the new target location
 		checkNextPosition = true;
 	}
@@ -468,17 +476,17 @@ FVector& ABasicNPC::GetCurrentLocation() {
 }
 
 void ABasicNPC::AttackAndReduceHealth(const int& damage, uint8_t attackerEatingSpeed, ABasicNPC* attacker) {
-	/*UE_LOG(LogTemp, Warning, TEXT("Current HP: %d\n\tAttacked by: %s"),
+	UE_LOG(LogTemp, Warning, TEXT("Current HP: %d\n\tAttacked by: %s"),
 		DecisionSys->AnimalAttributes.currentHp,
-		*attacker->GetName());*/
+		*attacker->GetName());
 
 	const int newHp = DecisionSys->AnimalAttributes.currentHp - damage;
 	DecisionSys->AnimalAttributes.currentHp = FMath::Max(newHp, 0);
 	UpdateStatsVoxelsMesh(StatsType::HealthPoints);
 
 	// Log the current HP and the name of the attacker  
-	/*UE_LOG(LogTemp, Warning, TEXT("\tNew HP: %d"),
-		DecisionSys->AnimalAttributes.currentHp);*/
+	UE_LOG(LogTemp, Warning, TEXT("\tNew HP: %d"),
+		DecisionSys->AnimalAttributes.currentHp);
 
 	if (DecisionSys->AnimalAttributes.currentHp == 0) {
 		TriggerNpcDeath(attackerEatingSpeed);
@@ -1050,6 +1058,7 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
 		// Making sure the next position is not occupied by another NPC
 		if (checkNextPosition || waitForNextPositionCheck) {
+
 			targetLocationIsAvailable = IsTargetLocationAvailable();
 
 			// Terminate the action early if the frustration reaches the threshold
@@ -1087,28 +1096,6 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 		actionType = NextAction.ActionType;
 		actionTarget = NextAction.Target;
 
-		if (this->GetName().Equals("BasicNPC_2")) { // TODO DELETE THIS AFTER
-			if (NextAction.ActionType == ActionType::AttackNpc) {
-				UE_LOG(LogTemp, Warning, TEXT("Tick():\tBasicNPC_2 current Action is AttackNPC. Target:"));
-
-				if (actionTarget) {
-					UE_LOG(LogTemp, Warning, TEXT("\t\tTarget is %s"), *actionTarget->GetName());
-				} else {
-					UE_LOG(LogTemp, Warning, TEXT("\t\tTarget is null (no target in range)"));
-				}
-
-				if (FoodNpcInRange.Num() > 0) {
-					for (ABasicNPC* FoodNpc : FoodNpcInRange) {
-						if (FoodNpc) {
-							UE_LOG(LogTemp, Warning, TEXT("Food NPC in range: %s"), *FoodNpc->GetName());
-						}
-					}
-				} else {
-					UE_LOG(LogTemp, Warning, TEXT("No Food NPCs in range."));
-				}
-			}
-		}
-
 		// Notify NPCs in the vision list 
 		if (NextAction.ShouldNotifyOthers) {
 			NotifyNpcsAroundOfEvent(NextAction);
@@ -1121,20 +1108,6 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 		} else {
 			sameActionFrustrationCounter = 0;
 		}
-
-		// TODO TESTING (DELETE IF AFTER)
-		if (frutrationTriggered) {
-			/*if (actionType == ActionType::AttackNpc) {
-				UE_LOG(LogTemp, Warning, TEXT("New action for %s is: AttacKNPC"), *this->GetName());
-			}
-
-			UE_LOG(LogTemp, Warning, TEXT("%s requests a new pathfinding task from %s to %s"),
-				*this->GetName(),
-				*currentLocation.ToString(),
-				*targetLocation.ToString());*/
-		}
-
-		
 
 		// Reset frustration after each action
 		frutrationTriggered = false;
