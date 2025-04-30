@@ -8,17 +8,10 @@ UDecisionSystemNPC::UDecisionSystemNPC() {
 UDecisionSystemNPC::~UDecisionSystemNPC() {
 }
 
-// TODO ADD NOISE TO INFLUENCE THE BASE AND MEMORY ATTRIBUTES
 void UDecisionSystemNPC::Initialize(ABasicNPC* InOwner, const AnimalType& animalType) {
 	Owner = InOwner;
 	AnimalAttributes = *AnimalsBaseAttributes[animalType];
 	MemoryAttributes = *AnimalsMemoryAttributes[animalType];
-
-	// Set how often the Decision System should check if the action should be interrupted and replaced
-	UWorld* World = Owner->GetWorld();
-	if (World) {
-		World->GetTimerManager().SetTimer(DecisionTimer, this, &UDecisionSystemNPC::ShouldActionBeInterrupted, AnimalAttributes.reactionSpeed, true);
-	}
 }
 
 NpcAction UDecisionSystemNPC::GetAction(bool ChooseOptimalAction, const int& IncrementTargetInVisionList) {
@@ -33,19 +26,6 @@ NpcAction UDecisionSystemNPC::GetAction(bool ChooseOptimalAction, const int& Inc
 		ShouldRoam(), // The NPC should roam in a random direction
 		ShouldRelax() // For testing only
 		});
-}
-
-void UDecisionSystemNPC::ShouldActionBeInterrupted() {
-	// TODO Check if current action should be interrupted 
-
-	// If no, return
-
-	// If yes, remove the current action (clean path and notify to stop) and provide a new action instead.
-}
-
-void UDecisionSystemNPC::NotifyNpcOfNewAction() {
-	// TODO Notify the owner of the action they need to perform
-	//		Something like a location for them to go, and what animation should they run when they're there. 
 }
 
 NpcAction UDecisionSystemNPC::ShouldFlee(const float& RandomNo) {
@@ -199,9 +179,6 @@ NpcAction UDecisionSystemNPC::ShouldAttemptFoodTrade(const float& RandomNo, bool
 
 
 NpcAction UDecisionSystemNPC::ShouldRoam() {
-	// TODO Improve this so it doesn't always go in a straight line. 
-	// Potentially reduce the roamRadius on each axis by the RandomNo
-
 	// The NPC should roam in a random direction
 	FVector& CurrentLoc = Owner->GetCurrentLocation();
 	FVector RoamLocation = GetRandomLocationAround(CurrentLoc, AnimalAttributes.roamRadius);
@@ -210,8 +187,6 @@ NpcAction UDecisionSystemNPC::ShouldRoam() {
 }
 
 NpcAction UDecisionSystemNPC::ShouldRelax() {
-	//UE_LOG(LogTemp, Warning, TEXT("ShouldRelax function is executed."));
-
 	FVector& CurrentLoc = Owner->GetCurrentLocation();
 	return NpcAction(CurrentLoc, AnimationType::Sit, ActionType::RestAfterBasicFood, nullptr);
 }

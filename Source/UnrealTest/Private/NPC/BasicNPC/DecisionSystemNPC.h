@@ -27,12 +27,6 @@ public:
 private:
 	ABasicNPC* Owner; 
 
-	// How often the NPC should check if their current action should be interrupted and replaced with another action
-	FTimerHandle DecisionTimer;
-	void ShouldActionBeInterrupted();
-
-	void NotifyNpcOfNewAction();
-
 	// Actions
 	FORCENOINLINE NpcAction ShouldFlee(const float& RandomNo);
 	FORCENOINLINE NpcAction ShouldRestAfterMeals();
@@ -84,18 +78,6 @@ private:
 		// TODO Add the rest of the relationships
 		// TODO Improve this Map, instead of using FString,
 		// use AnimalType and RelationshipType
-	};
-
-	// Used for roam random directions
-	const TArray<FVector> Directions = {
-		FVector(1, 0, 0),   // +X
-		FVector(-1, 0, 0),  // -X
-		FVector(0, 1, 0),   // +Y
-		FVector(0, -1, 0),  // -Y
-		FVector(1, 1, 0),   // +X, +Y
-		FVector(-1, 1, 0),  // -X, +Y
-		FVector(1, -1, 0),  // +X, -Y
-		FVector(-1, -1, 0)  // -X, -Y
 	};
 
 protected:
