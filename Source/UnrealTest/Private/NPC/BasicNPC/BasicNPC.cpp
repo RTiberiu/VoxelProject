@@ -709,16 +709,26 @@ void ABasicNPC::UpdateHunger(const float& DeltaSeconds) {
 
 	// Decrease by hunger depletation rate (not below zero)
 	if (HungerCounter > 1.0f) {
-		int newHunger = DecisionSys->AnimalAttributes.currentHunger - DecisionSys->AnimalAttributes.hungerDepletionRate;
-		DecisionSys->AnimalAttributes.currentHunger = FMath::Max(
-			newHunger,
-			0
-		);
+		BasicNpcAttributes& Attributes = DecisionSys->AnimalAttributes;
+		int amountNeeded = Attributes.hungerDepletionRate;
+		int pouchAvailable = Attributes.foodPouch;
+		int fromPouch = FMath::Min(pouchAvailable, amountNeeded);
+		Attributes.foodPouch = pouchAvailable - fromPouch;
+		amountNeeded = amountNeeded - fromPouch;
+
+		// If there's still some hunger left, take from currentHunger
+		if (amountNeeded > 0) {
+			int newHunger = static_cast<int>(Attributes.currentHunger) - amountNeeded;
+			
+			// Clamp at zero and cast back to uint8_t
+			Attributes.currentHunger = static_cast<uint8_t>(FMath::Max(newHunger, 0));
+		}
 
 		UpdateStatsVoxelsMesh(StatsType::Hunger);
+		UpdateStatsVoxelsMesh(StatsType::FoodPouch);
 
 		// Check if NPC should die of starvation
-		if (DecisionSys->AnimalAttributes.currentHunger == 0) {
+		if (Attributes.currentHunger == 0) {
 			TriggerNpcDeath();
 		}
 
