@@ -76,7 +76,6 @@ private:
 
 	void spawnInitialWorld();
 	void UseTestingConfigurations(ConfigToRun configToRun);
-	bool UsingTestConfiguration = false;
 	bool SpawnedConfigOnce = false;
 
 	// Generating all the vegetation meshes variations and adding them to a cached list

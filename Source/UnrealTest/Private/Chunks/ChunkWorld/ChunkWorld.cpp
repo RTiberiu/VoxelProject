@@ -125,8 +125,6 @@ void AChunkWorld::spawnInitialWorld() {
 }
 
 void AChunkWorld::UseTestingConfigurations(ConfigToRun configToRun) {
-	UsingTestConfiguration = true;
-
 	if (SpawnedConfigOnce) {
 		return;
 	}
@@ -569,7 +567,7 @@ void AChunkWorld::SpawnMultipleNpcObjects() {
 
 		// Print the NPC count every 50
 		if (WTSR->NPCCount % 10 == 0) {
-			// UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount); // TODO Uncomment after testing
+			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount); // TODO Uncomment after testing
 		}
 
 		NPCPositionsToSpawn.RemoveAt(positionIndex);
@@ -921,16 +919,9 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	// Uncomment to use the testing configurations instead
 	// UseTestingConfigurations(ConfigToRun::NotificationAttackNpc);
 
-	if (!UsingTestConfiguration) {
-		SpawnMultipleGrassObjects();
-		SpawnMultipleFlowerObjects();
-		SpawnMultipleNpcObjects();
-	}
-
-	// Reduce computing per frame by returning early if a tree already got spawned this frame
-	if (spawnedTreesThisFrame) {
-		return;
-	}
+	SpawnMultipleGrassObjects();
+	SpawnMultipleFlowerObjects();
+	SpawnMultipleNpcObjects();
 
 	// Destroy a few vegetation actors and NPCs
 	DestroyGrassActors();

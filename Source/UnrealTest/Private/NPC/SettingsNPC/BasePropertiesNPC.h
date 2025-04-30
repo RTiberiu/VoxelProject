@@ -7,7 +7,7 @@ struct BasicNpcAttributes {
 	uint8_t hitDamage;				// Damage point when attacking another NPC
 	float attackSpeed;			// How long the animal has to wait before dealing another attack
 
-	uint8_t movementSpeed;			// How fast the animal can move in the world.
+	uint16_t movementSpeed;			// How fast the animal can move in the world.
 
 	uint8_t currentStamina;
 	uint8_t maxStamina;
@@ -76,16 +76,16 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	100,	// maxHp
 	40,		// hitDamage
 	1.5f,	// attackSpeed
-	200,	// movementSpeed
+	300,	// movementSpeed
 	100,	// currentStamina
 	100, 	// maxStamina
-	5,		// staminaDepletionRate
+	4,		// staminaDepletionRate
 	10,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
-	5,		// hungerDepletionRate
+	2,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
-	30,		// hungerRecoveryImproved
+	50,		// hungerRecoveryImproved
 	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
 	4,		// restAfterFoodBasic
@@ -106,7 +106,7 @@ const BasicNpcAttributes TigerBasicAttributes = {
 	30,		// foodOfferAmount
 	600,	// roamRadius
 	700.0f, // communicationRadius
-	1.0f,   // communicationDesire
+	0.8f,   // communicationDesire
 };
 
 const MemoryNpcAttributes TigerMemoryAttributes = {
@@ -121,38 +121,38 @@ const BasicNpcAttributes TapirBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3.0f,	// attackSpeed
+	2.0f,	// attackSpeed
 	200,	// movementSpeed
-	60,		// currentStamina
-	60, 	// maxStamina
-	5,		// staminaDepletionRate
+	100,	// currentStamina
+	100, 	// maxStamina
+	4,		// staminaDepletionRate
 	10,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
-	5,		// hungerDepletionRate
+	4,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
-	30,		// hungerRecoveryImproved
+	50,		// hungerRecoveryImproved
 	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
-	3,		// restAfterFoodBasic
-	5,		// restAfterFoodImproved
+	4,		// restAfterFoodBasic
+	6,		// restAfterFoodImproved
 	5, 		// restAfterStaminaIsZero
 	4,		// mealsUntilRestIsNeeded
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
 	0,		// foodPouch
 	0.5f,   // desireToHoardFood
-	0.1f,	// chaseDesire
-	900.0f, // awarenessRadius
+	0.7f,	// chaseDesire
+	500.0f, // awarenessRadius
 	3000,	// fleeingRadius
-	1.0f,   // reactionSpeed
-	60,		// willingnessToBecomeAlly
-	0.5,	// desireToRecruitAllies
+	0.5f,   // reactionSpeed
+	10,		// willingnessToBecomeAlly
+	0.1f,	// desireToRecruitAllies
 	0.7f,	// survivalInstinct
-	20,		// foodOfferAmount
-	1500,	// roamRadius
-	700.0f, // communicationRadius
-	0.5f,   // communicationDesire
+	30,		// foodOfferAmount
+	600,	// roamRadius
+	500.0f, // communicationRadius
+	0.8f,   // communicationDesire
 };
 
 const MemoryNpcAttributes TapirMemoryAttributes = {
@@ -167,38 +167,38 @@ const BasicNpcAttributes SlothBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3.0f,	// attackSpeed
-	200,	// movementSpeed
-	60,		// currentStamina
-	60, 	// maxStamina
-	5,		// staminaDepletionRate
+	2.0f,	// attackSpeed
+	150,	// movementSpeed
+	100,	// currentStamina
+	100, 	// maxStamina
+	2,		// staminaDepletionRate
 	10,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
-	5,		// hungerDepletionRate
+	2,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
-	30,		// hungerRecoveryImproved
+	50,		// hungerRecoveryImproved
 	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
-	3,		// restAfterFoodBasic
-	5,		// restAfterFoodImproved
+	4,		// restAfterFoodBasic
+	6,		// restAfterFoodImproved
 	5, 		// restAfterStaminaIsZero
 	4,		// mealsUntilRestIsNeeded
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
 	0,		// foodPouch
-	0.5f,   // desireToHoardFood
-	0.1f,	// chaseDesire
-	900.0f, // awarenessRadius
+	0.9f,   // desireToHoardFood
+	0.2f,	// chaseDesire
+	500.0f, // awarenessRadius
 	3000,	// fleeingRadius
-	1.0f,   // reactionSpeed
-	60,		// willingnessToBecomeAlly
-	0.5,	// desireToRecruitAllies
-	0.7f,	// survivalInstinct
-	20,		// foodOfferAmount
-	1500,	// roamRadius
-	700.0f, // communicationRadius
-	0.5f,   // communicationDesire
+	0.5f,   // reactionSpeed
+	10,		// willingnessToBecomeAlly
+	0.1f,	// desireToRecruitAllies
+	0.5f,	// survivalInstinct
+	30,		// foodOfferAmount
+	600,	// roamRadius
+	500.0f, // communicationRadius
+	0.8f,   // communicationDesire
 };
 
 const MemoryNpcAttributes SlothMemoryAttributes = {
@@ -213,18 +213,18 @@ const MemoryNpcAttributes SlothMemoryAttributes = {
 const BasicNpcAttributes CobraBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
-	10,		// hitDamage
-	3.0f,	// attackSpeed
-	200,	// movementSpeed
-	60,		// currentStamina
-	60, 	// maxStamina
-	5,		// staminaDepletionRate
-	10,		// staminaRecoveryRate
+	50,		// hitDamage
+	1.5f,	// attackSpeed
+	250,	// movementSpeed
+	100,	// currentStamina
+	100, 	// maxStamina
+	4,		// staminaDepletionRate
+	20,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
-	5,		// hungerDepletionRate
+	2,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
-	30,		// hungerRecoveryImproved
+	50,		// hungerRecoveryImproved
 	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
 	3,		// restAfterFoodBasic
@@ -234,17 +234,17 @@ const BasicNpcAttributes CobraBasicAttributes = {
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
 	0,		// foodPouch
-	0.5f,   // desireToHoardFood
-	0.1f,	// chaseDesire
-	900.0f, // awarenessRadius
+	0.8f,   // desireToHoardFood
+	0.9f,	// chaseDesire
+	600.0f, // awarenessRadius
 	3000,	// fleeingRadius
 	1.0f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
-	1500,	// roamRadius
-	700.0f, // communicationRadius
+	600,	// roamRadius
+	600.0f, // communicationRadius
 	0.5f,   // communicationDesire
 };
 
@@ -261,17 +261,17 @@ const BasicNpcAttributes BatBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3.0f,	// attackSpeed
-	200,	// movementSpeed
+	1.0f,	// attackSpeed
+	220,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
-	5,		// staminaDepletionRate
-	10,		// staminaRecoveryRate
+	2,		// staminaDepletionRate
+	15,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
-	5,		// hungerDepletionRate
+	4,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
-	30,		// hungerRecoveryImproved
+	50,		// hungerRecoveryImproved
 	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
 	3,		// restAfterFoodBasic
@@ -281,18 +281,18 @@ const BasicNpcAttributes BatBasicAttributes = {
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
 	0,		// foodPouch
-	0.5f,   // desireToHoardFood
-	0.1f,	// chaseDesire
-	900.0f, // awarenessRadius
+	0.6f,   // desireToHoardFood
+	0.7f,	// chaseDesire
+	700.0f, // awarenessRadius
 	3000,	// fleeingRadius
 	1.0f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
-	1500,	// roamRadius
+	600,	// roamRadius
 	700.0f, // communicationRadius
-	0.5f,   // communicationDesire
+	0.9f,   // communicationDesire
 };
 
 const MemoryNpcAttributes BatMemoryAttributes = {
@@ -308,17 +308,17 @@ const BasicNpcAttributes PeacockBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3.0f,	// attackSpeed
+	2.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
 	5,		// staminaDepletionRate
-	10,		// staminaRecoveryRate
+	15,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
-	5,		// hungerDepletionRate
-	20,		// hungerRecoveryBasic
-	30,		// hungerRecoveryImproved
+	2,		// hungerDepletionRate
+	30,		// hungerRecoveryBasic
+	40,		// hungerRecoveryImproved
 	2,		// eatingSpeedRateBasic
 	3,		// eatingSpeedRateImproved
 	3,		// restAfterFoodBasic
@@ -328,18 +328,18 @@ const BasicNpcAttributes PeacockBasicAttributes = {
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
 	0,		// foodPouch
-	0.5f,   // desireToHoardFood
-	0.1f,	// chaseDesire
+	0.7f,   // desireToHoardFood
+	0.4f,	// chaseDesire
 	900.0f, // awarenessRadius
 	3000,	// fleeingRadius
 	0.5f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
-	1.0f,	// survivalInstinct
+	0.9f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
-	700.0f, // communicationRadius
-	0.5f,   // communicationDesire
+	900.0f, // communicationRadius
+	1.0f,   // communicationDesire
 };
 
 const MemoryNpcAttributes PeacockMemoryAttributes = {
@@ -354,13 +354,13 @@ const MemoryNpcAttributes PeacockMemoryAttributes = {
 const BasicNpcAttributes GorillaBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
-	10,		// hitDamage
+	50,		// hitDamage
 	3.0f,	// attackSpeed
-	200,	// movementSpeed
-	60,		// currentStamina
-	60, 	// maxStamina
+	180,	// movementSpeed
+	100,	// currentStamina
+	100, 	// maxStamina
 	5,		// staminaDepletionRate
-	10,		// staminaRecoveryRate
+	20,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
 	5,		// hungerDepletionRate
@@ -375,18 +375,18 @@ const BasicNpcAttributes GorillaBasicAttributes = {
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
 	0,		// foodPouch
-	0.5f,   // desireToHoardFood
-	0.1f,	// chaseDesire
-	900.0f, // awarenessRadius
+	0.6f,   // desireToHoardFood
+	0.8f,	// chaseDesire
+	800.0f, // awarenessRadius
 	3000,	// fleeingRadius
 	1.0f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
-	0.7f,	// survivalInstinct
+	0.9f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
-	700.0f, // communicationRadius
-	0.5f,   // communicationDesire
+	800.0f, // communicationRadius
+	0.9f,   // communicationDesire
 };
 
 const MemoryNpcAttributes GorillaMemoryAttributes = {
@@ -402,15 +402,15 @@ const BasicNpcAttributes PandaBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
 	10,		// hitDamage
-	3.0f,	// attackSpeed
+	2.0f,	// attackSpeed
 	200,	// movementSpeed
 	60,		// currentStamina
 	60, 	// maxStamina
 	5,		// staminaDepletionRate
-	10,		// staminaRecoveryRate
+	15,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
-	5,		// hungerDepletionRate
+	2,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
 	30,		// hungerRecoveryImproved
 	2,		// eatingSpeedRateBasic
@@ -422,17 +422,17 @@ const BasicNpcAttributes PandaBasicAttributes = {
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
 	0,		// foodPouch
-	0.5f,   // desireToHoardFood
-	0.1f,	// chaseDesire
-	900.0f, // awarenessRadius
-	3000,	// fleeingRadius
+	0.9f,   // desireToHoardFood
+	0.2f,	// chaseDesire
+	500.0f, // awarenessRadius
+	1500,	// fleeingRadius
 	1.0f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
-	700.0f, // communicationRadius
+	500.0f, // communicationRadius
 	0.5f,   // communicationDesire
 };
 
@@ -448,16 +448,16 @@ const MemoryNpcAttributes PandaMemoryAttributes = {
 const BasicNpcAttributes RedPandaBasicAttributes = {
 	100,	// currentHp
 	100,	// maxHp
-	10,		// hitDamage
-	3.0f,	// attackSpeed
+	30,		// hitDamage
+	2.0f,	// attackSpeed
 	200,	// movementSpeed
-	60,		// currentStamina
-	60, 	// maxStamina
-	5,		// staminaDepletionRate
+	100,	// currentStamina
+	100, 	// maxStamina
+	2,		// staminaDepletionRate
 	10,		// staminaRecoveryRate
 	100,	// currentHunger
 	100,	// maxHunger
-	5,		// hungerDepletionRate
+	4,		// hungerDepletionRate
 	20,		// hungerRecoveryBasic
 	30,		// hungerRecoveryImproved
 	2,		// eatingSpeedRateBasic
@@ -469,18 +469,18 @@ const BasicNpcAttributes RedPandaBasicAttributes = {
 	0,		// basicMealsCounter
 	0,		// improvedMealsCounter
 	0,		// foodPouch
-	0.5f,   // desireToHoardFood
-	0.1f,	// chaseDesire
+	0.8f,   // desireToHoardFood
+	0.4f,	// chaseDesire
 	900.0f, // awarenessRadius
-	3000,	// fleeingRadius
+	1500,	// fleeingRadius
 	1.0f,   // reactionSpeed
 	60,		// willingnessToBecomeAlly
 	0.5,	// desireToRecruitAllies
 	0.7f,	// survivalInstinct
 	20,		// foodOfferAmount
 	1500,	// roamRadius
-	700.0f, // communicationRadius
-	0.5f,   // communicationDesire
+	900.0f, // communicationRadius
+	0.8f,   // communicationDesire
 };
 
 const MemoryNpcAttributes RedPandaMemoryAttributes = {

@@ -476,17 +476,9 @@ FVector& ABasicNPC::GetCurrentLocation() {
 }
 
 void ABasicNPC::AttackAndReduceHealth(const int& damage, uint8_t attackerEatingSpeed, ABasicNPC* attacker) {
-	UE_LOG(LogTemp, Warning, TEXT("Current HP: %d\n\tAttacked by: %s"),
-		DecisionSys->AnimalAttributes.currentHp,
-		*attacker->GetName());
-
 	const int newHp = DecisionSys->AnimalAttributes.currentHp - damage;
 	DecisionSys->AnimalAttributes.currentHp = FMath::Max(newHp, 0);
 	UpdateStatsVoxelsMesh(StatsType::HealthPoints);
-
-	// Log the current HP and the name of the attacker  
-	UE_LOG(LogTemp, Warning, TEXT("\tNew HP: %d"),
-		DecisionSys->AnimalAttributes.currentHp);
 
 	if (DecisionSys->AnimalAttributes.currentHp == 0) {
 		TriggerNpcDeath(attackerEatingSpeed);
