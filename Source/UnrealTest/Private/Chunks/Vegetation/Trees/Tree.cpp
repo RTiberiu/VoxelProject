@@ -34,6 +34,9 @@ void ATree::SetTreeCollision(bool InHasCollision) {
 void ATree::UpdateCollision(bool InHasCollision) {
 	SetTreeCollision(InHasCollision);
 
+	// Only runs in debug mode, and changes the color of the mesh based on collision
+	ApplyCollisionLODColor();
+
 	if (InHasCollision) {
 		// If the tree has collision, enable it by regenerating the mesh
 		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -113,6 +116,9 @@ void ATree::printBinary(uint64_t value, int groupSize, const std::string& otherD
 }
 
 void ATree::SpawnTreeMeshes() {
+	// Only runs in debug mode, and changes the color of the mesh based on collision
+	ApplyCollisionLODColor();
+
 	Mesh->SetCastShadow(WTSR->TreeShadow);
 	
 	Mesh->CreateMeshSection(0, MeshData->Vertices, MeshData->Triangles, MeshData->Normals, MeshData->UV0, MeshData->Colors, TArray<FProcMeshTangent>(), hasCollision);
@@ -127,6 +133,20 @@ void ATree::SpawnTreeMeshes() {
 
 	if (Material) {
 		Mesh->SetMaterial(0, Material);
+	}
+}
+
+void ATree::ApplyCollisionLODColor() {
+	if (!WTSR->ShowTreesCollisionLOD) {
+		return;
+	}
+
+	const FColor CollisionColor = hasCollision
+		? FColor(252, 65, 3)
+		: FColor(254, 255, 232);
+
+	for (FColor& VertexColor : MeshData->Colors) {
+		VertexColor = CollisionColor;
 	}
 }
 

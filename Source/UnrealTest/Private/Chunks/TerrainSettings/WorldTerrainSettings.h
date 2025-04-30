@@ -29,6 +29,11 @@ public:
 
 	~UWorldTerrainSettings();
 
+	// Debug only parameters (showing collision is much slower)
+	const bool ShowChunkCollisionLOD{ false };
+	const bool ShowTreesCollisionLOD{ false };
+	const bool ShowNpcVisionSpheres{ false };
+	
 	//const int NoiseSeed{ FMath::RandRange(1, 9999) }; // Default is 1337 (used mainly for testing)
 	const int NoiseSeed{1337}; // Using the 1337 seed for testing. 
 	const uint8_t UnrealScale{ 60 }; // this changes the voxel size (100 is 1m) // 50 

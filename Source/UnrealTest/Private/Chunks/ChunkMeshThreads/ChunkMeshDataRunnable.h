@@ -126,15 +126,15 @@ private:
 	AnimalType GetAnimalTypeFromSpawnChance();
 
 	TArray<TPair<AnimalType, float>> AnimalSpawnChances = {
-		//{ AnimalType::RedPanda, 0.05f },
-		//{ AnimalType::Tapir,    0.15f },
-		//{ AnimalType::Sloth,    0.3f },
-		//{ AnimalType::Cobra,    0.4f },
-		//{ AnimalType::Bat,      0.5f },
-		{ AnimalType::Peacock,  0.5f }, // 0.6
-		{ AnimalType::Tiger,    1.0f }, // 0.7
-		//{ AnimalType::Gorilla,  0.9f },
-		//{ AnimalType::Panda,    1.0f }
+		{ AnimalType::RedPanda, 0.05f },
+		{ AnimalType::Tapir,    0.1f },
+		{ AnimalType::Sloth,    0.2f },
+		{ AnimalType::Cobra,    0.25f },
+		{ AnimalType::Bat,      0.45f },
+		{ AnimalType::Peacock,  0.65f }, // 0.6
+		{ AnimalType::Tiger,    0.8f }, // 0.7
+		{ AnimalType::Gorilla,  0.9f },
+		{ AnimalType::Panda,    1.0f }
 	};
 
 };

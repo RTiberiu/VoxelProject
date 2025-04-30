@@ -59,6 +59,7 @@ private:
 	void printBinary(uint64_t value, int groupSize, const std::string& otherData);
 
 	void SpawnTreeMeshes();
+	void ApplyCollisionLODColor();
 
 protected:
 	// Called when the game starts or when spawned

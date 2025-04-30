@@ -50,25 +50,22 @@ bool ABinaryChunk::HasCollision() {
 void ABinaryChunk::UpdateCollision(bool InHasCollision) {
 	SetChunkCollision(InHasCollision);
 
-	// Testing collision by updating the color based on it
-	/*FColor newColor = hasCollision ? FColor::Red : FColor::White;
-	for (int32 i = 0; i < meshData.Vertices.Num(); i++) {
-		meshData.Colors[i] = newColor;
-	}*/
+	// Only runs in debug mode, and changes the color of the mesh based on collision
+	ApplyCollisionLODColor();
 
 	if (hasCollision) {
 		// If the chunk has collision, enable it by regenerating the mesh
 		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		Mesh->SetCollisionResponseToAllChannels(ECR_Block);
 		Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		Mesh->SetCanEverAffectNavigation(true);
+		Mesh->SetCanEverAffectNavigation(false);
 
 		Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), hasCollision);
 	} else {
 		// If the chunk does not have collision, disable it by updating the mesh
 		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Mesh->UpdateMeshSection(0, meshData.Vertices, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>());
-		Mesh->SetCanEverAffectNavigation(true); // Mesh->SetCanEverAffectNavigation(false);
+		Mesh->SetCanEverAffectNavigation(false);
 
 	}
 }
@@ -106,6 +103,8 @@ void ABinaryChunk::printBinary(uint64_t value, int groupSize, const std::string&
 }
 
 void ABinaryChunk::spawnTerrainChunkMeshes() {	
+	// Only runs in debug mode, and changes the color of the mesh based on collision
+	ApplyCollisionLODColor();
 
 	Mesh->CreateMeshSection(0, meshData.Vertices, meshData.Triangles, meshData.Normals, meshData.UV0, meshData.Colors, TArray<FProcMeshTangent>(), hasCollision);
 
@@ -141,3 +140,16 @@ void ABinaryChunk::BeginPlay() {
 
 }
 
+void ABinaryChunk::ApplyCollisionLODColor() {
+	if (!WTSR->ShowChunkCollisionLOD) {
+		return;
+	}
+
+	const FColor CollisionColor = hasCollision
+		? FColor(252, 65, 3)
+		: FColor(254, 255, 232);
+
+	for (FColor& VertexColor : meshData.Colors) {
+		VertexColor = CollisionColor;
+	}
+}
