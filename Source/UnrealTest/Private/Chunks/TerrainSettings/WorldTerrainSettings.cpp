@@ -718,20 +718,24 @@ void UWorldTerrainSettings::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerli
 	initializePerlinNoise(continentalness);
 	initializePerlinNoise(erosion);
 	initializePerlinNoise(peaksAndValleys);
+	initializePerlinNoise(npcNoise);
 
 	// Declaring the 3 noise domain warp objects to modify the terrain
 	initializeDomainWarpNoise(continentalnessDW);
 	initializeDomainWarpNoise(erosionDW);
 	initializeDomainWarpNoise(peaksAndValleysDW);
+	initializeDomainWarpNoise(npcNoiseDW);
 
 	// Apply settings
 	applyPerlinNoiseSettings(continentalness, 0);
 	applyPerlinNoiseSettings(erosion, 1);
 	applyPerlinNoiseSettings(peaksAndValleys, 2);
+	applyPerlinNoiseSettings(npcNoise, 3);
 
 	applyDomainWarpSettings(continentalnessDW, 0);
 	applyDomainWarpSettings(erosionDW, 1);
 	applyDomainWarpSettings(peaksAndValleysDW, 2);
+	applyDomainWarpSettings(npcNoiseDW, 3);
 }
 
 void UWorldTerrainSettings::ApplyDomainWarpToCoords(float& noisePositionX, float& noisePositionZ, TObjectPtr<FastNoiseLite> noise) {
@@ -739,5 +743,5 @@ void UWorldTerrainSettings::ApplyDomainWarpToCoords(float& noisePositionX, float
 }
 
 float UWorldTerrainSettings::GetNoiseAtCoords(float& noisePositionX, float& noisePositionZ, TObjectPtr<FastNoiseLite> noise) {
-	return noise->GetNoise(noisePositionX, noisePositionZ) + 1;;
+	return noise->GetNoise(noisePositionX, noisePositionZ) + 1;
 }

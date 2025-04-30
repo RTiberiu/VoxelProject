@@ -123,18 +123,18 @@ private:
 
 
 	// NPC Spawn chances
-	AnimalType GetAnimalTypeFromSpawnChance();
+	AnimalType GetAnimalTypeFromSpawnChance(const int& x, const int& z, const FVector& chunkWorldLocation);
 
 	TArray<TPair<AnimalType, float>> AnimalSpawnChances = {
 		{ AnimalType::RedPanda, 0.05f },
-		{ AnimalType::Tapir,    0.1f },
-		{ AnimalType::Sloth,    0.2f },
-		{ AnimalType::Cobra,    0.25f },
-		{ AnimalType::Bat,      0.45f },
-		{ AnimalType::Peacock,  0.65f }, // 0.6
-		{ AnimalType::Tiger,    0.8f }, // 0.7
-		{ AnimalType::Gorilla,  0.9f },
-		{ AnimalType::Panda,    1.0f }
+		{ AnimalType::Tapir,    0.3f },
+		{ AnimalType::Sloth,    0.4f },
+		{ AnimalType::Cobra,    0.45f },
+		{ AnimalType::Bat,      0.8f },
+		{ AnimalType::Peacock,  1.4f }, 
+		{ AnimalType::Tiger,    1.8f },
+		{ AnimalType::Gorilla,  1.9f },
+		{ AnimalType::Panda,    3.0f }
 	};
 
 };

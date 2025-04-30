@@ -87,11 +87,14 @@ public:
 	TObjectPtr<FastNoiseLite> continentalness;
 	TObjectPtr<FastNoiseLite> erosion;
 	TObjectPtr<FastNoiseLite> peaksAndValleys;
+	TObjectPtr<FastNoiseLite> npcNoise;
 
 	// Domain warp for the 3 main noise objects
 	TObjectPtr<FastNoiseLite> continentalnessDW;
 	TObjectPtr<FastNoiseLite> erosionDW;
 	TObjectPtr<FastNoiseLite> peaksAndValleysDW;
+	TObjectPtr<FastNoiseLite> npcNoiseDW;
+
 
 	void SetPerlinNoiseSettings(APerlinNoiseSettings* InPerlinNoiseSettings);
 
@@ -124,8 +127,8 @@ public:
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
 	const float TreeSpawnChance{ 0.0014f };
 	const float FlowerSpawnChance{ 0.03f };	// Showcase settings: 0.03f		// Testing settings: 0.03f
-	const float GrassSpawnChance{ 0.08f };	// Showcase settings: 0.08f		// Testing settings: 0.05f
-	const float NPCSpawnChance{ 0.081f };	// Showcase settings: 0.082f	// Testing settings: 0.052f
+	const float GrassSpawnChance{ 0.075f };	// Showcase settings: 0.08f		// Testing settings: 0.05f
+	const float NPCSpawnChance{ 0.077f };	// Showcase settings: 0.082f	// Testing settings: 0.052f
 
 	// Shadow settings
 	const bool GrassShadow{ true };

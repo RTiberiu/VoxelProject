@@ -32,7 +32,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	TArray<FNoiseMapSettings> noiseMapSettings;
-    // TArray<NoiseMapSettings> noiseMapSettings;
 
 protected:
 	// Called when the game starts or when spawned

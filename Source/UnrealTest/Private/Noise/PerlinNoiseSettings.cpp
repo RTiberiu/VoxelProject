@@ -49,11 +49,25 @@ APerlinNoiseSettings::APerlinNoiseSettings() {
 	peaksAndValleys.DomainWarpLacunarity = 0.66f;
 	peaksAndValleys.DomainWarpGain = 0.74f;
 
+	FNoiseMapSettings npc;
+	npc.Octaves = 4;
+	npc.Frequencies = 0.5f;
+	npc.Amplitudes = { 5, 6, 7, 8, 9, 10 };
+	npc.Lacunarity = 0.5f;
+	npc.Gain = 2.0f;
+	npc.WeightedStrength = -0.6f;
+	npc.DomainWarpAmp = 3;
+	npc.DomainWarpFrequencies = 0.0f;
+	npc.DomainWarpOctaves = 1;
+	npc.DomainWarpLacunarity = 0.0f;
+	npc.DomainWarpGain = 0.0f;
+
 	biomeIndex = 2; 
 
 	noiseMapSettings.Add(continentalness);
 	noiseMapSettings.Add(erosion);
 	noiseMapSettings.Add(peaksAndValleys);
+	noiseMapSettings.Add(npc);
 	
 	noiseFrequency3D = 0.012;
 	squashingFactor = 0.004;
@@ -93,7 +107,6 @@ void APerlinNoiseSettings::BindInputToRespawnTerrain() {
 // Called every frame
 void APerlinNoiseSettings::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
-
 }
 
 void APerlinNoiseSettings::BeginDestroy() {

@@ -746,18 +746,19 @@ void ChunkMeshDataRunnable::AddNpcSpawnPoint(const int& x, const int& z, const i
 	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
 	// TODO Adjust spawn type based on noise not random
-	AnimalType animalType = GetAnimalTypeFromSpawnChance();
+	AnimalType animalType = GetAnimalTypeFromSpawnChance(x, z, chunkWorldLocation);
 	const TPair<FVoxelObjectLocationData, AnimalType> PositionAndType = { objectSpawnPosition, animalType };
 	PendingNpcSpawns.Add(PositionAndType);
 }
 
-AnimalType ChunkMeshDataRunnable::GetAnimalTypeFromSpawnChance() {
-	const float randomValue = FMath::FRand();
-	float AccumulatedChance = 0.0f;
+AnimalType ChunkMeshDataRunnable::GetAnimalTypeFromSpawnChance(const int& x, const int& z, const FVector& chunkWorldLocation) {
+	float noisePositionX = static_cast<float>((x * WTSR->UnrealScale + chunkWorldLocation.X) / WTSR->UnrealScale);
+	float noisePositionZ = static_cast<float>((z * WTSR->UnrealScale + chunkWorldLocation.Y) / WTSR->UnrealScale);
+
+	const float noiseValue = WTSR->GetNoiseAtCoords(noisePositionX, noisePositionZ, WTSR->npcNoise);
 
 	for (const TPair<AnimalType, float>& Pair : AnimalSpawnChances) {
-		AccumulatedChance += Pair.Value;
-		if (randomValue <= AccumulatedChance) {
+		if (noiseValue <= Pair.Value) {
 			return Pair.Key;
 		}
 	}
