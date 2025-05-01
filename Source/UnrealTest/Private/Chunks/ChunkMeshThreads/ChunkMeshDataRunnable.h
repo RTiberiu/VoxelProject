@@ -126,14 +126,14 @@ private:
 	AnimalType GetAnimalTypeFromSpawnChance(const int& x, const int& z, const FVector& chunkWorldLocation);
 
 	TArray<TPair<AnimalType, float>> AnimalSpawnChances = {
-		{ AnimalType::RedPanda, 0.05f },
-		{ AnimalType::Tapir,    0.3f },
-		{ AnimalType::Sloth,    0.4f },
-		{ AnimalType::Cobra,    0.45f },
-		{ AnimalType::Bat,      0.8f },
+		{ AnimalType::RedPanda, 0.1f },
+		{ AnimalType::Tapir,    0.4f },
+		{ AnimalType::Sloth,    0.5f },
+		{ AnimalType::Cobra,    0.7f },
+		{ AnimalType::Bat,      0.9f },
 		{ AnimalType::Peacock,  1.4f }, 
-		{ AnimalType::Tiger,    1.8f },
-		{ AnimalType::Gorilla,  1.9f },
+		{ AnimalType::Tiger,    1.7f },
+		{ AnimalType::Gorilla,  1.85f },
 		{ AnimalType::Panda,    3.0f }
 	};
 

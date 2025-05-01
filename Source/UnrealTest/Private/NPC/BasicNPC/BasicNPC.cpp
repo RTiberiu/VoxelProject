@@ -495,8 +495,6 @@ void ABasicNPC::TriggerFoodRewardOnKill() {
 }
 
 void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
-	PlayAnimation(animationToRunAtTarget);
-
 	switch (actionType) {
 	case ActionType::AttackNpc:
 		// Check if target is still valid
@@ -521,6 +519,8 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 			if (!isTargetDead && IsTargetLocationCloseEnough(currentLocation, TargetNPC->GetCurrentLocation())) {
 				// Reset the counter after the delay is complete  
 				AttackDelayCounter = 0.0f;
+
+				PlayAnimation(animationToRunAtTarget);
 
 				// Attack the NPC
 				TargetNPC->AttackAndReduceHealth(
@@ -549,6 +549,8 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 			break;
 		}
 
+		PlayAnimation(animationToRunAtTarget);
+
 		if (EatingCounter > DecisionSys->AnimalAttributes.eatingSpeedRateBasic) {
 			// Remove the food target and update hunger if the target is valid
 			if (IsValid(actionTarget)) {
@@ -565,15 +567,15 @@ void ABasicNPC::RunTargetAnimationAndUpdateAttributes(float& DeltaSeconds) {
 		}
 		break;
 	case ActionType::RestAfterBasicFood:
+		PlayAnimation(animationToRunAtTarget);
 		if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodBasic)) {
 			// Trigger end of action and reset counter  
 			SignalEndOfAction();
 			RestCounter = 0.0f;
 		}
-
 		break;
-
 	case ActionType::RestAfterImprovedFood:
+		PlayAnimation(animationToRunAtTarget);
 		if (UpdateStamina(DeltaSeconds, DecisionSys->AnimalAttributes.restAfterFoodImproved)) {
 			// Trigger end of action and reset counter  
 			SignalEndOfAction();
@@ -904,33 +906,6 @@ void ABasicNPC::NotifyNpcsAroundOfEvent(const NpcAction& CurrentAction) {
 }
 
 void ABasicNPC::ReceiveNotificationOfEvent(const NpcAction& ActionTriggered) {
-	if (this->GetName().Equals("BasicNPC_2")) { // TODO DELETE THIS AFTER
-		if (actionType == ActionType::AttackNpc) {
-			UE_LOG(LogTemp, Warning, TEXT("ReceiveNotificationOfEvent():\tBasicNPC_2 current Action is AttackNPC. Target:"));
-
-			if (actionTarget) {
-				UE_LOG(LogTemp, Warning, TEXT("\t\tTarget is %s"), *actionTarget->GetName());
-			} else {
-				UE_LOG(LogTemp, Warning, TEXT("\t\tTarget is null (no target in range)"));
-			}
-
-			if (FoodNpcInRange.Num() > 0) {
-				for (ABasicNPC* FoodNpc : FoodNpcInRange) {
-					if (FoodNpc) {
-						UE_LOG(LogTemp, Warning, TEXT("\t\t\tFood NPC in range: %s"), *FoodNpc->GetName());
-					}
-				}
-			} else {
-				UE_LOG(LogTemp, Warning, TEXT("\t\t\tNo Food NPCs in range."));
-			}
-		}
-
-		if (ActionTriggered.ActionType == ActionType::AttackNpc) {
-			UE_LOG(LogTemp, Warning, TEXT("ReceiveNotificationOfEvent():\tBasicNPC_2 RECEIVED Action to AttackNPC."));
-		}
-	}
-
-
 	ShowNotificationStat = true;
 	if (actionType == ActionTriggered.ActionType) {
 		UpdateStatsVoxelsMesh(StatsType::Notification, NotificationType::Discarded);

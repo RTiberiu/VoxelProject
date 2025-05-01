@@ -412,17 +412,12 @@ void AChunkWorld::DestroyTreeActors() {
 	while (!TreeActorsToRemove.IsEmpty() && removedTreeCounter < treesToRemovePerFrame) {
 
 		ATree* treeToRemove = nullptr;
-		TreeActorsToRemove.Peek(treeToRemove);
-
-		if (!IsValid(treeToRemove)) {
-			TreeActorsToRemove.Dequeue(treeToRemove);
-			removedTreeCounter++;
-			continue;
+		if (TreeActorsToRemove.Dequeue(treeToRemove)) {
+			if (IsValid(treeToRemove)) {
+				treeToRemove->Destroy();
+				WTSR->TreeCount--;
+			}
 		}
-
-		TreeActorsToRemove.Dequeue(treeToRemove);
-		treeToRemove->Destroy();
-		WTSR->TreeCount--;
 		removedTreeCounter++;
 	}
 }
@@ -452,6 +447,7 @@ void AChunkWorld::DestroyFlowerActors() {
 	// Remove flower actors
 	int removedFlowerCounter = 0;
 	while (!FlowerActorsToRemove.IsEmpty() && removedFlowerCounter < flowerToRemovePerFrame) {
+
 		UCustomProceduralMeshComponent* flowerToRemove = nullptr;
 		FlowerActorsToRemove.Peek(flowerToRemove);
 
@@ -469,9 +465,10 @@ void AChunkWorld::DestroyFlowerActors() {
 }
 
 void AChunkWorld::DestroyNpcActors() {
-	// Remove flower actors
+	// Remove NPC actors
 	int removedNpcCounter = 0;
 	while (!NpcActorsToRemove.IsEmpty() && removedNpcCounter < npcToRemovePerFrame) {
+
 		ABasicNPC* npcToRemove = nullptr;
 		NpcActorsToRemove.Peek(npcToRemove);
 
@@ -518,6 +515,7 @@ void AChunkWorld::SpawnMultipleGrassObjects() {
 }
 
 void AChunkWorld::SpawnMultipleFlowerObjects() {
+
 	// Append flower positions waiting to be spawned
 	TArray<FVoxelObjectLocationData> flowerSpawnPositions = CLDR->getFlowerSpawnPositionInRange();
 	FlowerPositionsToSpawn.Append(flowerSpawnPositions);

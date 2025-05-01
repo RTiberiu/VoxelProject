@@ -165,8 +165,8 @@ private:
 	const int FramesToCheckForSpawnPointsInRange = 20;
 	int FramesCounterCheckSpawnedPointsInRange = 21; // Trigger an immediate check
 
-	bool spawnedTreesThisFrame;
-	bool spawnedChunksThisFrame;
+	bool spawnedTreesThisFrame = false;
+	bool spawnedChunksThisFrame = false;
 
 	int updatePlayerCurrentPositionCounter = 0;
 	int updatePlayerCurrentPositionPerFrames = 60;
