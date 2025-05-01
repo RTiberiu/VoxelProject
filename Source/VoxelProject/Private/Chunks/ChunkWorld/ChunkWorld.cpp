@@ -563,10 +563,10 @@ void AChunkWorld::SpawnMultipleNpcObjects() {
 			WTSR->NPCCount++;
 		}
 
-		// Print the NPC count every 50
-		if (WTSR->NPCCount % 10 == 0) {
-			UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount); // TODO Uncomment after testing
-		}
+		// Print the NPC count every 10
+		//if (WTSR->NPCCount % 10 == 0) {
+		//	UE_LOG(LogTemp, Log, TEXT("NPC count: %d"), WTSR->NPCCount);
+		//}
 
 		NPCPositionsToSpawn.RemoveAt(positionIndex);
 		spawnedNPCCounter++;
@@ -880,7 +880,6 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 
 	// Spawn chunk if there is a calculated mesh data waiting
 	SpawnSingleChunk(PlayerPosition);
-
 	UpdateChunksCollision();
 
 	// Destroy a chunk and remove it from the map if there is a destroy position in queue

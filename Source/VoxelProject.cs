@@ -2,11 +2,11 @@
 
 using UnrealBuildTool;
 
-public class UnrealTestTarget : TargetRules {
-    public UnrealTestTarget(TargetInfo Target) : base(Target) {
+public class VoxelProjectTarget : TargetRules {
+    public VoxelProjectTarget(TargetInfo Target) : base(Target) {
         Type = TargetType.Game;
         DefaultBuildSettings = BuildSettingsVersion.V5;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
-        ExtraModuleNames.Add("UnrealTest");
+        ExtraModuleNames.Add("VoxelProject");
     }
 }
