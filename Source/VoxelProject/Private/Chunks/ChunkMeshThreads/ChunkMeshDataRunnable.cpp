@@ -38,17 +38,17 @@ uint32 ChunkMeshDataRunnable::Run() {
 
 		Time start = std::chrono::high_resolution_clock::now();
 
-		createBinarySolidColumnsYXZ();
-		createTerrainMeshesData();
+		CreateBinarySolidColumnsYXZ();
+		CreateTerrainMeshesData();
 
 		Time end = std::chrono::high_resolution_clock::now();
 
 		WTSR->chunkSpawnTime += end - start;
 		WTSR->chunksMeshCounter++;
 
-		WTSR->UpdateChunkSemaphore->Acquire(); // TODO This might need to be changed to a different semaphore
+		WTSR->UpdateChunkSemaphore->Acquire();
 		CLDR->addMeshDataForPosition(ChunkLocationData, TemporaryMeshData);
-		TemporaryMeshData = FVoxelObjectMeshData(); // TODO This might not need to be cleared
+		TemporaryMeshData = FVoxelObjectMeshData();
 		WTSR->UpdateChunkSemaphore->Release();
 
 		isTaskComplete.AtomicSet(true);
@@ -80,7 +80,7 @@ void ChunkMeshDataRunnable::SetPerlinNoiseSettings(APerlinNoiseSettings* InPerli
 	PerlinNoiseSettingsRef = InPerlinNoiseSettingsRef;
 }
 
-void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
+void ChunkMeshDataRunnable::CreateBinarySolidColumnsYXZ() {
 	const FVector chunkWorldLocation = ChunkLocationData.ObjectPosition;
 
 	// Set the chunk values to air for all 3 axis (Y, X, Z)
@@ -262,7 +262,7 @@ void ChunkMeshDataRunnable::createBinarySolidColumnsYXZ() {
 	CLDR->AddSurfaceVoxelPointsForChunk(ChunkLocationData.ObjectWorldCoords, surfaceVoxelPoints, surfaceAvoidPositions);
 }
 
-void ChunkMeshDataRunnable::faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
+void ChunkMeshDataRunnable::FaceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks) {
 	// Face culling for all the 3 axis (Y, X, Z)
 	for (int axis = 0; axis < 3; axis++) {
 		for (int x = 0; x < WTSR->chunkSizePadding; x++) {
@@ -295,10 +295,10 @@ void ChunkMeshDataRunnable::faceCullingBinaryColumnsYXZ(std::vector<std::vector<
 					}
 
 					// Sample ascending axis and set to true when air meets solid
-					columnFaceMasks[axis * 2 + 0][columnIndex] = column & ~(column >> 1); // INDEX VERIFIED!
+					columnFaceMasks[axis * 2][columnIndex] = column & ~(column >> 1);
 
 					// Sample descending axis and set to true when air meets solid
-					columnFaceMasks[axis * 2 + 1][columnIndex] = column & ~(column << 1); // INDEX VERIFIED!
+					columnFaceMasks[axis * 2 + 1][columnIndex] = column & ~(column << 1);
 
 					// Remove bottom face between height chunk if there are solid blocks underneath
 					if (axis == 0) {
@@ -326,48 +326,51 @@ void ChunkMeshDataRunnable::faceCullingBinaryColumnsYXZ(std::vector<std::vector<
 	}
 }
 
-void ChunkMeshDataRunnable::createTerrainMeshesData() {
+void ChunkMeshDataRunnable::CreateTerrainMeshesData() {
+	const int chunkSize = WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight;
+	
 	// Storing the face masks for the Y, X, Z axis
 	// Size is doubled to contains both ascending and descending columns 
 	std::vector<std::vector<uint64_t>> columnFaceMasks{
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Y ascending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Y descending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // X ascending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // X descending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Z ascending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Z descending
+		std::vector<uint64_t>(chunkSize), // Y ascending
+		std::vector<uint64_t>(chunkSize), // Y descending
+		std::vector<uint64_t>(chunkSize), // X ascending
+		std::vector<uint64_t>(chunkSize), // X descending
+		std::vector<uint64_t>(chunkSize), // Z ascending
+		std::vector<uint64_t>(chunkSize), // Z descending
 	};
 
 	// Face cull the binary columns on the 3 axis, ascending and descending
-	faceCullingBinaryColumnsYXZ(columnFaceMasks);
+	FaceCullingBinaryColumnsYXZ(columnFaceMasks);
 
 	// Storing planes for all axis, ascending and descending
 	std::vector<std::vector<uint64_t>> binaryPlanes{
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Y ascending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Y descending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // X ascending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // X descending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Z ascending
-		std::vector<uint64_t>(WTSR->chunkSizePadding * WTSR->chunkSizePadding * WTSR->intsPerHeight), // Z descending
+		std::vector<uint64_t>(chunkSize), // Y ascending
+		std::vector<uint64_t>(chunkSize), // Y descending
+		std::vector<uint64_t>(chunkSize), // X ascending
+		std::vector<uint64_t>(chunkSize), // X descending
+		std::vector<uint64_t>(chunkSize), // Z ascending
+		std::vector<uint64_t>(chunkSize), // Z descending
 	};
 
-	for (int axis = 0; axis < 6; axis++) { // Iterate all axis ascending and descending 
+	// Iterate all axis ascending and descending
+	for (int axis = 0; axis < 6; axis++) {  
 		// Create the binary plane for each axis
-		buildBinaryPlanes(columnFaceMasks[axis], binaryPlanes[axis], axis);
+		BuildBinaryPlanes(columnFaceMasks[axis], binaryPlanes[axis], axis);
 
-		// Greedy mesh each plane and create planes
-		greedyMeshingBinaryPlane(binaryPlanes[axis], axis);
+		// Greedy mesh each plane and create quads
+		GreedyMeshingBinaryPlane(binaryPlanes[axis], axis);
 	}
 }
 
-void ChunkMeshDataRunnable::buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis) {
+void ChunkMeshDataRunnable::BuildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis) {
 	for (int x = 0; x < WTSR->chunkSizePadding; x++) {
 		for (int z = 0; z < WTSR->chunkSizePadding; z++) {
 			for (int bitIndex = 0; bitIndex < WTSR->intsPerHeight; bitIndex++) {
 
-				const int columnIndex{ (x * WTSR->chunkSizePadding * WTSR->intsPerHeight) + (z * WTSR->intsPerHeight) + bitIndex }; // VERIFIED! Goes from 0 - 16,383
+				const int columnIndex{ (x * WTSR->chunkSizePadding * WTSR->intsPerHeight) + (z * WTSR->intsPerHeight) + bitIndex }; 
 
-				uint64_t column = faceMaskColumn[columnIndex];  // this goes from 0 - 16,383
+				uint64_t column = faceMaskColumn[columnIndex];
 
 				// Remove padding only for X and Z axis 
 				if (axis != 0 && axis != 1) {
@@ -416,7 +419,7 @@ void ChunkMeshDataRunnable::buildBinaryPlanes(const std::vector<uint64_t>& faceM
 	}
 }
 
-void ChunkMeshDataRunnable::greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis) {
+void ChunkMeshDataRunnable::GreedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis) {
 	for (int row = 0; row < planes.size(); row++) {
 
 		// Removing padding by skipping the first and last row in the plane
@@ -517,20 +520,19 @@ void ChunkMeshDataRunnable::greedyMeshingBinaryPlane(std::vector<uint64_t>& plan
 			voxelPosition1 = { voxelX, voxelZ, voxelY }; // X, Y, Z (height)
 
 			// Modify the original voxel position and create the remaining three quad position
-			createAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+			CreateAllVoxelPositionsFromOriginal(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
 
 			// Create the quads
-			createQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
+			CreateQuadAndAddToMeshData(voxelPosition1, voxelPosition2, voxelPosition3, voxelPosition4, width, height, axis);
 		}
 	}
 }
 
 // Modify the original voxel position and create the remaining three quad position
-void ChunkMeshDataRunnable::createAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& width, const int& height, const int& axis) {
+void ChunkMeshDataRunnable::CreateAllVoxelPositionsFromOriginal(FVector& voxelPosition1, FVector& voxelPosition2, FVector& voxelPosition3, FVector& voxelPosition4, const int& width, const int& height, const int& axis) {
 
 	// Get position modifiers depending on the current axis
 	// This values are used to create the 4 quad positions
-		// TODO Potentially integrate with the switch above
 	FVector widthPositionModifier = { 0, 0, 0 };
 	FVector heightPositionModifier = { 0, 0, 0 };
 
@@ -604,7 +606,7 @@ void ChunkMeshDataRunnable::createAllVoxelPositionsFromOriginal(FVector& voxelPo
 	}
 }
 
-void ChunkMeshDataRunnable::createQuadAndAddToMeshData(const FVector& voxelPosition1, const FVector& voxelPosition2, const FVector& voxelPosition3, const FVector& voxelPosition4, const int& height, const int& width, const int& axis) {
+void ChunkMeshDataRunnable::CreateQuadAndAddToMeshData(const FVector& voxelPosition1, const FVector& voxelPosition2, const FVector& voxelPosition3, const FVector& voxelPosition4, const int& height, const int& width, const int& axis) {
 	TemporaryMeshData.Vertices.Append({
 		voxelPosition1 * WTSR->UnrealScale,
 		voxelPosition2 * WTSR->UnrealScale,
@@ -644,10 +646,8 @@ void ChunkMeshDataRunnable::createQuadAndAddToMeshData(const FVector& voxelPosit
 			});
 	}
 
-	// TODO Create a dynamic texture and assign a random color from the layer for each 1x1 of the quad. 
-
 	// Assign different random colors for each vertex; This lets the GPU interpolate the colors
-	int layerIndex = getColorIndexFromVoxelHeight(static_cast<int>(voxelPosition1.Z));
+	int layerIndex = GetColorIndexFromVoxelHeight(static_cast<int>(voxelPosition1.Z));
 	FColor layerColor = WTSR->ChunkColorArray[layerIndex];
 
 	TemporaryMeshData.Colors.Append({
@@ -658,14 +658,14 @@ void ChunkMeshDataRunnable::createQuadAndAddToMeshData(const FVector& voxelPosit
 		});
 }
 
-int ChunkMeshDataRunnable::getColorIndexFromVoxelHeight(const int& height) {
+int ChunkMeshDataRunnable::GetColorIndexFromVoxelHeight(const int& height) {
 	const int colorIndex = FMath::Clamp(height / WTSR->LayerHeight, 0, WTSR->ColorLayers - 1);
 	return colorIndex;
 }
 
 void ChunkMeshDataRunnable::AddSpawnLocationForVegetationOrNpc(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation) {
 	// Return early if the point is not on grass
-	const int colorIndex = getColorIndexFromVoxelHeight(height);
+	const int colorIndex = GetColorIndexFromVoxelHeight(height);
 	bool pointNotOnGrass = colorIndex < WTSR->GrassColorStartIndex || colorIndex > WTSR->GrassColorEndIndex;
 	if (pointNotOnGrass) {
 		return;
@@ -745,7 +745,6 @@ void ChunkMeshDataRunnable::AddNpcSpawnPoint(const int& x, const int& z, const i
 	objectSpawnPosition.ObjectPosition = FVector(npcX, npcZ, height * WTSR->UnrealScale);
 	objectSpawnPosition.ObjectWorldCoords = ChunkLocationData.ObjectWorldCoords;
 
-	// TODO Adjust spawn type based on noise not random
 	AnimalType animalType = GetAnimalTypeFromSpawnChance(x, z, chunkWorldLocation);
 	const TPair<FVoxelObjectLocationData, AnimalType> PositionAndType = { objectSpawnPosition, animalType };
 	PendingNpcSpawns.Add(PositionAndType);

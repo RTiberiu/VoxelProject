@@ -70,17 +70,17 @@ private:
 
 	TArray<FVector2D> surfaceAvoidPositions;
 
-	void createBinarySolidColumnsYXZ();
+	void CreateBinarySolidColumnsYXZ();
 
-	void faceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
+	void FaceCullingBinaryColumnsYXZ(std::vector<std::vector<uint64_t>>& columnFaceMasks);
 
-	void createTerrainMeshesData();
+	void CreateTerrainMeshesData();
 
-	void buildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis);
+	void BuildBinaryPlanes(const std::vector<uint64_t>& faceMaskColumn, std::vector<uint64_t>& binaryPlane, const int& axis);
 
-	void greedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis);
+	void GreedyMeshingBinaryPlane(std::vector<uint64_t>& planes, const int& axis);
 
-	void createAllVoxelPositionsFromOriginal(
+	void CreateAllVoxelPositionsFromOriginal(
 		FVector& voxelPosition1,
 		FVector& voxelPosition2,
 		FVector& voxelPosition3,
@@ -89,7 +89,7 @@ private:
 		const int& height,
 		const int& axis);
 
-	void createQuadAndAddToMeshData(
+	void CreateQuadAndAddToMeshData(
 		const FVector& voxelPosition1,
 		const FVector& voxelPosition2,
 		const FVector& voxelPosition3,
@@ -97,7 +97,7 @@ private:
 		const int& height, const int& width,
 		const int& axis);
 
-	int getColorIndexFromVoxelHeight(const int& height);
+	int GetColorIndexFromVoxelHeight(const int& height);
 
 	void AddSpawnLocationForVegetationOrNpc(const int& x, const int& z, const int& height, const FVector& chunkWorldLocation);
 

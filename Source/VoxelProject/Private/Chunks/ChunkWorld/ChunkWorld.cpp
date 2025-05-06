@@ -914,7 +914,7 @@ void AChunkWorld::Tick(float DeltaSeconds) {
 	UpdateTreesCollision();
 
 	// Uncomment to use the testing configurations instead
-	// UseTestingConfigurations(ConfigToRun::NotificationAttackNpc);
+	//UseTestingConfigurations(ConfigToRun::NotificationAttackFoodSource);
 
 	SpawnMultipleGrassObjects();
 	SpawnMultipleFlowerObjects();

@@ -34,10 +34,10 @@ public:
 	const bool ShowTreesCollisionLOD{ false };
 	const bool ShowNpcVisionSpheres{ false };
 	
-	const int NoiseSeed{ FMath::RandRange(1, 9999) }; // Default is 1337 (used mainly for testing)
-	//const int NoiseSeed{1337}; // Using the 1337 seed for testing. 
+	//const int NoiseSeed{ FMath::RandRange(1, 9999) }; // Default is 1337 (used mainly for testing)
+	const int NoiseSeed{1337}; // Using the 1337 seed for testing. 
 	const uint8_t UnrealScale{ 60 }; // this changes the voxel size (100 is 1m) // 50 
-	const uint8_t DrawDistance{ 11 }; // 5 
+	const uint8_t DrawDistance{ 13 }; // 5 
     const uint8_t HalfUnrealScale{ static_cast<uint8_t>(UnrealScale / 2) }; // Used for aligning in the middle of a voxel
 
 	const uint8_t VegetationDrawDistance{ 3 }; // This is for smaller vegetation objects (grass/flowers)
