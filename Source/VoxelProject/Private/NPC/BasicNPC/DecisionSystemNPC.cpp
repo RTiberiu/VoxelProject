@@ -19,11 +19,11 @@ NpcAction UDecisionSystemNPC::GetAction(bool ChooseOptimalAction, const int& Inc
 
 	return FirstValidAction({
 		ShouldFlee(RandomNo), // Check if NPC should flee from enemies if they exist
-		 ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
+		ShouldRestAfterMeals(), // Check if NPC should rest after basic or improved food meals
 		ShouldAttackNpc(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should chase for food 
-		 ShouldEatBasicFoodSource(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should gather food 
+		ShouldEatBasicFoodSource(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should gather food 
 		//ShouldAttemptFoodTrade(RandomNo, ChooseOptimalAction, IncrementTargetInVisionList), // Check if NPC should share food for allies
-		  ShouldRoam(), // The NPC should roam in a random direction
+		ShouldRoam(), // The NPC should roam in a random direction
 		ShouldRelax() // For testing only
 		});
 }
@@ -64,8 +64,6 @@ NpcAction UDecisionSystemNPC::ShouldRestAfterMeals() {
 }
 
 NpcAction UDecisionSystemNPC::ShouldAttackNpc(const float& RandomNo, bool ChooseOptimalAction, const int& IncrementTargetInVisionList) {
-	//UE_LOG(LogTemp, Warning, TEXT("ShouldAttackNpc function is executed."));
-
 	// Check if NPC should chase for food 
 	if (!Owner->IsFoodNpcInRange()) {
 		return NoneAction;

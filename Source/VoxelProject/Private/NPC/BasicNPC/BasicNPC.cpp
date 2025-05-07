@@ -70,12 +70,6 @@ void ABasicNPC::InitializeBrain(const AnimalType& animalType) {
 	NpcType = animalType;
 	Relationships = AnimalsRelationships[NpcType];
 
-	// TODO I think the DecisionSys might be garbage collected, 
-	// since it sometimes has the Owner as a nullptr. This should 
-	// never happen since DecisionSys is a member of the ABasicNPC class. 
-	// POTENTIAL FIX: I might prevent the garbage collection and destroy it
-	// manually when the NPC is destroyed.
-
 	// Create the decision system and initialize it
 	DecisionSys = NewObject<UDecisionSystemNPC>();
 	DecisionSys->Initialize(this, animalType);
@@ -817,21 +811,18 @@ void ABasicNPC::AddOverlappingNpcToVisionList(ABasicNPC* OverlappingNpc) {
 
 	// Check if it's food 
 	if ((Relationships.FoodType & OverlappingNpcType) == OverlappingNpcType) {
-		//UE_LOG(LogTemp, Warning, TEXT("Added %s to the FOOD NPC vision list."), *OverlappingNpc->GetName());
 		FoodNpcInRange.Add(OverlappingNpc);
 		return;
 	}
 
 	// Check if it's ally
 	if ((Relationships.Allies & OverlappingNpcType) == OverlappingNpcType) {
-		//UE_LOG(LogTemp, Warning, TEXT("Added %s to the ALLIES vision list."), *OverlappingNpc->GetName());
 		AlliesInRange.Add(OverlappingNpc);
 		return;
 	}
 
 	// Check if it's threat
 	if ((Relationships.Enemies & OverlappingNpcType) == OverlappingNpcType) {
-		//UE_LOG(LogTemp, Warning, TEXT("Added %s to the THREATS vision list."), *OverlappingNpc->GetName());
 		ThreatsInRange.Add(OverlappingNpc);
 		return;
 	}
@@ -970,7 +961,11 @@ bool ABasicNPC::AcceptAttackFoodSourceNotification() {
 void ABasicNPC::TriggerPathfindingTask() {
 	// Adjust location for grass and flower, otherwise the pathfinding will go for the adjacent voxel
 	if (actionType == ActionType::AttackFoodSource) {
-		targetLocation = FVector(targetLocation.X + WTSR->HalfUnrealScale, targetLocation.Y + WTSR->HalfUnrealScale, targetLocation.Z);
+		targetLocation = FVector(
+			targetLocation.X + WTSR->HalfUnrealScale, 
+			targetLocation.Y + WTSR->HalfUnrealScale, 
+			targetLocation.Z
+		);
 	}
 
 	PathfindingManager->AddPathfindingTask(this, currentLocation, targetLocation);
@@ -992,7 +987,7 @@ void ABasicNPC::BeginPlay() {
 void ABasicNPC::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 
-	// TESTING ONLY -- PREVENTING THE NPC TO MAKE ANY MOVES FOR THE FIRST N SECONDS
+	// PREVENTING THE NPC TO MAKE ANY MOVES FOR THE FIRST N SECONDS
 	if (DelayBeforeFirstPathRequest < 1.0f) {
 		DelayBeforeFirstPathRequest += DeltaSeconds;
 		return;
@@ -1040,15 +1035,11 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 
 			// Terminate the action early if the frustration reaches the threshold
 			if (FrustrationCounter >= FrustrationThreshold) {
-				//UE_LOG(LogTemp, Warning, TEXT("Action discarded due to frustration threshold being reached. %s"), *this->GetName());
 				frutrationTriggered = true;
 				FrustrationCounter = 0.0f;
 
 				// Set the current target, to compare it when a new target is selected
 				LastActionTarget = actionTarget;
-
-				//UE_LOG(LogTemp, Warning, TEXT("Path discarded:"));
-				//pathToTarget->print();
 
 				SignalEndOfAction();
 			}
@@ -1059,8 +1050,6 @@ void ABasicNPC::Tick(float DeltaSeconds) {
 			ConsumePathAndMoveToLocation(DeltaSeconds);
 		}
 	}
-
-	// TODO IF THE FOOD SOURCE IS GONE, STOP ACTION AND REQUEST NEW ACTION
 
 	if (!isTargetSet) {
 		isTargetSet = true;

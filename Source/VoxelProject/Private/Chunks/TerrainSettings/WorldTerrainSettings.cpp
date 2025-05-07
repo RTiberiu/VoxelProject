@@ -90,7 +90,7 @@ int UWorldTerrainSettings::GetMapSize() {
 	return MapSize;
 }
 
-void UWorldTerrainSettings::updateInitialPlayerPosition(FVector newPosition) {
+void UWorldTerrainSettings::UpdateInitialPlayerPosition(FVector newPosition) {
 	PlayerPositionSemaphore->Acquire();
 	playerInitialPosition = newPosition;
 	PlayerPositionSemaphore->Release();
@@ -129,7 +129,6 @@ const TMap<FIntPoint, AActor*>& UWorldTerrainSettings::GetSpawnedChunksMap() con
 */
 void UWorldTerrainSettings::UpdateChunksCollision(FVector& PlayerPosition) {
 	ChunkMapSemaphore->Acquire();
-
 	for (const TPair<FIntPoint, AActor*>& ChunkPair : SpawnedChunksMap) {
 		ABinaryChunk* ChunkActor = Cast<ABinaryChunk>(ChunkPair.Value);
 
@@ -143,7 +142,8 @@ void UWorldTerrainSettings::UpdateChunksCollision(FVector& PlayerPosition) {
 			float maxY = PlayerPosition.Y + CollisionDistance;
 
 			// Check if the player is within the collision boundaries
-			bool withinCollisionDistance = (ChunkPosition.X >= minX && ChunkPosition.X <= maxX) &&
+			bool withinCollisionDistance = 
+				(ChunkPosition.X >= minX && ChunkPosition.X <= maxX) &&
 				(ChunkPosition.Y >= minY && ChunkPosition.Y <= maxY);
 
 			// Update collision state based on proximity
@@ -164,7 +164,6 @@ void UWorldTerrainSettings::UpdateChunksCollision(FVector& PlayerPosition) {
 			}
 		}
 	}
-
 	ChunkMapSemaphore->Release();
 }
 
@@ -173,7 +172,7 @@ void UWorldTerrainSettings::UpdateTreeCollisions(FVector& PlayerPosition) {
 
 	const TMap<FIntPoint, TArray<ATree*>> SpawnedTreesMapTemp = SpawnedTreesMap;
 
-	TreeMapSemaphore->Release(); // TODO THIS MIGHT BREAK, SINCE THE TREE ACTOR MIGHT NOT EXIST WHEN I TRY TO UPDATE IT
+	TreeMapSemaphore->Release();
 
 	for (const TPair<FIntPoint, TArray<ATree*>>& treesAtLocation : SpawnedTreesMapTemp) {
 		// Iterate through each tree in the array for this specific location

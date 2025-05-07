@@ -47,7 +47,7 @@ uint32 ChunkMeshDataRunnable::Run() {
 		WTSR->chunksMeshCounter++;
 
 		WTSR->UpdateChunkSemaphore->Acquire();
-		CLDR->addMeshDataForPosition(ChunkLocationData, TemporaryMeshData);
+		CLDR->AddMeshDataForPosition(ChunkLocationData, TemporaryMeshData);
 		TemporaryMeshData = FVoxelObjectMeshData();
 		WTSR->UpdateChunkSemaphore->Release();
 

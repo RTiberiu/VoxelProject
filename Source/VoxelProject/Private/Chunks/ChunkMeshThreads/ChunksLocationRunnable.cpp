@@ -38,17 +38,21 @@ bool ChunksLocationRunnable::Init() {
 
 uint32 ChunksLocationRunnable::Run() {
 	while (isRunning) {
-		// Add spawn points for Chunks
+		// Add spawn/despawn points for Chunks
 		WTSR->UpdateChunkSemaphore->Acquire();
 		UpdateSpawnPoints(CHUNKS);
 		WTSR->UpdateChunkSemaphore->Release();
 
+		// TODO These calls should be also protected by a semaphore.
+		// This currently causes the pointer crash when despawning vegetation.
+		
+		// Add spawn/despawn points for vegetation, trees, and NPCs
 		UpdateSpawnPoints(VEGETATION);
 		UpdateSpawnPoints(TREES);
 		UpdateSpawnPoints(NPCS);
 
 		// Update the initial position for the next frame
-		WTSR->updateInitialPlayerPosition(PlayerPosition);
+		WTSR->UpdateInitialPlayerPosition(PlayerPosition);
 
 		// Update Chunks and Trees collision
 		WTSR->UpdateChunksCollision(PlayerPosition);
@@ -59,6 +63,7 @@ uint32 ChunksLocationRunnable::Run() {
 	}
 	return 0;
 }
+
 
 void ChunksLocationRunnable::Stop() {
 	isRunning = false;
@@ -115,8 +120,8 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 
 			if (SpawnType == CHUNKS) {
 				FVector ChunkPosition = FVector(newRowX * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
-				CLDR->addChunksToDestroyPosition(oldChunkCoords);
-				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
+				CLDR->AddChunksToDestroyPosition(oldChunkCoords);
+				CLDR->AddChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
 			} else if (SpawnType == VEGETATION) {
 				CLDR->AddVegetationChunkSpawnPosition(newChunkCoords);
 				CLDR->RemoveVegetationChunkSpawnPosition(oldChunkCoords);
@@ -189,8 +194,8 @@ void ChunksLocationRunnable::UpdateSpawnPoints(SpawnPointType SpawnType) {
 
 			if (SpawnType == CHUNKS) {
 				FVector ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, newRowZ * WTSR->chunkSize * WTSR->UnrealScale, 0);
-				CLDR->addChunksToDestroyPosition(oldChunkCoords);
-				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
+				CLDR->AddChunksToDestroyPosition(oldChunkCoords);
+				CLDR->AddChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, newChunkCoords));
 			} else if (SpawnType == VEGETATION) {
 				CLDR->AddVegetationChunkSpawnPosition(newChunkCoords);
 				CLDR->RemoveVegetationChunkSpawnPosition(oldChunkCoords);

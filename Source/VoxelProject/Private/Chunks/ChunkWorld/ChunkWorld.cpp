@@ -76,7 +76,7 @@ void AChunkWorld::spawnInitialWorld() {
 	FIntPoint PlayerStartCoords = FIntPoint(0, 0);
 	FVector ChunkPosition = FVector(0, 0, 0);
 	FIntPoint ChunkWorldCoords = FIntPoint(0, 0);
-	CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
+	CLDR->AddChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 	CLDR->AddVegetationChunkSpawnPosition(ChunkWorldCoords);
 	CLDR->AddTreeChunkSpawnPosition(ChunkWorldCoords);
 	CLDR->AddNpcChunkSpawnPosition(ChunkWorldCoords);
@@ -101,7 +101,7 @@ void AChunkWorld::spawnInitialWorld() {
 				ChunkPosition = FVector(x * WTSR->chunkSize * WTSR->UnrealScale, z * WTSR->chunkSize * WTSR->UnrealScale, 0);
 				ChunkWorldCoords = FIntPoint(x, z);
 
-				CLDR->addChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
+				CLDR->AddChunksToSpawnPosition(FVoxelObjectLocationData(ChunkPosition, ChunkWorldCoords));
 
 				int ringDistance = FMath::Max(FMath::Abs(x), FMath::Abs(z));
 				if (ringDistance < vegetationMax) {
@@ -700,7 +700,7 @@ void AChunkWorld::DestroySingleChunk() {
 		CLDR->RemoveSurfaceVoxelPointsForChunk(chunkToDestroyPosition);
 	} else {
 		// Add the chunk position back because the chunk is not yet spawned
-		CLDR->addChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back. I should use a TMap instead and remove the entry of that object instead, preventing it from spawning in the first place.
+		CLDR->AddChunksToDestroyPosition(chunkToDestroyPosition); // TODO Optimize this, as it keeps getting removed and added back. I should use a TMap instead and remove the entry of that object instead, preventing it from spawning in the first place.
 	}
 }
 
@@ -725,7 +725,7 @@ void AChunkWorld::BeginPlay() {
 	generateFlowerMeshVariations();
 
 	// Set player's initial position
-	WTSR->updateInitialPlayerPosition(GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation());
+	WTSR->UpdateInitialPlayerPosition(GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation());
 
 	isInitialWorldGenerated = true;
 

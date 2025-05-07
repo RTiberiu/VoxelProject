@@ -37,7 +37,7 @@ public:
 	//const int NoiseSeed{ FMath::RandRange(1, 9999) }; // Default is 1337 (used mainly for testing)
 	const int NoiseSeed{1337}; // Using the 1337 seed for testing. 
 	const uint8_t UnrealScale{ 60 }; // this changes the voxel size (100 is 1m) // 50 
-	const uint8_t DrawDistance{ 13 }; // 5 
+	const uint8_t DrawDistance{ 13 }; 
     const uint8_t HalfUnrealScale{ static_cast<uint8_t>(UnrealScale / 2) }; // Used for aligning in the middle of a voxel
 
 	const uint8_t VegetationDrawDistance{ 3 }; // This is for smaller vegetation objects (grass/flowers)
@@ -76,7 +76,7 @@ public:
 	FairSemaphore* UpdateChunkSemaphore;
 
 	// Player positions (used to despawn objects and for pathfinding)
-	void updateInitialPlayerPosition(FVector newPosition);
+	void UpdateInitialPlayerPosition(FVector newPosition);
 	FVector getInitialPlayerPosition();
 
 	void updateCurrentPlayerPosition(FVector& newPosition);
@@ -126,9 +126,9 @@ public:
 	// Vegetation settings
 	const int VegetationCollisionDistance{ chunkSize * UnrealScale };
 	const float TreeSpawnChance{ 0.0014f };
-	const float FlowerSpawnChance{ 0.03f };	// Showcase settings: 0.03f		// Testing settings: 0.03f
-	const float GrassSpawnChance{ 0.075f };	// Showcase settings: 0.08f		// Testing settings: 0.05f
-	const float NPCSpawnChance{ 0.077f };	// Showcase settings: 0.082f	// Testing settings: 0.052f
+	const float FlowerSpawnChance{ 0.03f };	
+	const float GrassSpawnChance{ 0.075f };	
+	const float NPCSpawnChance{ 0.077f };	
 
 	// Shadow settings
 	const bool GrassShadow{ true };

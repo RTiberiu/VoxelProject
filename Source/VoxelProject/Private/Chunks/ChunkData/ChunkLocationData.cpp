@@ -59,26 +59,26 @@ bool UChunkLocationData::isMeshWaitingToBeSpawned() {
 	return isMeshWaiting;
 }
 
-void UChunkLocationData::addChunksToSpawnPosition(const FVoxelObjectLocationData position) {
+void UChunkLocationData::AddChunksToSpawnPosition(const FVoxelObjectLocationData position) {
 	chunksToSpawnPositions.Enqueue(position);
 }
 
-void UChunkLocationData::addChunksToDestroyPosition(const FIntPoint& position) {
+void UChunkLocationData::AddChunksToDestroyPosition(const FIntPoint& position) {
 	chunksToDestroyPositions.Enqueue(position);
 }
 
-void UChunkLocationData::addMeshDataForPosition(const FVoxelObjectLocationData chunkLocationData, const FVoxelObjectMeshData meshData) {
+void UChunkLocationData::AddMeshDataForPosition(const FVoxelObjectLocationData chunkLocationData, const FVoxelObjectMeshData meshData) {
 	MeshDataSemaphore->Acquire();
 	locationDataForComputedMeshes.Enqueue(chunkLocationData);
 	computedMeshData.Enqueue(meshData);
 	MeshDataSemaphore->Release();
 }
 
-void UChunkLocationData::addTreeToDestroyPosition(const FIntPoint& treePosition) {
+void UChunkLocationData::AddTreeToDestroyPosition(const FIntPoint& treePosition) {
 	treesToDestroy.Enqueue(treePosition);
 }
 
-bool UChunkLocationData::getTreeToDestroyPosition(FIntPoint& treePosition) {
+bool UChunkLocationData::GetTreeToDestroyPosition(FIntPoint& treePosition) {
 	return treesToDestroy.Dequeue(treePosition);
 }
 
@@ -722,7 +722,9 @@ bool UChunkLocationData::IsSurfacePointValid(const double& X, const double& Z) {
 	}
 
 	// Check if any point is occupied by a current NPC 
-	FIntPoint point = FIntPoint(X * WTSR->UnrealScale + WTSR->HalfUnrealScale, Z * WTSR->UnrealScale + WTSR->HalfUnrealScale); // Adjusting 2D points to Unreal's scale
+	FIntPoint point = FIntPoint(
+		X * WTSR->UnrealScale + WTSR->HalfUnrealScale, 
+		Z * WTSR->UnrealScale + WTSR->HalfUnrealScale); // Adjusting 2D points to Unreal's scale
     return !IsLocationOccupied(point);
 }
 

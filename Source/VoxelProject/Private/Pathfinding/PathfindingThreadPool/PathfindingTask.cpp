@@ -57,9 +57,6 @@ void FPathfindingTask::AdjustLocationsToUnrealScaling() {
 }
 
 Path* FPathfindingTask::GetPathToEndLocation() {
-    // UE_LOG(LogTemp, Warning, TEXT("Started pathfinding for %s to %s"), *StartLocation.ToString(), *EndLocation.ToString());
-    FDateTime StartTime = FDateTime::Now();
-	
     VoxelSearchState startPosition = VoxelSearchState(StartLocation, CLDR);
     VoxelSearchState endPosition = VoxelSearchState(EndLocation, CLDR);
 
@@ -68,8 +65,6 @@ Path* FPathfindingTask::GetPathToEndLocation() {
 	isSearching = true;
     Path* pathToGoal = searchProblem->search();
 	isSearching = false;
-
-    FDateTime EndTime = FDateTime::Now();
 
 	// Cleanup 
 	delete searchProblem;

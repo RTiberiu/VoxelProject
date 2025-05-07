@@ -20,9 +20,8 @@ public:
     void SetWorldTerrainSettings(UWorldTerrainSettings* InWorldTerrainSettings);
     void SetChunkLocationData(UChunkLocationData* InChunkLocationData);
 
-    // TODO Adds a task to the thread pool
+    // Adds a task to the thread pool
     void AddPathfindingTask(ABasicNPC* npcRef, FVector& startLocation, FVector& endLocation);
-
     
 private:
     UWorldTerrainSettings* WorldTerrainSettingsRef;

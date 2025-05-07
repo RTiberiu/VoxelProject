@@ -31,12 +31,12 @@ public:
     bool getComputedMeshDataAndLocationData(FVoxelObjectLocationData& locationData, FVoxelObjectMeshData& meshData);
     bool isMeshWaitingToBeSpawned();
 
-    void addChunksToSpawnPosition(const FVoxelObjectLocationData position);
-    void addChunksToDestroyPosition(const FIntPoint& position);
-    void addMeshDataForPosition(const FVoxelObjectLocationData chunkLocationData, const FVoxelObjectMeshData meshData);
+    void AddChunksToSpawnPosition(const FVoxelObjectLocationData position);
+    void AddChunksToDestroyPosition(const FIntPoint& position);
+    void AddMeshDataForPosition(const FVoxelObjectLocationData chunkLocationData, const FVoxelObjectMeshData meshData);
 
-    void addTreeToDestroyPosition(const FIntPoint& tree);
-    bool getTreeToDestroyPosition(FIntPoint& tree);
+    void AddTreeToDestroyPosition(const FIntPoint& tree);
+    bool GetTreeToDestroyPosition(FIntPoint& tree);
     
     void emptyPositionQueues();
 

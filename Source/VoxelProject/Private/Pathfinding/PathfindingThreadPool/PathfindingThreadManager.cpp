@@ -45,5 +45,4 @@ void PathfindingThreadManager::AddPathfindingTask(ABasicNPC* npcRef, FVector& st
 
 	FPathfindingTask* NewTask = new FPathfindingTask(startLocation, endLocation, npcRef, WTSR, CLDR);
 	PathfindingThreadPool->AddQueuedWork(NewTask);
-	// UE_LOG(LogTemp, Warning, TEXT("Pathfinding task added."));
 }
