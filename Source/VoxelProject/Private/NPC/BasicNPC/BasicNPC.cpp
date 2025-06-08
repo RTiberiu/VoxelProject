@@ -634,16 +634,8 @@ void ABasicNPC::RemoveFoodTargetFromMapAndDestroy() {
 	UCustomProceduralMeshComponent* FoodObject = static_cast<UCustomProceduralMeshComponent*>(actionTarget);
 	if (FoodObject->MeshType == MeshType::Flower) {
 		WTSR->RemoveSingleFlowerFromMap(FoodObject);
-		WTSR->FlowerCount--;
 	} else if (FoodObject->MeshType == MeshType::Grass) {
 		WTSR->RemoveSingleGrassFromMap(FoodObject);
-		WTSR->GrassCount--;
-	}
-
-	// Destroy object if it's still valid
-	if (IsValid(FoodObject)) {
-		FoodObject->UnregisterComponent();
-		FoodObject->DestroyComponent();
 	}
 }
 
