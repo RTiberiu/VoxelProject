@@ -511,13 +511,12 @@ void UWorldTerrainSettings::RemoveSingleGrassFromMap(UCustomProceduralMeshCompon
         GrassArray.Remove(grass);
         if (GrassArray.Num() == 0) {
             SpawnedGrassMap.Remove(grass->ObjectWorldCoords);
-			GrassCount--;
-
-			if (IsValid(grass)) {
-				grass->UnregisterComponent();
-				grass->DestroyComponent();
-			}
         }
+
+		// Destroy object
+		GrassCount--;
+		grass->UnregisterComponent();
+		grass->DestroyComponent();
     }
 
     GrassMapSemaphore->Release();
@@ -531,14 +530,12 @@ void UWorldTerrainSettings::RemoveSingleFlowerFromMap(UCustomProceduralMeshCompo
 		FlowerArray.Remove(flower);
 		if (FlowerArray.Num() == 0) {
 			SpawnedFlowerMap.Remove(flower->ObjectWorldCoords);
-			FlowerCount--;
-
-			// Destroy object if it's still valid
-			if (IsValid(flower)) {
-				flower->UnregisterComponent();
-				flower->DestroyComponent();
-			}
 		}
+
+		// Destroy object
+		FlowerCount--;
+		flower->UnregisterComponent();
+		flower->DestroyComponent();
 	}
 
 	FlowerMapSemaphore->Release();
