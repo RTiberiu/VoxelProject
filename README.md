@@ -72,7 +72,7 @@ https://github.com/user-attachments/assets/fbde7d1b-5b18-4392-b0ee-dab75c0b37e1
 
 # Packaged project  
 
-Packaged project link (Windows only): [CM4105 Honours Project - Packaged project build](https://liverguac-my.sharepoint.com/my?id=%2Fpersonal%2Ft%5Frociu%5Frgu%5Fac%5Fuk%2FDocuments%2FCM4105%20Honours%20Project%20%2D%20Packaged%20project%20build&ga=1)  
+Packaged project link (Windows only): [CM4105 Honours Project - Packaged project build](https://drive.google.com/drive/folders/1Vc6jC2pXUSoGZCrSVPsY9OjsSUfgkL0w?usp=sharing)  
 ### Basic Controls  
 | Key                | Action                            |
 | ------------------ | --------------------------------- |
