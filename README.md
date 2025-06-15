@@ -1,4 +1,4 @@
-# Voxel Project
+# Dissertation: Exploring a Large NPC Ecosystem in a Procedurally Generated Voxel Environment 
 _Author: Tiberiu Rociu_  
 
 ![Landscape1](https://github.com/user-attachments/assets/42c30144-9324-42fd-b330-5c8fa351340b)
@@ -156,26 +156,34 @@ generating and rendering one large one. This can be seen in Figure 1,
 where the landscape is subdivided into smaller chunks that can be added
 as needed, instead of rendering a single mesh for the entire landscape
 in one draw call.</p>
+<div align="center">
 <table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/65ef534e-4216-4c28-a0cd-37c3d1bcc0be"
-style="width:4.9248in;height:2.60631in" /></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">Highlighted terrain chunks showing the
-Chunking System</td>
-</tr>
-<tr>
-<td style="text-align: center;">Figure 1</td>
-</tr>
-</tbody>
+  <colgroup>
+    <col style="width: 100%" />
+  </colgroup>
+  <thead>
+    <tr>
+      <th align="center">
+        <img
+          src="https://github.com/user-attachments/assets/65ef534e-4216-4c28-a0cd-37c3d1bcc0be"
+          style="width:4.9248in; height:2.60631in;"
+        />
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><strong>
+        Highlighted terrain chunks showing the Chunking System
+      </strong></td>
+    </tr>
+    <tr>
+      <td align="center">Figure 1</td>
+    </tr>
+  </tbody>
 </table>
+</div>
+
 <h3 id="binary-greedy-meshing">Binary Greedy Meshing</h3>
 <p>The Greedy Meshing algorithm reduces the geometry and voxel data by
 combining faces that are coplanar and adjacent into larger rectangular
@@ -183,6 +191,7 @@ polygons. As seen in Figure 2, each voxel has its own quad that is
 formed of two triangles, and through Greedy Meshing, the quads are
 combined and the vertex count and storage requirements are significantly
 reduced.</p>
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 50%" />
@@ -190,26 +199,26 @@ reduced.</p>
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/37b231fc-a0f2-4c3e-b76e-0c5f8bd2e806"
+<th align="center"><img src="https://github.com/user-attachments/assets/37b231fc-a0f2-4c3e-b76e-0c5f8bd2e806"
 style="width:2.3622in;height:1.89071in" /></th>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/893a4fbe-83f2-45d2-88d9-8eeb3a776787"
+<th salign="center"><img src="https://github.com/user-attachments/assets/893a4fbe-83f2-45d2-88d9-8eeb3a776787"
 style="width:2.3622in;height:1.89071in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">One quad per each voxel</td>
-<td style="text-align: center;">One quad for multiple voxels</td>
+<td align="center">One quad per each voxel</td>
+<td align="center">One quad for multiple voxels</td>
 </tr>
 <tr>
-<td colspan="2" style="text-align: center;">Greedy Meshing example on a
-top down voxel terrain</td>
+<td colspan="2" align="center"><strong>Greedy Meshing example on a top down voxel terrain</strong></td>
 </tr>
 <tr>
-<td colspan="2" style="text-align: center;">Figure 2</td>
+<td colspan="2" align="center">Figure 2</td>
 </tr>
 </tbody>
 </table>
+</div>
 <p>Commonly, this technique is implemented by looping and checking the
 bounds into which a quad can expand into. This can become
 computationally expensive, considering that the algorithm is applied on
@@ -219,58 +228,75 @@ the possible faces.</p>
 project, as inspired by (Tantan, 2024), using bitwise operations
 instead. 2D slices of the 3D chunk are built, as exemplified in Figure 3
 and Figure 4.</p>
+<div align="center">
 <table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/7bd20d47-8ddf-4b7b-b147-dc655b809a88"
-style="width:4.9248in;height:2.25308in" /></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">Example of building 2D planes of a 3D
-chunk on all axis</td>
-</tr>
-<tr>
-<td style="text-align: center;">Figure 3</td>
-</tr>
-</tbody>
+  <colgroup>
+    <col style="width: 100%" />
+  </colgroup>
+  <thead>
+    <tr>
+      <th align="center">
+        <img
+          src="https://github.com/user-attachments/assets/7bd20d47-8ddf-4b7b-b147-dc655b809a88"
+          style="width:4.9248in; height:2.25308in;"
+        />
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><strong>
+        Example of building 2D planes of a 3D chunk on all axis
+      </strong></td>
+    </tr>
+    <tr>
+      <td align="center">Figure 3</td>
+    </tr>
+  </tbody>
 </table>
+</div>
+
 <p>Each column in the Figure 4 example would be a 64-bit integer, where
 each 1 represents a solid voxel, and 0 represents empty air. As a
 simplified example, to combine the quads starting from the integer at
-position x10, we use C++’s method std::countr_one() to get the number of
+position x10, we use C++’s method <code>std::countr_one()</code> to get the number of
 1s, meaning the height of the quad, then a mask is created, containing
 the same number of 1s as our height. Using the mask, we can try to
 expand into the next integer, x9, by using the bitwise operation AND
 (&amp;). While this is true, we can expand up until x4, create the quad,
 and discard all the 1s used and continue the process until all the quads
 in the 2D slice are combined. For this algorithm to work,
-std::countr_zero() is also used to jump any empty gaps in the terrain
+<code>std::countr_zero()</code> is also used to jump any empty gaps in the terrain
 slice. The final result will be similar to the one seen in Figure 2.</p>
+
+<div align="center">
 <table>
-<colgroup>
-<col style="width: 100%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/5d8a0e48-2abe-4857-b3c3-3de5bee60010"
-style="width:4.38969in;height:3.58505in" /></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">Example of a 2D plane used in the binary
-greedy meshing algorithm</td>
-</tr>
-<tr>
-<td style="text-align: center;">Figure 4</td>
-</tr>
-</tbody>
+  <colgroup>
+    <col style="width: 100%" />
+  </colgroup>
+  <thead>
+    <tr>
+      <th align="center">
+        <img
+          src="https://github.com/user-attachments/assets/4f68d2ab-b63f-43d6-8989-c8ad1efc52df"
+          style="width:900px; height:auto;"
+        />
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><strong>
+        Example of a 2D plane used in the binary greedy meshing algorithm
+      </strong></td>
+    </tr>
+    <tr>
+      <td align="center">Figure 4</td>
+    </tr>
+  </tbody>
 </table>
+</div>
+
 <h3 id="binary-face-culling">Binary Face Culling</h3>
 <p>The face culling algorithm reduces the geometry even further, by only
 computing and drawing the meshes that are visible to the player. As seen
@@ -282,27 +308,31 @@ looping and checking each voxel’s neighbour voxels to determine if each
 of its faces are surrounded by air or solid blocks. This results in
 keeping only the outer layer of an object, drawing only the necessary
 faces and discarding any that’s being hidden.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/b1473a98-ee04-42c1-9803-3eb1180ec470"
-style="width:4.38969in;height:3.52226in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/b1473a98-ee04-42c1-9803-3eb1180ec470"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Side view example of face culled
+<td align="center"><strong>Side view example of face culled
 terrain, where only the outer voxel blue faces are drawn and the inside
-faces are empty</td>
+faces are empty</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 5</td>
+<td align="center">Figure 5</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>For this reason, a more optimised solution was implemented, as
 inspired by (Tantan, 2024), using a Binary Face Culling algorithm where
 bitwise operations replace most of the computationally heavy loops.</p>
@@ -320,26 +350,29 @@ then be computed in just a few bitwise operations.</p>
 compute the left or right faces of a single column in a plane. The only
 difference between the right or left faces computation is how we
 bitshift in the first step.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/f3cd66eb-ac9c-4c62-8348-abe3fe0cac0e"
-style="width:4.9621in;height:6.10377in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/f3cd66eb-ac9c-4c62-8348-abe3fe0cac0e"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Face culling for left faces in a 4x4
-chunk with padding</td>
+<td align="center"><strong>Face culling for left faces in a 4x4 chunk with padding</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 6</td>
+<td align="center">Figure 6</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>For these examples, a 4x4 chunk is used, with a 1x1 outer padding.
 Meaning that any faces outside of the red square will be discarded, as
 they’re part of a different chunk. This ensures that any outer faces of
@@ -351,29 +384,32 @@ These final bits, when overlaid over the terrain, show that each
 positive bit is a left face. Finally, in this example, the left-most
 face is discarded, as it is part of the padding area, and only the
 middle face is kept.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"></th>
+<th align="center"></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><img src="https://github.com/user-attachments/assets/928e3dcd-4627-42e9-a5ae-81fc099c6745"
-style="width:4.99712in;height:6.14685in" /></td>
+<td align="center"><img src="https://github.com/user-attachments/assets/928e3dcd-4627-42e9-a5ae-81fc099c6745"
+style="width:900px; height:auto;" /></td>
 </tr>
 <tr>
-<td style="text-align: center;">Face culling for right faces in a 4x4
-chunk with padding</td>
+<td align="center"><strong>Face culling for right faces in a 4x4 chunk with padding</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 7</td>
+<td align="center">Figure 7</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>The Figure 7 example is similar to the Figure 6 explanation, but the
 first step is to shift the original bits of the y2 column to the left
 instead of right, thus getting in the end the right faces for the 64-bit
@@ -385,26 +421,30 @@ distance. The idea is to reduce the strain on the GPU and CPU by
 reducing computations or draw calls for objects that are too far from
 the player and wouldn’t normally be visible. These objects would only be
 loaded into the scene as the player moves in the world.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/5358ec5b-e73d-41c1-942d-3370661b4efa"
-style="width:5.94114in;height:3.95833in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/5358ec5b-e73d-41c1-942d-3370661b4efa"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Top down view of terrain, showing
-multiple draw distances for the LOD system around the player</td>
+<td align="center"><strong>Top down view of terrain, showing
+multiple draw distances for the LOD system around the player</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 8</td>
+<td align="center">Figure 8</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>As seen in the simplified diagram of Figure 8, there can be multiple
 LOD systems implemented at the same time, each handling the various
 aspects mentioned. It is advantageous to employ multiple draw distances,
@@ -422,30 +462,34 @@ algorithm, meaning it always finds the best path, with the speed of
 greedy best-first search, guiding the search toward the goal. In Figure
 9, the nodes explored by the algorithm can be visualised, along with the
 final shortest path to the target, while avoiding any collisions, as
-guided by the cost function and the successor() function.</p>
+guided by the cost function and the <code>successor()</code> function.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/2a55512d-5df8-4603-a503-cd02dc294c2b"
-style="width:5.53746in;height:3.95833in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/2a55512d-5df8-4603-a503-cd02dc294c2b"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Showing the locations explored and the
-shortest path found by the A* algorithm</td>
+<td align="center"><strong>Showing the locations explored and the
+shortest path found by the A* algorithm</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">(Patel, 1997)</td>
+<td align="center">(Patel, 1997)</td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 9</td>
+<td align="center">Figure 9</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h1 id="implementation">Implementation</h1>
 <p>The project implementation will, as before, be broken down into the
 two main parts of the project: one focusing on terrain generation, and
@@ -456,8 +500,8 @@ Optimisations</h2>
 <p>For simplicity, building the binary columns for the orientation of
 each axis based on the noise function is abstracted away from the full
 terrain algorithm explanation. Its full implementation can be found in
-the CreateBinarySolidColumnsYXZ() function instead. The important part
-is that the FaceCullingBinaryColumnsYXZ() function works on these
+the <code>CreateBinarySolidColumnsYXZ()</code> function instead. The important part
+is that the <code>FaceCullingBinaryColumnsYXZ()</code> function works on these
 created binary columns to create the culled face masks.</p>
 <p>As discussed in Section 1.3.3., the algorithm has to run the face
 culling algorithm on each column or 64-bit integer of the 3D chunk. In
@@ -469,76 +513,86 @@ vector is pre-allocated, since the dimensions of each chunk are known
 beforehand. Lastly, to increase data retrieval performance, the usual 3D
 array used to store the chunk data is flattened into a 1D array
 instead.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/40d26697-1664-429e-a4ac-1336ddb250e6"
-style="width:5.7208in;height:2.16972in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/80d0c205-fa0a-4a15-8d55-156b32a205af"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Code from CreateTerrainMeshesData(),
-showing the 2D planes being built and face culled</td>
+<td align="center"><strong>Code from <code>CreateTerrainMeshesData()</code>, showing the 2D planes being built and face culled</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 10</td>
+<td align="center">Figure 10</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>The columns created in columnFaceMasks will store just the face
 culled data, discarding all the previous voxels that are hidden. In
-Figure 10, a code snippet from FaceCullingBinaryColumnsYXZ(), we can see
+Figure 10, a code snippet from <code>FaceCullingBinaryColumnsYXZ()</code>, we can see
 the same algorithm described in Figure 6 and 7, showing how the left and
 right faces for each column are computed.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/b729bcad-fff7-43cf-886d-68c5bd0e3cba"
-style="width:5.7208in;height:0.9759in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/3b65b219-c2fd-4f6d-88c3-04515fc8e1e4"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Code from FaceCullingBinaryColumnsYXZ(),
-showing the face culling algorithm on a column from the 2D plane</td>
+<td align="center"><strong>Code from <code>FaceCullingBinaryColumnsYXZ()</code>,
+showing the face culling algorithm on a column from the 2D plane</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 11</td>
+<td align="center">Figure 11</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>The result can be seen in the in-game screenshots of Figure 12, where
 there are no meshes underneath each surface voxel or between the
 highlighted chunks themselves.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/276a30e2-c21c-4761-8fd4-26fc57a690d0"
+<th align="center"><img src="https://github.com/user-attachments/assets/276a30e2-c21c-4761-8fd4-26fc57a690d0"
 style="width:5.94114in;height:3.2305in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><p><img src="https://github.com/user-attachments/assets/0970bbd8-c8cc-44b4-9e73-281fe56bbf5b"
+<td align="center"><p><img src="https://github.com/user-attachments/assets/0970bbd8-c8cc-44b4-9e73-281fe56bbf5b"
 style="width:5.94114in;height:3.2305in" /></p>
-<p>In-game screenshots showing the terrain face culling
-algorithm</p></td>
+<p><strong>In-game screenshots showing the terrain face culling algorithm</strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 12</td>
+<td align="center">Figure 12</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h3 id="binary-greedy-meshing-1">Binary Greedy Meshing</h3>
 <p>As discussed in Section 1.3.2., the algorithm has to combine all
 possible quads that are on the same elevation and are facing the same
@@ -546,79 +600,88 @@ way. This means that from the columnFaceMasks created in the previous
 part, Section 2.1.1., 2D planes have to be created, as shown in Figure
 3. columnFaceMasks is used as a base for the 2D planes because it
 ensures only the visible quads will be combined.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/96e3693e-30f2-4633-af2e-5ef017c24115"
-style="width:5.70411in;height:3.17361in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/6c931bff-c73d-4f9d-8adb-0fa8dd711592"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Code from CreateTerrainMeshesData(),
-showing the 2D planes being built and greedy meshed</td>
+<td align="center"><strong>Code from <code>CreateTerrainMeshesData()</code>, showing the 2D planes being built and greedy meshed</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 13</td>
+<td align="center">Figure 13</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>In the code snippet of Figure 13, each axis’ planes are stored as
 before in std::vectors with pre-allocated memory, they get their bits
-allocated by BuildBinaryPlanes(), and then each plane will have its
-quads merged inside of GreedyMeshingBinaryPlane().</p>
+allocated by <code>BuildBinaryPlanes()</code>, and then each plane will have its
+quads merged inside of <code>GreedyMeshingBinaryPlane()</code>.</p>
 <p>The explanation of getting the height of a quad from Section 1.3.2.
 can be seen in the code implementation in Figure 14, where
-std::countr_zero() gets the starting point of a quad, and
-std::countr_one() will get the height. A bit height mask is created and
+<code>std::countr_zero()</code> gets the starting point of a quad, and
+<code>std::countr_one()</code> will get the height. A bit height mask is created and
 this will then be further compared to adjacent rows in the plane,
 expanding the width of the quad with each true operation.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/00b453d2-4aca-47d7-9bbb-293a2c684112"
-style="width:5.7827in;height:2.48892in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/b9856597-4047-478a-ae51-7f8bbf0ea898"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Code from GreedyMeshingBinaryPlane(),
-showing how a quad’s height is computed</td>
+<td align="center"><strong>Code from <code>GreedyMeshingBinaryPlane()</code>, showing how a quad’s height is computed</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 14</td>
+<td align="center">Figure 14</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>The merged quads can be seen in Figure 15, an in-game screenshot,
 where the normal view and the wireframe view are overlaid over the same
 terrain, to show the various quads’ dimensions.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/6c9d0662-fb0b-48f6-9fa5-0a2b617ebd6f"
+<th align="center"><img src="https://github.com/user-attachments/assets/4a6f79fb-11f9-437a-a7ff-126cc2492831"
 style="width:6.12444in;height:2.47826in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game greedy meshing example, showing
-combined quads</td>
+<td align="center"><strong>In-game greedy meshing example, showing combined quads</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 15</td>
+<td align="center">Figure 15</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h3 id="lod-system-collision">LOD System – Collision</h3>
 <p>Similar to the diagram shown in Figure 8, where depending on distance
 various attributes can be changed, the result can be seen in the in-game
@@ -631,101 +694,108 @@ compute, even with Unreal’s optimisations such as spatial partitioning,
 where objects are grouped and far objects are discarded for certain
 collision checks. It is still more efficient for objects to not have the
 collision in the first place, if one is not needed.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/af1acbaf-f326-4dc1-9b0b-7f50d3819337"
+<th align="center"><img src="https://github.com/user-attachments/assets/fd39d167-4725-4f00-9885-5c214727af16"
 style="width:6.15495in;height:3.28324in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game screenshot, displaying the LOD
-collision system for terrain and trees</td>
+<td align="center"><strong>In-game screenshot, displaying the LOD collision system for terrain and trees</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 16</td>
+<td align="center">Figure 16</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>In the code implementation in Figure 17, multiple function calls are
 made to update various lists of objects that will eventually be updated
 over many frames, as also seen in Figure 18. This functionality of
 updating lists is made on a separate thread instead of the main game
 thread, to ensure that all the distance calculations and list updates
 are not introducing frame drops. Lastly, in Figure 19,
-UpdateChunksCollision() is called every frame in the main game thread,
+<code>UpdateChunksCollision()</code> is called every frame in the main game thread,
 and two chunks get their collision updated, if any are waiting in the
 update list populated by the separate thread.</p>
 <p>Chunk collision updates are staggered instead of handling all the
 waiting chunks at once, to prevent too many chunks from receiving
 updates in a single frame, creating a temporary freeze. This way, the
 updates are not noticeable, and a stable frame rate is kept.</p>
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/f5ddc7ce-388d-402a-a4bd-9bbf045b3a66"
-style="width:4.29861in;height:3.4356in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/f3075745-5afa-4463-ac7e-b0f7c47d120e"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><p>Function calls, in a separate thread,
-updating objects lists for</p>
-<p>spawning and despawning, and for collision updates.</p></td>
+<td align="center"><p><strong>Function calls, in a separate thread, updating objects lists for spawning and despawning, and for collision updates.<strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 17</td>
+<td align="center">Figure 17</td>
 </tr>
 </tbody>
 </table>
+</div>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/1823ee04-0efa-404e-9db4-f17e15c5d1ee"
-style="width:4.17016in;height:4.73611in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/0741fcfe-30b4-4433-8868-c1a214a9a487"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><p>Adding chunk pointers to lists for
-collision updates,</p>
-<p>based on the player’s position</p></td>
+<td align="center"><p><strong>Adding chunk pointers to lists for collision updates, based on the player’s position</strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 18</td>
+<td align="center">Figure 18</td>
 </tr>
 </tbody>
 </table>
+</div>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/2e80bce3-b321-4550-98cd-42a8b9aa0738"
-style="width:5.4917in;height:1.87571in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/e5e0990b-9eb5-4632-81d9-8f5ab55ddfb6"
+style="width:900px; height:auto;"/></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Code for adding and removing collision
-for a chunk, if one is waiting in the update list</td>
+<td align="center"><strong>Code for adding and removing collision for a chunk, if one is waiting in the update list</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 19</td>
+<td align="center">Figure 19</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h3 id="lod-system-spawningdespawning">LOD System –
 Spawning/Despawning</h3>
 <p>Similar to Section 2.1.3., all the spawn and despawn positions are
@@ -737,53 +807,58 @@ chunks too far from the player will be removed by adding them to a list.
 Their mesh pointers added to the list will be removed over multiple
 frames in the game thread, and a similar process is true for spawning
 the objects.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/f8c0e46f-8c13-4119-a4ad-2a76cd2fc7a0"
-style="width:5.87011in;height:2.00694in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/3c10f84f-c966-4f1f-b7b2-60ee05711a97"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><p>Code snippet from
-UpdateSpawnPoints(), showing how the spawning and despawning</p>
-<p>of grass and flower objects is handled</p></td>
+<td align="center"><p><strong>Code snippet from <code>UpdateSpawnPoints()</code>, showing how the spawning and despawning of grass and flower objects is handled</strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 20</td>
+<td align="center">Figure 20</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>In the in-game screenshot of Figure 21, the implementation of
 multiple draw distances through the LOD system can be seen, showing that
 the terrain chunks span further than other objects, and that tree
 objects span around the player at a reduced distance than the terrain.
 This implementation drastically reduces the scene memory consumption and
 also reduces the number of draw calls to the GPU.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/6614e9f4-be3f-4736-a285-b040a26be55f"
+<th align="center"><img src="https://github.com/user-attachments/assets/572a68b6-0712-4554-8b94-31af83772123"
 style="width:6.18315in;height:3.29828in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game screenshot, displaying the LOD
-system for spawning objects around the player</td>
+<td align="center"><strong>In-game screenshot, displaying the LOD system for spawning objects around the player</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 21</td>
+<td align="center">Figure 21</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h2 id="npc-ecosystem-optimisations">NPC Ecosystem Optimisations</h2>
 <h3 id="custom-pathfinding-using-a">Custom Pathfinding using A*</h3>
 <p>As mentioned in Section 1.3.5., A* is a powerful algorithm for
@@ -798,62 +873,64 @@ Java to C++, and integrated with a Pathfinding Manager, a thread pool
 that can receive pathfinding requests from the NPC class and allow each
 thread to notify the NPC when a path to the goal was found (see Figure
 22, 23, 24).</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/b7b0b888-b2da-4ddc-85f1-e0ca19bccb72"
-style="width:6.01679in;height:1.60448in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/4d7ebc5a-97ec-4577-83c7-5c536fe494a2"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Adding a pathfinding task to the
-Pathfinding Manager from the NPC class</td>
+<td align="center"><strong>Adding a pathfinding task to the Pathfinding Manager from the NPC class</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 22</td>
+<td align="center">Figure 22</td>
 </tr>
 </tbody>
 </table>
+</div>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/446e803c-018f-478e-b7f7-28de14804ab3"
-style="width:4.53731in;height:2.77749in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/e98876fd-01e7-4ae0-877a-70f570679548"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><p>Thread from Pathfinding Manager,
-finding the path to the goal location</p>
-<p>and notifying the NPC when a path is found</p></td>
+<td align="center"><p><strong>Thread from Pathfinding Manager, finding the path to the goal location and notifying the NPC when a path is found</strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 23</td>
+<td align="center">Figure 23</td>
 </tr>
 <tr>
-<td style="text-align: center;"></td>
+<td align="center"></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="https://github.com/user-attachments/assets/3f2ada00-d5d6-4508-8374-e26e1191a7d6"
-style="width:5.80597in;height:2.77439in" /></td>
+<td align="center"><img src="https://github.com/user-attachments/assets/f1e3deb0-d643-4ac1-935f-a0538f3859e1"
+style="width:900px; height:auto;" /></td>
 </tr>
 <tr>
-<td style="text-align: center;"><p>The Pathfinding Task creating a
-VoxelSearchProblem and returning</p>
-<p>the path to the goal location</p></td>
+<td align="center"><p><strong>The Pathfinding Task creating a VoxelSearchProblem and returning the path to the goal location</strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 24</td>
+<td align="center">Figure 24</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>Assuming that there will be large amounts of pathfinding tasks, since
 each NPC’s actions require moving to a certain location, and that there
 is large number of NPCs simulated at once, moving the computations to a
@@ -861,26 +938,29 @@ separate thread was crucial to maintain a stable frame rate and not
 introduce stutters. A thread pool was also needed, as it removes the
 overhead of creating and destroying a thread each time a task is
 completed, maintaining thus better performance by reusing threads.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/e8c6985d-eb76-4765-9443-aed7eba12721"
-style="width:5.83827in;height:1.59701in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/53efb175-7a46-428d-a482-262de9924dc1"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Manhattan distance used a heuristic for
-the A* search</td>
+<td align="center"><strong>Manhattan distance used a heuristic for the A* search</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 25</td>
+<td align="center">Figure 25</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>Lastly, as seen in Figure 25, the heuristic used for the pathfinding
 search is a simple Manhattan distance between the current and goal
 position.</p>
@@ -897,129 +977,140 @@ voxels, and the voxels that should be avoided. Because of their hashing
 table implementation, maps offer a great average data retrieval time
 complexity of O(1), which makes them an efficient custom solution for
 collision checking.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/aa1e6e8c-48ac-4512-afa2-c8c69ab987dc"
-style="width:5.52985in;height:1.37503in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/8ea96bc9-549a-4792-9708-c2808dc262e5"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><p>Maps and the custom fair semaphore
-used to store the surface voxel</p>
-<p>data and their occupancy</p></td>
+<td align="center"><p><strong>Maps and the custom fair semaphore used to store the surface voxel data and their occupancy</strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 26</td>
+<td align="center">Figure 26</td>
 </tr>
 </tbody>
 </table>
-<p>In Figure 27, the function IsSurfacePointValid() is used by a thread
+</div>
+
+<p>In Figure 27, the function <code>IsSurfacePointValid()</code> is used by a thread
 from the Pathfinding Manager to validate locations during pathfinding.
 This allows the search to return a path that avoids solid static objects
 such as trees, and dynamic objects such as NPCs.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/bfcb6631-d520-4abb-973d-e7039a01a421"
-style="width:5.35075in;height:3.33864in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/6a14eea6-832c-4978-8ed3-dad3047919e3"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Function for checking if a pathfinding
-point is valid</td>
+<td align="center"><strong>Function for checking if a pathfinding point is valid</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 27</td>
+<td align="center">Figure 27</td>
 </tr>
 </tbody>
 </table>
-<p>In Figure 28, the first IsLocationOccupied() function is used by the
+</div>
+
+<p>In Figure 28, the first <code>IsLocationOccupied()</code> function is used by the
 NPCs during their transition to one voxel to another, giving them a
 check for occupancy and allowing them to momentarily pause if a voxel
 they’re trying to reach is occupied. Otherwise, if the voxel is free,
 the NPC will take ownership of that position up until they move to a new
 location.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/91614808-ae3f-4d40-84dd-37a9fff77e6e"
-style="width:5.54478in;height:2.05471in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/d9be02aa-75af-4457-ad57-2782253cdab1"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><p>Overloaded functions for checking if
-a position is occupied or</p>
-<p>for checking a position and assigning the NPC requesting it if it’s
-not</p></td>
+<td align="center"><p><strong>Overloaded functions for checking if a position is occupied or for checking a position and assigning the NPC requesting it if it’s not</strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 28</td>
+<td align="center">Figure 28</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h3 id="vision-spheres-checks">Vision Spheres Checks</h3>
 <p>Each NPC’s mental model of the world is encapsulated in their vision
 sphere, as seen in Figure 29. All the objects of interest, such as
 flowers and grass for food, and other NPCs as allies, threats, or prey,
 are updated constantly as the NPC moves in the world.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/811c467c-0526-4ac9-b035-24879b8fe8bf"
+<th align="center"><img src="https://github.com/user-attachments/assets/2caddd6b-6a9a-4652-9911-63ef178b957e"
 style="width:5.92897in;height:3.22388in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game NPC with its vision sphere shown
-in debug mode</td>
+<td align="center"><strong>In-game NPC with its vision sphere shown in debug mode</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 29</td>
+<td align="center">Figure 29</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>The vision sphere is an Unreal Engine tool that provides an
-OnOverlapBegin() and OnOverlapEnd() event-driven functions that are
+<code>OnOverlapBegin()</code> and <code>OnOverlapEnd()</code> event-driven functions that are
 triggered every time an object collides with the sphere. This allows a
 developer to implement their own logic to handle the overlap event.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/2c5ddb08-1a33-4a70-875b-4f3e3c07c2b0"
-style="width:2.6791in;height:2.29456in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/136e9a31-1f7a-4fd8-b308-ea9bcfa1873a"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><p>Storing animal types as positive bits
-in a 16-bit integer,</p>
-<p>and a struct for storing an NPC’s relationships</p></td>
+<td align="center"><p><strong>Storing animal types as positive bits in a 16-bit integer, and a struct for storing an NPC’s relationships</strong></p></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 30</td>
+<td align="center">Figure 30</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>Because this function is triggered extremely often by large amounts
 of NPCs, as each NPC has their own vision sphere with a different radius
 depending on their type, this function had to be efficient. Thus, to
@@ -1027,76 +1118,85 @@ ensure quick checks for all the different relationship types between
 NPCs, an approach inspired by the implementation of Binary Greedy
 Meshing and Binary Face Culling was used, storing relationships as
 positive bits in an 16-bit integer, as seen in Figure 30 and 45.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/4e73424e-8109-4fe9-b7d5-1daac8584901"
-style="width:5.88692in;height:1.46269in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/a1d119db-41e5-4615-8cd1-ca8f214b5215"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Code example of some of the NPC
-relationships, stored as a 16-bit integer</td>
+<td align="center"><strong>Code example of some of the NPC relationships, stored as a 16-bit integer</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 31</td>
+<td align="center">Figure 31</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>When an NPC enters the vision sphere, fast bit AND operations are
 made to determine the relationship type with that NPC and adding its
 pointer to a vision array, as shown in the Figure 32. These vision
 arrays, besides other attributes, will be used to determine an NPC’s
 next action.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/7964f600-8012-4167-96df-bbfd447bcef0"
+<th align="center"><img src="https://github.com/user-attachments/assets/3ffe31e5-2ce3-488a-89dd-3c2bce2a291a"
 style="width:5.8248in;height:3.46269in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game NPC with its vision sphere shown
-in debug mode</td>
+<td align="center"><strong>In-game NPC with its vision sphere shown in debug mode</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 32</td>
+<td align="center">Figure 32</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>A simpler process is used for adding vegetation as food sources to a
 vision array, by using a custom procedural mesh component that adds a
 bit more functionality, like storing the mesh type. This can be seen in
 Figure 33, where the mesh type of the mesh component is validated and
 added to an NPC’s vision array.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/92a0087a-2168-45a2-ae99-6b654a736143"
-style="width:5.84449in;height:0.98104in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/8651c124-7215-47c7-8e52-e019f50a16c2"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Code for adding food to an NPC’s vision
-array</td>
+<td align="center"><strong>Code for adding food to an NPC’s vision array</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 33</td>
+<td align="center">Figure 33</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h3 id="lod-system-spawningdespawning-1">LOD System –
 Spawning/Despawning</h3>
 <p>Similarly to the system detailed in Section 2.1.3. and 2.1.4., NPCs
@@ -1106,49 +1206,56 @@ lowest draw distance out of all the environment objects, because they’re
 computationally demanding and simulating them when they’re too far for
 the player to see introduces redundant computations and a lower frame
 rate.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/030caea5-d20f-41f8-9517-501286a8e325"
+<th align="center"><img src="https://github.com/user-attachments/assets/f1389cf4-2735-437a-b295-a91a9df1e2a7"
 style="width:6.15053in;height:2.70783in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game estimated draw distances
-diagram</td>
+<td align="center"><strong>In-game estimated draw distances diagram</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 34</td>
+<td align="center">Figure 34</td>
 </tr>
 </tbody>
 </table>
+
+</div>
+
 <p>Even with a lower draw distance, the NPC numbers with the current
 spawn chance control variable value still result in an average 200+
 concurrently simulated NPCs, depending on the terrain.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/a07ebf83-b19c-49ea-9547-f2d29c907b8d"
-style="width:4.5789in;height:1.81614in" /></th>
+<th align="center"><img src="https://github.com/user-attachments/assets/41255a41-42ef-4bcf-b336-7f4f4b2926f6"
+style="width:900px; height:auto;" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Control variables determining the LOD
-draw distances and spawn chances</td>
+<td align="center"><strong>Control variables determining the LOD draw distances and spawn chances</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 35</td>
+<td align="center">Figure 35</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h1 id="testing-and-evaluation">Testing and Evaluation</h1>
 <p>This chapter will focus on evaluating the implementation of the
 terrain and the NPC ecosystem primarily from an optimisation
@@ -1174,26 +1281,29 @@ the same geometry, the mesh render time and memory per chunk are almost
 identical. The difference is in the mesh compute time, with the binary
 version of these algorithms being more than 9 times faster than the
 traditional implementation.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/5c6fb5d2-d4e3-4cab-9ffb-810bc7b33551"
+<th align="center"><img src="https://github.com/user-attachments/assets/b45b192f-8077-4368-ab07-85d33fe8c37b"
 style="width:6.12671in;height:3.67532in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">(Note: Graph is using a logarithmic
-scale)</td>
+<td align="center">(Note: Graph is using a logarithmic scale)</td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 36</td>
+<td align="center">Figure 36</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>These algorithms, besides the other techniques described in Section
 2.1., allow for a much larger landscape and number of foliage objects,
 while still maintaining a good frame rate. In Figure 37, for testing
@@ -1201,26 +1311,29 @@ purposes, a large landscape is simulated with less than 10GB RAM used
 and with a stable 60 frames per second. This would normally be
 unnecessary, as from the player’s point of view, the horizon would be
 filled with terrain even at half the render distance.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/1c26340e-1a4c-4133-a1d5-332531d33750"
+<th align="center"><img src="https://github.com/user-attachments/assets/bb26a5c5-0683-4346-b520-4e32291cbb7a"
 style="width:6.1581in;height:3.34847in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game screenshot showing a larger
-landscape</td>
+<td align="center"><strong>In-game screenshot showing a larger landscape</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 37</td>
+<td align="center">Figure 37</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h2 id="npc-ecosystem-evaluation">NPC Ecosystem Evaluation</h2>
 <p>In the table from Figure 38, there are some metrics showing the
 average computations per minute when 150 NPCs are being simulated.
@@ -1230,6 +1343,8 @@ packaged project, the results are very favourable. It shows that the
 implemented system is efficient and can handle large numbers of
 pathfinding tasks, actions request, communication between NPCs, and an
 even larger number of vision sphere updates for each NPC.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 50%" />
@@ -1237,101 +1352,111 @@ even larger number of vision sphere updates for each NPC.</p>
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;">Pathfinding Tasks</th>
-<th style="text-align: center;">1,705</th>
+<th align="center">Pathfinding Tasks</th>
+<th align="center">1,705</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">Actions Requested</td>
-<td style="text-align: center;">1,501</td>
+<td align="center">Actions Requested</td>
+<td align="center">1,501</td>
 </tr>
 <tr>
-<td style="text-align: center;">Notifications Sent</td>
-<td style="text-align: center;">1,086</td>
+<td align="center">Notifications Sent</td>
+<td align="center">1,086</td>
 </tr>
 <tr>
-<td style="text-align: center;">Vision Sphere Updates</td>
-<td style="text-align: center;">30,759</td>
+<td align="center">Vision Sphere Updates</td>
+<td align="center">30,759</td>
 </tr>
 <tr>
-<td colspan="2" style="text-align: center;">Computation Averages for 150
-NPCs Over 60 Seconds</td>
+<td colspan="2" align="center"><strong>Computation Averages for 150 NPCs Over 60 Seconds</strong></td>
 </tr>
 <tr>
-<td colspan="2" style="text-align: center;">Figure 38</td>
+<td colspan="2" align="center">Figure 38</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>In Figure 39, the dynamic voxel attributes above each NPC’s head can
 be observed. These are helpful to discern important attributes such as
 stamina (blue), hunger (yellow), health (orange), stored food (purple),
 and communication voxel (grey – nothing, blue – notifying, green –
 accepted notification, and red – discarded notification).</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/96d36345-4e73-4dac-8947-9141c1ca1a45"
+<th align="center"><img src="https://github.com/user-attachments/assets/08ffe93d-79f3-4bae-86f5-df7023cc80c9"
 style="width:6.15809in;height:3.34846in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game screenshot showing NPC’s dynamic
-voxel attributes</td>
+<td align="center"><strong>In-game screenshot showing NPC’s dynamic voxel attributes</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 39</td>
+<td align="center">Figure 39</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <p>The in-game screenshots from Figure 40 and 41 are an attempt to show
 the dynamic behaviours of the different types of NPCs. Particularly in
 Figure 41, where multiple Tiger NPCs are attempting to attack the same
 Peacock NPC prey target.</p>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/9d520c4c-2ce8-46ee-a71b-11d9cf77685d"
+<th align="center"><img src="https://github.com/user-attachments/assets/6d6ff46a-6b75-458b-93e1-6dc5014b4892"
 style="width:6.1581in;height:3.34847in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game screenshot showing NPC
-interacting</td>
+<td align="center"><strong>In-game screenshot showing NPC interacting</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 40</td>
+<td align="center">Figure 40</td>
+    
 </tr>
 </tbody>
 </table>
+</div>
+
+<div align="center">
 <table>
 <colgroup>
 <col style="width: 100%" />
 </colgroup>
 <thead>
 <tr>
-<th style="text-align: center;"><img src="https://github.com/user-attachments/assets/cccc160a-1dfc-4bb6-b5a5-f37f61a6fc1d"
+<th align="center"><img src="https://github.com/user-attachments/assets/3f6ac812-4dc3-483d-8f4e-ccbef86a53b9"
 style="width:6.1581in;height:3.34846in" /></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">In-game screenshot showing multiple
-Tiger NPCs trying to attack a single Peacock NPC</td>
+<td align="center"><strong>In-game screenshot showing multiple Tiger NPCs trying to attack a single Peacock NPC</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;">Figure 41</td>
+<td align="center">Figure 41</td>
 </tr>
 </tbody>
 </table>
+</div>
+
 <h2 id="section"></h2>
 <h2 id="self-reflection">Self-Reflection</h2>
 <p>The project was a huge personal undertaking, because with no prior
