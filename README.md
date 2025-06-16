@@ -38,37 +38,45 @@ _Author: Tiberiu Rociu_
   
 # Showcase  
 
-Showing the runtime world generation when spawning in the world. 
+<figure>
+  <figcaption><strong>Showing the runtime world generation during player spawn.</strong></figcaption>
+  <video src="https://github.com/user-attachments/assets/cc541bbc-ccfd-45f1-befa-a0838b605c29" controls width="640"></video>
+</figure>
 
-https://github.com/user-attachments/assets/cc541bbc-ccfd-45f1-befa-a0838b605c29
+<figure>
+  <figcaption><strong>Walking around and observing chasing behaviours and other interactions.</strong></figcaption>
+  <video src="https://github.com/user-attachments/assets/414bc3c1-19fa-4677-8322-feedc5b7e7b2" controls width="640"></video>
+</figure>
 
-Walking around and observing chasing behaviours and others. 
+<figure>
+  <figcaption><strong>Flying to showcase the terrain, NPC, and vegetation LOD spawning and despawning systems.</strong></figcaption>
+  <video src="https://github.com/user-attachments/assets/63bf557f-5366-436b-a85d-b899c1a7f3fb" controls width="640"></video>
+</figure>
 
-https://github.com/user-attachments/assets/414bc3c1-19fa-4677-8322-feedc5b7e7b2
+<figure>
+  <figcaption><strong>Showing the world size, including the LOD systems that spawn objects only around the player.</strong></figcaption>
+  <video src="https://github.com/user-attachments/assets/695b64fc-2464-49f3-983b-8d9f891bf768" controls width="640"></video>
+</figure>
 
-Flying to show the terrain, NPC, and vegetation LOD spawning and despawning systems. 
+<figure>
+  <figcaption><strong>Showing the greedy meshing and face culling algorithm, which merges adjacent faces and removes any geometry that would be hidden from view.</strong></figcaption>
+  <video src="https://github.com/user-attachments/assets/854a68fc-e102-4bf3-9ce0-fbf2904e2231" controls width="640"></video>
+</figure>
 
-https://github.com/user-attachments/assets/63bf557f-5366-436b-a85d-b899c1a7f3fb  
+<figure>
+  <figcaption><strong>Showing the LOD collision system, where terrain and trees update their collision as the player moves through the world.</strong></figcaption>
+  <video src="https://github.com/user-attachments/assets/c9bb3c24-d6c3-4843-a357-e25e97f7e5f9" controls width="640"></video>
+</figure>
 
-Showing the world size, including the LOD systems of spawning objects only around the player. 
+<figure>
+  <figcaption><strong>Test environment designed to show two NPCs communicating. In both scenarios, one of the tigers notifies the other of a food source, and the other accepts and attempts to reach and consume it. This system is meant to improve survival by allowing NPCs to alert allies to food sources and nearby predators.</strong></figcaption>
+  <video src="https://github.com/user-attachments/assets/086308c4-e94d-48ba-9779-d1374615af06" controls width="640"></video>
+</figure>
 
-https://github.com/user-attachments/assets/695b64fc-2464-49f3-983b-8d9f891bf768  
-
-Showing the greedy meshing and face culling algorithm, which merges adjacent faces and removes any geometry that would be hidden from view.. 
-
-https://github.com/user-attachments/assets/854a68fc-e102-4bf3-9ce0-fbf2904e2231  
-
-Showing the LOD collision system, where terrain and trees have their collision updated as the player moves in the world. 
-
-https://github.com/user-attachments/assets/c9bb3c24-d6c3-4843-a357-e25e97f7e5f9  
-
-Test environment meant to show two NPCs communicating, in both scenarios one of the tigers notifies the other tiger of a food source, and the other one accepts and tries to also reach and consume said food source. This is meant to improve survival by notifying allies of food sources and predators.    
-
-https://github.com/user-attachments/assets/086308c4-e94d-48ba-9779-d1374615af06  
-
-Dynamic NPCs interacting with the environment and with each other, chasing, fleeing, eating, roaming, and resting based on their attributes and relationships.  
-
-https://github.com/user-attachments/assets/fbde7d1b-5b18-4392-b0ee-dab75c0b37e1    
+<figure>
+  <figcaption><strong>Dynamic NPCs interacting with the environment and each other: chasing, fleeing, eating, roaming, and resting based on their attributes and relationships.</strong></figcaption>
+  <video src="https://github.com/user-attachments/assets/fbde7d1b-5b18-4392-b0ee-dab75c0b37e1" controls width="640"></video>
+</figure>  
 
 # Packaged project  
 
