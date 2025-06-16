@@ -45,37 +45,37 @@ _Author: Tiberiu Rociu_
 
 <figure>
   <figcaption><strong>Walking around and observing chasing behaviours and other interactions.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/414bc3c1-19fa-4677-8322-feedc5b7e7b2" controls width="640"></video>
+  <video src="https://github.com/user-attachments/assets/28a6c61d-14c1-4b9b-b73f-217e79b9c25f" controls width="640"></video>
 </figure>
 
 <figure>
   <figcaption><strong>Flying to showcase the terrain, NPC, and vegetation LOD spawning and despawning systems.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/63bf557f-5366-436b-a85d-b899c1a7f3fb" controls width="640"></video>
+  <video src="https://github.com/user-attachments/assets/05f3f95d-f4b6-42a7-88e9-09b8ad0890a7" controls width="640"></video>
 </figure>
 
 <figure>
   <figcaption><strong>Showing the world size, including the LOD systems that spawn objects only around the player.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/695b64fc-2464-49f3-983b-8d9f891bf768" controls width="640"></video>
+  <video src="https://github.com/user-attachments/assets/ff6ec306-ab62-4c3d-b1d4-affd06729d75" controls width="640"></video>
 </figure>
 
 <figure>
   <figcaption><strong>Showing the greedy meshing and face culling algorithm, which merges adjacent faces and removes any geometry that would be hidden from view.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/854a68fc-e102-4bf3-9ce0-fbf2904e2231" controls width="640"></video>
+  <video src="https://github.com/user-attachments/assets/62fd58a3-7992-4c02-9721-c378501bdf73" controls width="640"></video>
 </figure>
 
 <figure>
   <figcaption><strong>Showing the LOD collision system, where terrain and trees update their collision as the player moves through the world.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/c9bb3c24-d6c3-4843-a357-e25e97f7e5f9" controls width="640"></video>
+  <video src="https://github.com/user-attachments/assets/21d4e67e-5b23-4e08-a3c4-0eab8caa250b" controls width="640"></video>
 </figure>
 
 <figure>
   <figcaption><strong>Test environment designed to show two NPCs communicating. In both scenarios, one of the tigers notifies the other of a food source, and the other accepts and attempts to reach and consume it. This system is meant to improve survival by allowing NPCs to alert allies to food sources and nearby predators.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/086308c4-e94d-48ba-9779-d1374615af06" controls width="640"></video>
+  <video src="https://github.com/user-attachments/assets/762dbe30-5870-44d2-9f49-497d48552848" controls width="640"></video>
 </figure>
 
 <figure>
   <figcaption><strong>Dynamic NPCs interacting with the environment and each other: chasing, fleeing, eating, roaming, and resting based on their attributes and relationships.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/fbde7d1b-5b18-4392-b0ee-dab75c0b37e1" controls width="640"></video>
+  <video src="https://github.com/user-attachments/assets/e76ca056-1bfc-42d8-9282-c2544a0278ed" controls width="640"></video>
 </figure>  
 
 # Packaged project  
