@@ -38,45 +38,7 @@ _Author: Tiberiu Rociu_
   
 # Showcase  
 
-<figure>
-  <figcaption><strong>Showing the runtime world generation during player spawn.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/cc541bbc-ccfd-45f1-befa-a0838b605c29" controls width="640"></video>
-</figure>
-
-<figure>
-  <figcaption><strong>Walking around and observing chasing behaviours and other interactions.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/28a6c61d-14c1-4b9b-b73f-217e79b9c25f" controls width="640"></video>
-</figure>
-
-<figure>
-  <figcaption><strong>Flying to showcase the terrain, NPC, and vegetation LOD spawning and despawning systems.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/05f3f95d-f4b6-42a7-88e9-09b8ad0890a7" controls width="640"></video>
-</figure>
-
-<figure>
-  <figcaption><strong>Showing the world size, including the LOD systems that spawn objects only around the player.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/ff6ec306-ab62-4c3d-b1d4-affd06729d75" controls width="640"></video>
-</figure>
-
-<figure>
-  <figcaption><strong>Showing the greedy meshing and face culling algorithm, which merges adjacent faces and removes any geometry that would be hidden from view.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/62fd58a3-7992-4c02-9721-c378501bdf73" controls width="640"></video>
-</figure>
-
-<figure>
-  <figcaption><strong>Showing the LOD collision system, where terrain and trees update their collision as the player moves through the world.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/21d4e67e-5b23-4e08-a3c4-0eab8caa250b" controls width="640"></video>
-</figure>
-
-<figure>
-  <figcaption><strong>Test environment designed to show two NPCs communicating. In both scenarios, one of the tigers notifies the other of a food source, and the other accepts and attempts to reach and consume it. This system is meant to improve survival by allowing NPCs to alert allies to food sources and nearby predators.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/762dbe30-5870-44d2-9f49-497d48552848" controls width="640"></video>
-</figure>
-
-<figure>
-  <figcaption><strong>Dynamic NPCs interacting with the environment and each other: chasing, fleeing, eating, roaming, and resting based on their attributes and relationships.</strong></figcaption>
-  <video src="https://github.com/user-attachments/assets/e76ca056-1bfc-42d8-9282-c2544a0278ed" controls width="640"></video>
-</figure>  
+[![Procedural Voxel Terrain & NPC Ecosystem in Unreal Engine 5](https://img.youtube.com/vi/njQHKAKHUcQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=njQHKAKHUcQ)
 
 # Packaged project  
 
