@@ -39,6 +39,7 @@ _Author: Tiberiu Rociu_
 # Showcase  
 
 [![Procedural Voxel Terrain & NPC Ecosystem in Unreal Engine 5](https://img.youtube.com/vi/njQHKAKHUcQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=njQHKAKHUcQ)
+YouTube link: [https://www.youtube.com/watch?v=njQHKAKHUcQ](https://youtu.be/njQHKAKHUcQ?si=C48PlkyO979AblZ9)
 
 # Packaged project  
 
